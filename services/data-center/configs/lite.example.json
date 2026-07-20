@@ -1,0 +1,6 @@
+{
+  "name": "nexa-data-center",
+  "http": { "addr": ":48092" },
+  "templatesDir": "./templates",
+  "dataDir": "./data"
+}
