@@ -71,13 +71,13 @@
 - [x] todo/done/approve/start 持久化到 JSON
 - [ ] 完整流程定义与多节点状态机
 
-### M5 — Business + 数据 ✅ demo
-- [x] 待办 / 工作要求 / 日历 / 接待 latest
+### M5 — Business + 数据 ✅ file-backed
+- [x] 待办 / 工作要求 / 日历 / 接待 latest（JSON store）
 - [ ] data-center 与 agent 导出工具打通
 - [ ] cdc 表清单与 ADS 任务
 
-### M6 — ERP / Finance / IM / OP / AI ✅ demo APIs
-- [x] erp/finance/im/op/ai 查询面 demo API
+### M6 — ERP / Finance / IM / OP / AI ✅ partial file-backed
+- [x] erp/finance file-backed；im/op/ai 仍为 demo 查询面
 - [ ] MySQL 持久化与真实对接
 - [ ] op 与 App 运维页联调
 
@@ -118,6 +118,7 @@
 | 2026-07-20 | business/erp/finance/im/op/ai demo API；start-dev/stop-dev；agent curated 全量 path |
 | 2026-07-20 | file-backed IAM/HR/BPM；钉钉 sync skeleton；Dockerfiles + compose；nexa-common httpx/store |
 | 2026-07-20 | gateway IAM introspect auth |
+| 2026-07-20 | business/erp/finance file-backed stores |
 
 ## 执行原则（无人值守）
 
