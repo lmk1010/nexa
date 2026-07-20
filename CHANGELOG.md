@@ -18,6 +18,9 @@ This project is pre-1.0; entries are grouped by date on `main`.
 
 ### Added
 
+- IM conversations create/list, messages list/send, mark read, contacts from org
+- IAM password change API; tenant-scoped user list
+
 - BPM task state machine with history (approve/reject/cancel/reopen)
 - Business todo complete API
 - Mobile tenant onboarding page scaffold

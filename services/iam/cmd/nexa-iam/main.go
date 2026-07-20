@@ -119,6 +119,7 @@ func main() {
 	mux.HandleFunc("/v1/iam/invites", s.handleCreateInvite)
 	mux.HandleFunc("/v1/iam/invites/accept", s.handleAcceptInvite)
 	mux.HandleFunc("/v1/iam/onboarding/status", s.handleOnboardingStatus)
+	mux.HandleFunc("/v1/iam/password/change", s.handleChangePassword)
 	mux.HandleFunc("/app-api/system/auth/login", s.handleLogin)
 	mux.HandleFunc("/admin-api/system/auth/login", s.handleLogin)
 	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
@@ -250,14 +251,18 @@ func (s *server) handlePermissions(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handleUsers(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.userFromRequest(r); !ok {
+	me, ok := s.userFromRequest(r)
+	if !ok {
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"code": 401, "msg": "unauthorized"})
 		return
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	list := make([]user, 0, len(s.db.Users))
+	list := make([]user, 0)
 	for _, u := range s.db.Users {
+		if me.TenantID != 0 && u.TenantID != me.TenantID {
+			continue
+		}
 		u.Password = ""
 		list = append(list, u)
 	}
@@ -504,6 +509,41 @@ func (s *server) handleOnboardingStatus(w http.ResponseWriter, r *http.Request) 
 			{"id": "agent", "done": true, "title": "Agent 可用"},
 		},
 	}})
+}
+
+func (s *server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"code": 405})
+		return
+	}
+	me, ok := s.userFromRequest(r)
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"code": 401, "msg": "unauthorized"})
+		return
+	}
+	var body struct {
+		OldPassword string `json:"oldPassword"`
+		NewPassword string `json:"newPassword"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.NewPassword == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"code": 400, "msg": "newPassword required"})
+		return
+	}
+	if len(body.NewPassword) < 6 {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"code": 400, "msg": "password min 6 chars"})
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	u, ok := s.db.Users[me.Username]
+	if !ok || !checkPassword(u.Password, body.OldPassword) {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"code": 401, "msg": "old password incorrect"})
+		return
+	}
+	u.Password = hashPassword(body.NewPassword)
+	s.db.Users[me.Username] = u
+	_ = s.save()
+	writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": true})
 }
 
 func hashPassword(pw string) string {

@@ -377,7 +377,7 @@ func registerFinance(mux *http.ServeMux, s *store) {
 }
 
 func registerIM(mux *http.ServeMux, s *store) {
-	jsonAlias(mux, []string{"/v1/im/conversations"}, func(w http.ResponseWriter, r *http.Request) {
+	listConv := func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 		tid := tenantID(r)
@@ -388,27 +388,141 @@ func registerIM(mux *http.ServeMux, s *store) {
 			}
 		}
 		writeJSON(w, 200, map[string]any{"code": 0, "data": out, "total": len(out)})
-	})
-	jsonAlias(mux, []string{"/v1/im/contacts"}, func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, 200, map[string]any{"code": 0, "data": []map[string]any{{"id": 1001, "name": "Zhang San"}, {"id": 1002, "name": "Li Si"}}})
-	})
-	jsonAlias(mux, []string{"/v1/im/messages/send"}, func(w http.ResponseWriter, r *http.Request) {
+	}
+	createConv := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeJSON(w, 405, map[string]any{"code": 405})
 			return
 		}
-		var body struct{ ConversationID, From, Text string }
+		var body struct {
+			Title string `json:"title"`
+		}
+		if json.NewDecoder(r.Body).Decode(&body) != nil || body.Title == "" {
+			writeJSON(w, 400, map[string]any{"code": 400, "msg": "title required"})
+			return
+		}
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		now := time.Now().Format(time.RFC3339)
+		c := conv{ID: "c" + time.Now().Format("150405"), TenantID: tenantID(r), Title: body.Title, Unread: 0, UpdatedAt: now}
+		s.db.Conversations = append(s.db.Conversations, c)
+		_ = s.save()
+		writeJSON(w, 200, map[string]any{"code": 0, "data": c})
+	}
+	listMsg := func(w http.ResponseWriter, r *http.Request) {
+		cid := r.URL.Query().Get("conversationId")
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		tid := tenantID(r)
+		out := make([]msg, 0)
+		for _, m := range s.db.Messages {
+			if !matchTenant(tid, m.TenantID) {
+				continue
+			}
+			if cid == "" || m.ConversationID == cid {
+				out = append(out, m)
+			}
+		}
+		writeJSON(w, 200, map[string]any{"code": 0, "data": out, "total": len(out)})
+	}
+	sendMsg := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, 405, map[string]any{"code": 405})
+			return
+		}
+		var body struct {
+			ConversationID string `json:"conversationId"`
+			From           string `json:"from"`
+			Text           string `json:"text"`
+		}
+		if json.NewDecoder(r.Body).Decode(&body) != nil || body.Text == "" {
+			writeJSON(w, 400, map[string]any{"code": 400, "msg": "text required"})
+			return
+		}
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		tid := tenantID(r)
+		if body.From == "" {
+			body.From = r.Header.Get("X-Username")
+		}
+		if body.ConversationID == "" {
+			// auto create conversation
+			c := conv{ID: "c" + time.Now().Format("150405"), TenantID: tid, Title: "Chat", Unread: 0, UpdatedAt: time.Now().Format(time.RFC3339)}
+			s.db.Conversations = append(s.db.Conversations, c)
+			body.ConversationID = c.ID
+		} else {
+			// ensure conversation belongs to tenant or create shadow
+			found := false
+			for _, c := range s.db.Conversations {
+				if c.ID == body.ConversationID && matchTenant(tid, c.TenantID) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				writeJSON(w, 404, map[string]any{"code": 404, "msg": "conversation not found"})
+				return
+			}
+		}
+		now := time.Now().Format(time.RFC3339)
+		m := msg{ID: "m" + time.Now().Format("150405.000"), TenantID: tid, ConversationID: body.ConversationID, From: body.From, Text: body.Text, At: now}
+		s.db.Messages = append(s.db.Messages, m)
+		for i := range s.db.Conversations {
+			if s.db.Conversations[i].ID == body.ConversationID {
+				s.db.Conversations[i].UpdatedAt = now
+				s.db.Conversations[i].Unread++
+			}
+		}
+		_ = s.save()
+		writeJSON(w, 200, map[string]any{"code": 0, "data": m})
+	}
+	readConv := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, 405, map[string]any{"code": 405})
+			return
+		}
+		var body struct {
+			ConversationID string `json:"conversationId"`
+		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		m := msg{ID: "m" + time.Now().Format("150405"), TenantID: tenantID(r), ConversationID: body.ConversationID, From: body.From, Text: body.Text, At: time.Now().Format(time.RFC3339)}
-		if m.ConversationID == "" {
-			m.ConversationID = "c1"
+		tid := tenantID(r)
+		for i := range s.db.Conversations {
+			if s.db.Conversations[i].ID == body.ConversationID && matchTenant(tid, s.db.Conversations[i].TenantID) {
+				s.db.Conversations[i].Unread = 0
+				_ = s.save()
+				writeJSON(w, 200, map[string]any{"code": 0, "data": s.db.Conversations[i]})
+				return
+			}
 		}
-		s.db.Messages = append(s.db.Messages, m)
-		_ = s.save()
-		writeJSON(w, 200, map[string]any{"code": 0, "data": m})
+		writeJSON(w, 404, map[string]any{"code": 404})
+	}
+	// contacts from tenant employees
+	contacts := func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		tid := tenantID(r)
+		out := make([]map[string]any, 0)
+		for _, e := range s.db.Employees {
+			if matchTenant(tid, e.TenantID) {
+				out = append(out, map[string]any{"id": e.ID, "name": e.Name, "dept": e.DeptName, "jobNo": e.JobNo})
+			}
+		}
+		writeJSON(w, 200, map[string]any{"code": 0, "data": out, "total": len(out)})
+	}
+
+	jsonAlias(mux, []string{"/v1/im/conversations"}, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			createConv(w, r)
+			return
+		}
+		listConv(w, r)
 	})
+	jsonAlias(mux, []string{"/v1/im/contacts"}, contacts)
+	jsonAlias(mux, []string{"/v1/im/messages"}, listMsg)
+	jsonAlias(mux, []string{"/v1/im/messages/send"}, sendMsg)
+	jsonAlias(mux, []string{"/v1/im/conversations/read"}, readConv)
 }
 
 func registerOP(mux *http.ServeMux, s *store) {
