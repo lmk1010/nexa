@@ -81,6 +81,14 @@
 - [ ] MySQL 持久化与真实对接
 - [ ] op 与 App 运维页联调
 
+### M8 — AI-Native 企业能力 ✅ baseline
+- [x] AI control plane：skills / intent / sense / automation
+- [x] 企业 skill 目录（26+）覆盖 OA 全域
+- [x] Gateway 对 AI 路由/bootstrap 边缘放行
+- [x] Agent curated skills + enterprise prompt
+- [ ] 域事件自动上报 sense（各服务 hook）
+- [ ] 真 LLM intent（可选，当前关键词路由可用）
+
 ### M7 — 客户端与发布
 - [ ] mobile 配置切 nexa gateway
 - [ ] admin 最小控制台
@@ -119,6 +127,7 @@
 | 2026-07-20 | file-backed IAM/HR/BPM；钉钉 sync skeleton；Dockerfiles + compose；nexa-common httpx/store |
 | 2026-07-20 | gateway IAM introspect auth |
 | 2026-07-20 | business/erp/finance file-backed stores |
+| 2026-07-20 | AI control plane skills/intent/sense/automation；gateway AI edge；agent enterprise prompt |
 
 ## 执行原则（无人值守）
 

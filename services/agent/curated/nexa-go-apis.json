@@ -157,6 +157,46 @@
       "method": "POST",
       "path": "/v1/iam/token/introspect",
       "summary": "Introspect token"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/ai/skills",
+      "summary": "AI skill catalog"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/ai/intent/route",
+      "summary": "NL intent to skills"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/ai/sense",
+      "summary": "Push perception event"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/ai/sense/recent",
+      "summary": "Recent sense events"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/ai/automation/rules",
+      "summary": "Automation rules"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/ai/automation/runs",
+      "summary": "Automation runs"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/ai/automation/tick",
+      "summary": "Run automation tick"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/ai/assistant/bootstrap",
+      "summary": "Assistant bootstrap"
     }
   ]
 }

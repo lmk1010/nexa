@@ -190,6 +190,10 @@ func isPublic(cfg config, path string) bool {
 		"/v1/iam/login":                 true,
 		"/app-api/system/auth/login":    true,
 		"/admin-api/system/auth/login":  true,
+		"/v1/ai/skills":                 true,
+		"/v1/ai/intent/route":           true,
+		"/v1/ai/assistant/bootstrap":    true,
+		"/v1/ai/sense":                  true,
 	}
 	if exact[path] {
 		return true

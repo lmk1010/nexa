@@ -1,21 +1,17 @@
 # Autonomous execution log
 
 ## Status
-Running continuously against docs/GOAL.md
+Running continuously against docs/GOAL.md — AI-native enterprise assistant.
 
-## Done this session
-- Platform monorepo + agent NeoX path
-- All domain Go services with demo/file-backed APIs
-- Gateway reverse proxy
-- IAM/HR/BPM JSON persistence
-- HR DingTalk sync skeleton
-- Dockerfiles + deploy/docker-compose.yml
-- packages/nexa-common httpx + filestore
-- start-dev / stop-dev scripts
+## Latest
+- AI control plane (skills, intent route, sense, automation rules/runs)
+- docs/architecture/ai-native.md
+- Gateway public AI edge paths
+- Agent enterprise prompt + curated skills/apis
 
 ## Next
-1. Business/ERP/Finance file-backed stores
-2. Wire agent tools to nexa-go-apis explicitly
-3. Real DingTalk OpenAPI client behind same routes
-4. compose up smoke when Docker available
-5. Mobile app base URL -> gateway
+1. Domain services emit sense events on write paths
+2. IM/OP file-backed stores
+3. Agent runtime loads bootstrap prompt automatically
+4. Real DingTalk OpenAPI client
+5. Mobile baseURL -> gateway

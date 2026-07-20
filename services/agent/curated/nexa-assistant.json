@@ -1,0 +1,15 @@
+{
+  "name": "nexa-enterprise-assistant",
+  "gateway": "http://127.0.0.1:48080",
+  "bootstrapPath": "/v1/ai/assistant/bootstrap",
+  "intentPath": "/v1/ai/intent/route",
+  "skillsPath": "/v1/ai/skills",
+  "promptFile": "prompts/enterprise-assistant.md",
+  "principles": [
+    "skill-first",
+    "perception-automation",
+    "explainable-tool-use",
+    "least-privilege",
+    "warehouse-for-analytics"
+  ]
+}

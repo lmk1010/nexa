@@ -1,4 +1,7 @@
-// nexa-ai — AI control plane: skills, intent, sense, automation (Go).
+from pathlib import Path
+
+
+AI_MAIN = r'''// nexa-ai — AI control plane: skills, intent, sense, automation (Go).
 package main
 
 import (
@@ -176,13 +179,13 @@ func (s *server) loop(ctx context.Context) {
 
 func defaultSkills() []skill {
 	return []skill{
-		{ID: "iam.whoami", Domain: "iam", Title: "当前用户", Description: "查询当前登录用户与角色权限", Method: "GET", Path: "/v1/iam/me", Auth: true, Keywords: []string{"我是谁", "whoami", "当前用户", "权限", "me", "profile"}, Examples: []string{"我是谁", "我有哪些权限"}},
+		{ID: "iam.whoami", Domain: "iam", Title: "当前用户", Description: "查询当前登录用户与角色权限", Method: "GET", Path: "/v1/iam/me", Auth: true, Keywords: []string{"我是谁", "whoami", "当前用户", "权限"}, Examples: []string{"我是谁", "我有哪些权限"}},
 		{ID: "iam.permissions", Domain: "iam", Title: "权限点", Description: "列出当前用户权限点", Method: "GET", Path: "/v1/iam/permissions", Auth: true, Keywords: []string{"权限", "permission"}, Examples: []string{"列出我的权限"}},
-		{ID: "hr.employees.search", Domain: "hr", Title: "员工列表", Description: "查询花名册/员工列表", Method: "GET", Path: "/v1/hr/employees", Auth: true, Keywords: []string{"员工", "花名册", "通讯录", "人员", "hr", "employee", "roster", "staff"}, Examples: []string{"查一下员工列表", "花名册有谁"}},
+		{ID: "hr.employees.search", Domain: "hr", Title: "员工列表", Description: "查询花名册/员工列表", Method: "GET", Path: "/v1/hr/employees", Auth: true, Keywords: []string{"员工", "花名册", "通讯录", "人员", "hr"}, Examples: []string{"查一下员工列表", "花名册有谁"}},
 		{ID: "hr.depts.tree", Domain: "hr", Title: "组织树", Description: "查询部门组织树", Method: "GET", Path: "/v1/hr/departments/tree", Auth: true, Keywords: []string{"部门", "组织", "架构"}, Examples: []string{"公司组织架构"}},
-		{ID: "hr.dingtalk.sync", Domain: "hr", Title: "钉钉同步", Description: "触发钉钉通讯录/花名册同步", Method: "POST", Path: "/v1/hr/dingtalk/sync", Auth: true, Keywords: []string{"钉钉", "同步", "dingtalk", "sync", "directory"}, Examples: []string{"同步钉钉通讯录"}, InputHint: map[string]string{"mode": "full|directory|roster"}},
+		{ID: "hr.dingtalk.sync", Domain: "hr", Title: "钉钉同步", Description: "触发钉钉通讯录/花名册同步", Method: "POST", Path: "/v1/hr/dingtalk/sync", Auth: true, Keywords: []string{"钉钉", "同步", "dingtalk"}, Examples: []string{"同步钉钉通讯录"}, InputHint: map[string]string{"mode": "full|directory|roster"}},
 		{ID: "hr.dingtalk.status", Domain: "hr", Title: "钉钉状态", Description: "查看钉钉同步状态", Method: "GET", Path: "/v1/hr/dingtalk/status", Auth: true, Keywords: []string{"钉钉状态", "同步状态"}, Examples: []string{"钉钉同步到哪了"}},
-		{ID: "bpm.todo.list", Domain: "bpm", Title: "审批待办", Description: "查询待审批任务", Method: "GET", Path: "/v1/bpm/tasks/todo", Auth: true, Keywords: []string{"审批", "待办", "流程", "bpm", "approve", "todo", "approval", "pending"}, Examples: []string{"我有哪些审批待办"}},
+		{ID: "bpm.todo.list", Domain: "bpm", Title: "审批待办", Description: "查询待审批任务", Method: "GET", Path: "/v1/bpm/tasks/todo", Auth: true, Keywords: []string{"审批", "待办", "流程", "bpm", "approve"}, Examples: []string{"我有哪些审批待办"}},
 		{ID: "bpm.done.list", Domain: "bpm", Title: "已办审批", Description: "查询已处理审批", Method: "GET", Path: "/v1/bpm/tasks/done", Auth: true, Keywords: []string{"已办", "审批历史"}, Examples: []string{"已处理的审批"}},
 		{ID: "bpm.task.approve", Domain: "bpm", Title: "审批动作", Description: "通过或驳回审批任务", Method: "POST", Path: "/v1/bpm/tasks/approve", Auth: true, Keywords: []string{"通过", "驳回", "同意", "拒绝"}, Examples: []string{"通过请假单"}, InputHint: map[string]string{"taskId": "string", "action": "approve|reject", "reason": "string"}},
 		{ID: "bpm.task.start", Domain: "bpm", Title: "发起审批", Description: "发起一个审批任务", Method: "POST", Path: "/v1/bpm/tasks/start", Auth: true, Keywords: []string{"发起审批", "提交申请"}, Examples: []string{"帮我发起采购审批"}},
@@ -191,13 +194,13 @@ func defaultSkills() []skill {
 		{ID: "biz.work.requirements", Domain: "business", Title: "工作要求", Description: "查询工作要求", Method: "GET", Path: "/v1/business/work-requirements", Auth: true, Keywords: []string{"工作要求", "目标"}, Examples: []string{"有哪些工作要求"}},
 		{ID: "biz.calendar.today", Domain: "business", Title: "日历事件", Description: "查询日历事件", Method: "GET", Path: "/v1/business/calendar/events", Auth: true, Keywords: []string{"日历", "会议", "日程"}, Examples: []string{"今天有什么会"}},
 		{ID: "biz.reception.latest", Domain: "business", Title: "前台访客", Description: "最近前台接待记录", Method: "GET", Path: "/v1/business/reception/latest", Auth: true, Keywords: []string{"前台", "访客", "接待"}, Examples: []string{"最近有谁来访"}},
-		{ID: "erp.stock.summary", Domain: "erp", Title: "库存概况", Description: "查询库存汇总", Method: "GET", Path: "/v1/erp/stock/summary", Auth: true, Keywords: []string{"库存", "仓", "sku", "erp", "stock", "inventory"}, Examples: []string{"库存怎么样"}},
+		{ID: "erp.stock.summary", Domain: "erp", Title: "库存概况", Description: "查询库存汇总", Method: "GET", Path: "/v1/erp/stock/summary", Auth: true, Keywords: []string{"库存", "仓", "sku", "erp"}, Examples: []string{"库存怎么样"}},
 		{ID: "erp.purchase.orders", Domain: "erp", Title: "采购单", Description: "查询采购订单", Method: "GET", Path: "/v1/erp/purchase/orders", Auth: true, Keywords: []string{"采购", "purchase"}, Examples: []string{"有哪些采购单"}},
-		{ID: "finance.month.summary", Domain: "finance", Title: "月度财务", Description: "本月收支利润摘要", Method: "GET", Path: "/v1/finance/summary/monthly", Auth: true, Keywords: []string{"财务", "收支", "利润", "营收", "finance", "profit", "revenue"}, Examples: []string{"本月财务怎么样"}},
+		{ID: "finance.month.summary", Domain: "finance", Title: "月度财务", Description: "本月收支利润摘要", Method: "GET", Path: "/v1/finance/summary/monthly", Auth: true, Keywords: []string{"财务", "收支", "利润", "营收"}, Examples: []string{"本月财务怎么样"}},
 		{ID: "finance.ledger.recent", Domain: "finance", Title: "近期流水", Description: "最近财务流水", Method: "GET", Path: "/v1/finance/ledger/recent", Auth: true, Keywords: []string{"流水", "记账", "ledger"}, Examples: []string{"最近流水"}},
 		{ID: "im.conversations", Domain: "im", Title: "会话列表", Description: "IM 会话列表", Method: "GET", Path: "/v1/im/conversations", Auth: true, Keywords: []string{"消息", "会话", "im", "聊天"}, Examples: []string{"我有哪些会话"}},
 		{ID: "im.contacts", Domain: "im", Title: "IM 通讯录", Description: "IM 联系人", Method: "GET", Path: "/v1/im/contacts", Auth: true, Keywords: []string{"联系人", "好友"}, Examples: []string{"通讯录"}},
-		{ID: "op.health", Domain: "op", Title: "运维状态", Description: "平台与服务健康概览", Method: "GET", Path: "/v1/op/status", Auth: true, Keywords: []string{"运维", "健康", "监控", "status", "health", "ops", "monitor"}, Examples: []string{"系统正常吗"}},
+		{ID: "op.health", Domain: "op", Title: "运维状态", Description: "平台与服务健康概览", Method: "GET", Path: "/v1/op/status", Auth: true, Keywords: []string{"运维", "健康", "监控", "status"}, Examples: []string{"系统正常吗"}},
 		{ID: "op.audit.recent", Domain: "op", Title: "审计日志", Description: "最近操作审计", Method: "GET", Path: "/v1/op/audit/recent", Auth: true, Keywords: []string{"审计", "日志"}, Examples: []string{"最近谁登录了"}},
 		{ID: "ai.reception.config", Domain: "ai", Title: "接待配置", Description: "智能前台配置", Method: "GET", Path: "/v1/ai/reception/config", Auth: true, Keywords: []string{"接待配置", "asr"}, Examples: []string{"前台AI怎么配的"}},
 		{ID: "ai.reception.records", Domain: "ai", Title: "接待记录", Description: "智能前台识别记录", Method: "GET", Path: "/v1/ai/reception/records", Auth: true, Keywords: []string{"接待记录"}, Examples: []string{"接待识别记录"}},
@@ -219,7 +222,7 @@ func (s *server) loadOrSeed() error {
 		Rules: []autoRule{
 			{ID: "rule_bpm_overdue", Name: "审批超时催办", Enabled: true, SenseType: "bpm.task.overdue", Actions: []string{"notify:assignee", "bpm.todo.list"}, Description: "审批超时后提醒处理人"},
 			{ID: "rule_hr_joined", Name: "入职自动待办", Enabled: true, SenseType: "hr.employee.joined", Actions: []string{"biz.todo.create", "notify:hr"}, Description: "新员工入职创建 onboarding 待办"},
-			{ID: "rule_stock_low", Name: "库存预警", Enabled: true, SenseType: "erp.stock.low", Actions: []string{"erp.stock.summary", "biz.todo.create", "notify:ops"}, Description: "低库存创建工作待办并通知运营"},
+			{ID: "rule_stock_low", Name: "库存预警", Enabled: true, SenseType: "erp.stock.low", Actions: []string{"erp.stock.summary", "biz.todo.create", "notify:ops"}, Description: "低��存创建工作待办并通知运营"},
 			{ID: "rule_reception", Name: "访客感知", Enabled: true, SenseType: "biz.reception.detected", Actions: []string{"biz.reception.latest", "notify:host"}, Description: "前台检测到访客后通知主人"},
 			{ID: "rule_service_down", Name: "服务宕机告警", Enabled: true, SenseType: "op.service.down", Actions: []string{"op.health", "notify:admin"}, Description: "服务不可用时告警"},
 		},
@@ -357,11 +360,7 @@ func (s *server) handleSense(w http.ResponseWriter, r *http.Request) {
 	}
 	n := s.processAutomationLocked()
 	_ = s.save()
-	outEv := ev
-	if len(s.db.Sense) > 0 && s.db.Sense[0].ID == ev.ID {
-		outEv = s.db.Sense[0]
-	}
-	writeJSON(w, 200, map[string]any{"code": 0, "data": map[string]any{"event": outEv, "automationHandled": n}})
+	writeJSON(w, 200, map[string]any{"code": 0, "data": map[string]any{"event": ev, "automationHandled": n}})
 }
 
 func (s *server) handleSenseRecent(w http.ResponseWriter, r *http.Request) {
@@ -490,3 +489,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
 }
+'''
+
+Path("E:/code/nexa/services/ai/cmd/nexa-ai/main.go").write_text(AI_MAIN, encoding="utf-8")
+print("ai main written", len(AI_MAIN))
