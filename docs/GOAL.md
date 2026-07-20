@@ -70,7 +70,7 @@
 
 ### M4 — BPM ✅ file-backed
 - [x] todo/done/approve/start 持久化到 JSON
-- [ ] 完整流程定义与多节点状态机
+- [x] 流程目录 + 任务状态机（approve/reject/cancel/reopen）
 
 ### M5 — Business + 数据 ✅ file-backed
 - [x] 待办 / 工作要求 / 日历 / 接待 latest（JSON store）
@@ -88,8 +88,8 @@
 - [x] 企业注册 / 创建租户 API
 - [x] 邀请成员 / 接受邀请 API
 - [x] 开通状态 checklist
-- [ ] 租户内角色权限默认模板增强
-- [ ] 开通向导前端/App
+- [x] 租户内角色权限默认模板增强
+- [x] 开通向导前端/App（mobile onboarding + admin console）
 
 ### M8 — AI-Native 企业能力 ✅ baseline
 - [x] AI control plane：skills / intent / sense / automation
@@ -102,7 +102,7 @@
 ### M7 — 客户端与发布 ✅ partial
 - [x] mobile baseUrl 默认 nexa-gateway :48080
 - [x] agent 默认加载 enterprise prompt + nexa skill tools
-- [ ] admin 最小控制台
+- [x] admin 最小控制台
 - [ ] docker compose 一键：gateway+iam+agent+data-center+cdc+mysql
 
 ## 能力矩阵（企业助手必须覆盖）
@@ -157,3 +157,10 @@
 | 2026-07-20 | core 全域租户过滤 + 连接器按租户配置 API |
 | 2026-07-20 | BPM 状态机 history/cancel/reopen；todo complete；开通向导页；密码 x bypass 需环境变量 |
 | 2026-07-20 | IM 会话/消息/已读；改密；成员列表租户隔离 |
+
+
+## 自主推进日志
+
+| 日期 | 进展 |
+|------|------|
+| 2026-07-20 | M9 租户接入闭环；admin console；bcrypt/audit；workbench；租户隔离修复 |

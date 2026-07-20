@@ -9,10 +9,24 @@ This project is pre-1.0; entries are grouped by date on `main`.
 
 ### Planned
 
-- Full tenant isolation across core domains
 - MySQL-backed stores
-- Per-tenant connector config
-- App onboarding UI
+- Agent real LLM end-to-end
+- Full data-center engine + CDC prod profile
+
+## [0.2.0] - 2026-07-20
+
+### Added
+
+- Admin console at `/admin` (overview, members, approvals, todos, IM, connectors, workbench, audit, onboarding)
+- Workbench summary API and BPM process catalog
+- IAM role templates + audit log
+- Calendar events CRUD; HR department create; tenant org bootstrap
+- bcrypt password hashing with legacy migration
+
+### Fixed
+
+- Tenant register panic when Tenants/Invites maps nil on load
+- Cross-tenant department leak (legacy row.tenantId==0 treated as demo only)
 
 ## [0.1.0] - 2026-07-20
 

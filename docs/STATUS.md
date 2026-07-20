@@ -30,6 +30,9 @@
 
 ### 已有
 
+- Admin console `/admin`（总览/成员/审批/待办/IM/连接器/工作台/审计/开通）
+- 工作台 summary + BPM 流程目录
+- IAM bcrypt + 角色模板 + 审计日志
 - 租户注册/邀请/加入/onboarding
 - 登录+introspect+网关鉴权+租户头
 - 组织/审批/待办/ERP/财务/IM/AI skills 面
@@ -39,14 +42,14 @@
 
 ### 还差（优先级）
 
-1. core 内全域 `X-Tenant-Id` 过滤写实
+~~1. core 内全域 `X-Tenant-Id` 过滤写实~~ ✅
 2. ~~审批状态机 + IM 会话/消息~~ ✅
-3. 连接器按租户配置（不仅目录）
+~~3. 连接器按租户配置（不仅目录）~~ ✅
 4. MySQL 替换 JSON store
 5. Agent 真 LLM 联调
-6. App 开通向导 UI
-7. 管理端最小控制台
-8. 密码安全增强（bcrypt）、审计
+~~6. App 开通向导 UI~~ ✅
+~~7. 管理端最小控制台~~ ✅
+~~8. 密码安全增强（bcrypt）、审计~~ ✅
 9. 单测 + e2e
 10. 全量 data-center 引擎 + CDC 生产配置
 
@@ -63,3 +66,10 @@ cd deploy && docker compose up -d --build
 - IM create/list/send/read + contacts from employees; password change; users tenant-scoped
 - MySQL schema drafts under services/*/sql (runtime still file)
 - Mobile login links to /onboarding; HR bootstrap-tenant for new orgs
+
+
+### 2026-07-20 evening
+- IAM: bcrypt passwords, nil-map safe tenant maps, role templates, audit log APIs
+- Core: workbench summary, BPM process catalog, calendar CRUD, department create, tenant isolation fix
+- Admin: `/admin` static console with workbench + audit
+- Verified multi-tenant isolation (tenant 2 only sees own org after bootstrap)

@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"embed"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -21,6 +22,9 @@ import (
 	"syscall"
 	"time"
 )
+
+//go:embed all:web
+var adminFS embed.FS
 
 var version = "1.0.0-core"
 
@@ -63,6 +67,7 @@ func main() {
 
 	store := newStore(cfg.DataDir)
 	store.loadOrSeed()
+	store.backfillTenant()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
@@ -89,6 +94,31 @@ func main() {
 	registerProxy(mux, "/app-api/agent", cfg.AgentURL, true)
 	registerProxy(mux, "/admin-api/agent", cfg.AgentURL, true)
 
+
+	// Admin console (static)
+	mux.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/admin/", http.StatusFound)
+	})
+	mux.HandleFunc("/admin/", func(w http.ResponseWriter, r *http.Request) {
+		// try embedded first, then local web/
+		p := strings.TrimPrefix(r.URL.Path, "/admin/")
+		if p == "" || p == "/" {
+			p = "admin.html"
+		}
+		if p == "logo.svg" || p == "admin.html" {
+			if b, err := adminFS.ReadFile("web/" + p); err == nil {
+				if strings.HasSuffix(p, ".svg") {
+					w.Header().Set("Content-Type", "image/svg+xml")
+				} else {
+					w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				}
+				w.Write(b)
+				return
+			}
+		}
+		http.NotFound(w, r)
+	})
+
 	// Domain routes (in-process)
 	registerHR(mux, store)
 	registerBPM(mux, store)
@@ -99,6 +129,8 @@ func main() {
 	registerOP(mux, store)
 	registerAI(mux, store)
 	registerDataCenter(mux, store)
+	registerWorkbench(mux, store)
+	registerBPMProcesses(mux, store)
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
@@ -165,13 +197,13 @@ func registerProxy(mux *http.ServeMux, prefix, target string, strip bool) {
 
 func authMiddleware(iamURL string, next http.Handler) http.Handler {
 	publicExact := map[string]bool{
-		"/healthz": true, "/v1/platform/services": true, "/": true,
+		"/healthz": true, "/v1/platform/services": true, "/": true, "/admin": true, "/admin/": true,
 		"/v1/iam/login": true, "/v1/iam/tenants/register": true, "/v1/iam/invites/accept": true,
 		"/app-api/system/auth/login": true, "/admin-api/system/auth/login": true,
 		"/v1/ai/skills": true, "/v1/ai/intent/route": true, "/v1/ai/assistant/bootstrap": true,
 		"/v1/ai/sense": true,
 	}
-	publicPrefix := []string{"/agent", "/app-api/agent", "/admin-api/agent", "/v1/iam/login", "/v1/iam/tenants/register", "/v1/iam/invites/accept"}
+	publicPrefix := []string{"/admin", "/agent", "/app-api/agent", "/admin-api/agent", "/v1/iam/login", "/v1/iam/tenants/register", "/v1/iam/invites/accept"}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if publicExact[path] {
@@ -287,6 +319,7 @@ type coreDB struct {
 	Messages      []msg                   `json:"messages"`
 	Sense         []senseEv               `json:"sense"`
 	Rules         []autoRule              `json:"rules"`
+	Events        []calEvent              `json:"events"`
 	ExportJobs    []exportJob             `json:"exportJobs"`
 	SyncJobs      []syncJob               `json:"syncJobs"`
 	Connectors    map[string]connectorCfg `json:"connectors"`
@@ -451,6 +484,15 @@ type autoRule struct {
 	SenseType string
 	Actions   []string
 }
+type calEvent struct {
+	ID       string `json:"id"`
+	TenantID int64  `json:"tenantId,omitempty"`
+	Title    string `json:"title"`
+	Start    string `json:"start"`
+	End      string `json:"end,omitempty"`
+	AllDay   bool   `json:"allDay,omitempty"`
+}
+
 type exportJob struct {
 	ID         string `json:"id"`
 	TenantID   int64  `json:"tenantId,omitempty"`
@@ -481,9 +523,47 @@ type connectorCfg struct {
 
 func matchTenant(tid, row int64) bool {
 	if tid == 0 {
-		return true
+		return true // no tenant header: admin/debug
 	}
-	return row == 0 || row == tid
+	// legacy rows without tenantId are treated as demo tenant 1
+	if row == 0 {
+		return tid == 1
+	}
+	return row == tid
+}
+
+func (s *store) backfillTenant() {
+	changed := false
+	fix := func(v *int64) {
+		if *v == 0 {
+			*v = 1
+			changed = true
+		}
+	}
+	for i := range s.db.Employees {
+		fix(&s.db.Employees[i].TenantID)
+	}
+	for i := range s.db.Departments {
+		fix(&s.db.Departments[i].TenantID)
+	}
+	for i := range s.db.Tasks {
+		fix(&s.db.Tasks[i].TenantID)
+	}
+	for i := range s.db.Todos {
+		fix(&s.db.Todos[i].TenantID)
+	}
+	for i := range s.db.Conversations {
+		fix(&s.db.Conversations[i].TenantID)
+	}
+	for i := range s.db.Messages {
+		fix(&s.db.Messages[i].TenantID)
+	}
+	for i := range s.db.Events {
+		fix(&s.db.Events[i].TenantID)
+	}
+	if changed {
+		_ = s.save()
+	}
 }
 
 func jsonAlias(mux *http.ServeMux, paths []string, h http.HandlerFunc) {

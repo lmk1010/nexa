@@ -89,6 +89,8 @@ func registerHR(mux *http.ServeMux, s *store) {
 	hTree := func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
+		tid := tenantID(r)
+		ensureTenantOrg(tid)
 		type node struct {
 			ID       int64  `json:"id"`
 			Name     string `json:"name"`
@@ -96,6 +98,9 @@ func registerHR(mux *http.ServeMux, s *store) {
 		}
 		by := map[int64][]department{}
 		for _, d := range s.db.Departments {
+			if !matchTenant(tid, d.TenantID) {
+				continue
+			}
 			by[d.ParentID] = append(by[d.ParentID], d)
 		}
 		var build func(int64) []node
@@ -106,7 +111,25 @@ func registerHR(mux *http.ServeMux, s *store) {
 			}
 			return out
 		}
-		writeJSON(w, 200, map[string]any{"code": 0, "data": build(0)})
+		// prefer roots whose parent is missing in this tenant
+		roots := build(0)
+		if len(roots) == 0 {
+			// any department with parent not in tenant set
+			ids := map[int64]bool{}
+			for _, d := range s.db.Departments {
+				if matchTenant(tid, d.TenantID) {
+					ids[d.ID] = true
+				}
+			}
+			for pid, list := range by {
+				if pid != 0 && !ids[pid] {
+					for _, d := range list {
+						roots = append(roots, node{ID: d.ID, Name: d.Name, Children: build(d.ID)})
+					}
+				}
+			}
+		}
+		writeJSON(w, 200, map[string]any{"code": 0, "data": roots})
 	}
 	hSync := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -120,6 +143,28 @@ func registerHR(mux *http.ServeMux, s *store) {
 		_ = s.save()
 		writeJSON(w, 200, map[string]any{"code": 0, "data": job})
 	}
+		jsonAlias(mux, []string{"/v1/hr/departments"}, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, 405, map[string]any{"code": 405})
+			return
+		}
+		var body department
+		if json.NewDecoder(r.Body).Decode(&body) != nil || body.Name == "" {
+			writeJSON(w, 400, map[string]any{"code": 400, "msg": "name required"})
+			return
+		}
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		tid := tenantID(r)
+		if body.TenantID == 0 {
+			body.TenantID = tid
+		}
+		s.db.Seq++
+		body.ID = s.db.Seq
+		s.db.Departments = append(s.db.Departments, body)
+		_ = s.save()
+		writeJSON(w, 200, map[string]any{"code": 0, "data": body})
+	})
 	jsonAlias(mux, []string{"/v1/hr/employees", "/app-api/hr/employees", "/admin-api/hr/employees"}, hEmp)
 	jsonAlias(mux, []string{"/v1/hr/departments/tree", "/app-api/hr/departments/tree", "/admin-api/hr/departments/tree"}, hTree)
 	jsonAlias(mux, []string{"/v1/hr/dingtalk/sync"}, hSync)
@@ -365,7 +410,43 @@ func registerBusiness(mux *http.ServeMux, s *store) {
 		writeJSON(w, 200, map[string]any{"code": 0, "data": []map[string]any{{"id": "wr1", "title": "Q3 campaign", "status": "active"}}, "total": 1})
 	})
 	jsonAlias(mux, []string{"/v1/business/calendar/events"}, func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, 200, map[string]any{"code": 0, "data": []map[string]any{{"id": "ev1", "title": "All-hands", "start": time.Now().Add(2 * time.Hour).Format(time.RFC3339)}}, "total": 1})
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		tid := tenantID(r)
+		if r.Method == http.MethodGet {
+			out := make([]calEvent, 0)
+			for _, e := range s.db.Events {
+				if matchTenant(tid, e.TenantID) {
+					out = append(out, e)
+				}
+			}
+			if len(out) == 0 && tid <= 1 {
+				out = append(out, calEvent{ID: "ev1", TenantID: 1, Title: "All-hands", Start: time.Now().Add(2 * time.Hour).Format(time.RFC3339)})
+			}
+			writeJSON(w, 200, map[string]any{"code": 0, "data": out, "total": len(out)})
+			return
+		}
+		if r.Method == http.MethodPost {
+			var body calEvent
+			if json.NewDecoder(r.Body).Decode(&body) != nil || body.Title == "" {
+				writeJSON(w, 400, map[string]any{"code": 400})
+				return
+			}
+			if body.TenantID == 0 {
+				body.TenantID = tid
+			}
+			if body.ID == "" {
+				body.ID = "ev" + time.Now().Format("150405")
+			}
+			if body.Start == "" {
+				body.Start = time.Now().Format(time.RFC3339)
+			}
+			s.db.Events = append(s.db.Events, body)
+			_ = s.save()
+			writeJSON(w, 200, map[string]any{"code": 0, "data": body})
+			return
+		}
+		writeJSON(w, 405, map[string]any{"code": 405})
 	})
 	jsonAlias(mux, []string{"/v1/business/reception/latest"}, func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"code": 0, "data": []map[string]any{{"id": "rc1", "visitor": "Guest", "purpose": "meeting"}}})
@@ -758,5 +839,62 @@ func registerDataCenter(mux *http.ServeMux, s *store) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 		writeJSON(w, 200, map[string]any{"code": 0, "data": map[string]any{"templates": len(tpls), "jobs": len(s.db.ExportJobs), "mode": "core"}})
+	})
+}
+
+
+func registerWorkbench(mux *http.ServeMux, s *store) {
+	jsonAlias(mux, []string{"/v1/workbench/summary", "/app-api/workbench/summary"}, func(w http.ResponseWriter, r *http.Request) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		tid := tenantID(r)
+		todoN, taskN, empN, convN := 0, 0, 0, 0
+		for _, x := range s.db.Todos {
+			if matchTenant(tid, x.TenantID) && x.Status == "open" {
+				todoN++
+			}
+		}
+		for _, x := range s.db.Tasks {
+			if matchTenant(tid, x.TenantID) && x.Status == "pending" {
+				taskN++
+			}
+		}
+		for _, x := range s.db.Employees {
+			if matchTenant(tid, x.TenantID) && x.Status == "active" {
+				empN++
+			}
+		}
+		for _, x := range s.db.Conversations {
+			if matchTenant(tid, x.TenantID) {
+				convN++
+			}
+		}
+		writeJSON(w, 200, map[string]any{"code": 0, "data": map[string]any{
+			"openTodos":     todoN,
+			"pendingTasks":  taskN,
+			"activeEmployees": empN,
+			"conversations": convN,
+			"modules": []map[string]any{
+				{"id": "hr", "title": "组织通讯录", "path": "/v1/hr/employees"},
+				{"id": "bpm", "title": "审批", "path": "/v1/bpm/tasks/todo"},
+				{"id": "im", "title": "消息", "path": "/v1/im/conversations"},
+				{"id": "biz", "title": "待办", "path": "/v1/business/todos"},
+				{"id": "data", "title": "数据中心", "path": "/v1/data-center/hall"},
+				{"id": "ai", "title": "企业助手", "path": "/v1/ai/skills"},
+			},
+		}})
+	})
+}
+
+func registerBPMProcesses(mux *http.ServeMux, s *store) {
+	// simple process catalog for enterprise ding-like UX
+	defs := []map[string]any{
+		{"id": "leave", "name": "请假", "category": "HR", "nodes": []string{"start", "manager_approve", "end"}},
+		{"id": "expense", "name": "报销", "category": "Finance", "nodes": []string{"start", "finance_approve", "end"}},
+		{"id": "purchase", "name": "采购申请", "category": "ERP", "nodes": []string{"start", "manager_approve", "finance_approve", "end"}},
+		{"id": "onboard", "name": "入职审批", "category": "HR", "nodes": []string{"start", "hr_approve", "end"}},
+	}
+	jsonAlias(mux, []string{"/v1/bpm/processes", "/app-api/bpm/processes"}, func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, 200, map[string]any{"code": 0, "data": defs, "total": len(defs)})
 	})
 }

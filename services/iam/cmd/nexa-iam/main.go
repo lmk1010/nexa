@@ -18,9 +18,11 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
-var version = "0.4.0-tenant"
+var version = "0.5.0-tenant"
 
 type config struct {
 	Name string `json:"name"`
@@ -58,11 +60,21 @@ type user struct {
 	Permissions []string `json:"permissions"`
 }
 
+type auditEvent struct {
+	ID       int64  `json:"id"`
+	At       string `json:"at"`
+	Actor    string `json:"actor"`
+	Action   string `json:"action"`
+	Detail   string `json:"detail,omitempty"`
+	TenantID int64  `json:"tenantId,omitempty"`
+}
+
 type db struct {
 	Users     map[string]user        `json:"users"`
 	Tokens    map[string]tokenRecord `json:"tokens"`
 	Tenants   map[int64]tenant       `json:"tenants"`
 	Invites   map[string]invite      `json:"invites"`
+	Audit     []auditEvent           `json:"audit,omitempty"`
 	Seq       int64                  `json:"seq"`
 	TenantSeq int64                  `json:"tenantSeq"`
 }
@@ -120,6 +132,8 @@ func main() {
 	mux.HandleFunc("/v1/iam/invites/accept", s.handleAcceptInvite)
 	mux.HandleFunc("/v1/iam/onboarding/status", s.handleOnboardingStatus)
 	mux.HandleFunc("/v1/iam/password/change", s.handleChangePassword)
+	mux.HandleFunc("/v1/iam/roles/templates", s.handleRoleTemplates)
+	mux.HandleFunc("/v1/iam/audit", s.handleAudit)
 	mux.HandleFunc("/app-api/system/auth/login", s.handleLogin)
 	mux.HandleFunc("/admin-api/system/auth/login", s.handleLogin)
 	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
@@ -146,6 +160,31 @@ func main() {
 	_ = srv.Shutdown(shCtx)
 }
 
+func (s *server) ensureMaps() {
+	if s.db.Users == nil {
+		s.db.Users = map[string]user{}
+	}
+	if s.db.Tokens == nil {
+		s.db.Tokens = map[string]tokenRecord{}
+	}
+	if s.db.Tenants == nil {
+		s.db.Tenants = map[int64]tenant{}
+	}
+	if s.db.Invites == nil {
+		s.db.Invites = map[string]invite{}
+	}
+	if s.db.Audit == nil {
+		s.db.Audit = []auditEvent{}
+	}
+	// migrate demo tenant if missing
+	if len(s.db.Tenants) == 0 {
+		s.db.Tenants[1] = tenant{ID: 1, Name: "Demo Corp", Code: "demo", Status: "active", CreatedAt: time.Now().Format(time.RFC3339)}
+		if s.db.TenantSeq < 1 {
+			s.db.TenantSeq = 1
+		}
+	}
+}
+
 func (s *server) loadOrSeed() error {
 	_ = os.MkdirAll(filepath.Dir(s.path), 0o755)
 	raw, err := os.ReadFile(s.path)
@@ -153,12 +192,7 @@ func (s *server) loadOrSeed() error {
 		if err := json.Unmarshal(raw, &s.db); err != nil {
 			return err
 		}
-		if s.db.Users == nil {
-			s.db.Users = map[string]user{}
-		}
-		if s.db.Tokens == nil {
-			s.db.Tokens = map[string]tokenRecord{}
-		}
+		s.ensureMaps()
 		return nil
 	}
 	if !errors.Is(err, os.ErrNotExist) {
@@ -166,16 +200,45 @@ func (s *server) loadOrSeed() error {
 	}
 	s.db = db{
 		Users: map[string]user{
-			"admin": {ID: 1, Username: "admin", Nickname: "管理员", Password: hashPassword("admin123"), TenantID: 1, Roles: []string{"super_admin"}, Permissions: []string{"*"}},
-			"boss":  {ID: 2, Username: "boss", Nickname: "老板", Password: hashPassword("boss123"), TenantID: 1, Roles: []string{"boss"}, Permissions: []string{"app:data-center:use", "app:ops:view", "app:cockpit:view", "hr:read", "bpm:approve"}},
+			"admin": {ID: 1, Username: "admin", Nickname: "管理员", Password: hashPassword("admin123"), TenantID: 1, Roles: []string{"super_admin"}, Permissions: defaultPerms("super_admin")},
+			"boss":  {ID: 2, Username: "boss", Nickname: "老板", Password: hashPassword("boss123"), TenantID: 1, Roles: []string{"boss"}, Permissions: defaultPerms("boss")},
 		},
 		Tokens:    map[string]tokenRecord{},
 		Tenants:   map[int64]tenant{1: {ID: 1, Name: "Demo Corp", Code: "demo", Status: "active", CreatedAt: time.Now().Format(time.RFC3339)}},
 		Invites:   map[string]invite{},
+		Audit:     []auditEvent{},
 		Seq:       2,
 		TenantSeq: 1,
 	}
 	return s.save()
+}
+
+func defaultPerms(role string) []string {
+	switch role {
+	case "super_admin", "tenant_admin":
+		return []string{"*", "tenant:admin", "app:data-center:use", "app:ops:view", "app:cockpit:view", "hr:read", "hr:write", "bpm:approve", "im:use", "biz:todo"}
+	case "boss":
+		return []string{"app:data-center:use", "app:ops:view", "app:cockpit:view", "hr:read", "bpm:approve", "im:use", "biz:todo"}
+	case "member":
+		return []string{"hr:read", "bpm:approve", "im:use", "biz:todo"}
+	default:
+		return []string{"hr:read", "im:use"}
+	}
+}
+
+func (s *server) appendAudit(actor, action, detail string, tenantID int64) {
+	s.db.Audit = append(s.db.Audit, auditEvent{
+		ID:       time.Now().UnixNano(),
+		At:       time.Now().Format(time.RFC3339),
+		Actor:    actor,
+		Action:   action,
+		Detail:   detail,
+		TenantID: tenantID,
+	})
+	// keep last 500
+	if len(s.db.Audit) > 500 {
+		s.db.Audit = s.db.Audit[len(s.db.Audit)-500:]
+	}
 }
 
 func (s *server) save() error {
@@ -216,6 +279,7 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.db.Tokens[tok] = tokenRecord{Username: u.Username, ExpiresAt: time.Now().Add(24 * time.Hour)}
+	s.appendAudit(u.Username, "login", "", u.TenantID)
 	_ = s.save()
 	out := u
 	out.Password = ""
@@ -370,14 +434,16 @@ func (s *server) handleRegisterTenant(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	s.ensureMaps()
 	s.db.TenantSeq++
 	tid := s.db.TenantSeq
 	now := time.Now().Format(time.RFC3339)
 	tn := tenant{ID: tid, Name: body.Company, Code: body.Code, Status: "active", CreatedAt: now}
 	s.db.Tenants[tid] = tn
 	s.db.Seq++
-	u := user{ID: s.db.Seq, Username: body.Admin, Nickname: body.Nickname, Password: hashPassword(body.Password), TenantID: tid, Roles: []string{"tenant_admin"}, Permissions: []string{"*", "tenant:admin", "app:data-center:use", "hr:read", "bpm:approve"}}
+	u := user{ID: s.db.Seq, Username: body.Admin, Nickname: body.Nickname, Password: hashPassword(body.Password), TenantID: tid, Roles: []string{"tenant_admin"}, Permissions: defaultPerms("tenant_admin")}
 	s.db.Users[body.Admin] = u
+	s.appendAudit(body.Admin, "tenant.register", body.Company, tid)
 	_ = s.save()
 	out := u
 	out.Password = ""
@@ -423,8 +489,10 @@ func (s *server) handleCreateInvite(w http.ResponseWriter, r *http.Request) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.ensureMaps()
 	inv := invite{Code: code, TenantID: u.TenantID, Role: body.Role, CreatedBy: u.Username, CreatedAt: time.Now().Format(time.RFC3339), ExpiresAt: time.Now().Add(7 * 24 * time.Hour).Format(time.RFC3339)}
 	s.db.Invites[code] = inv
+	s.appendAudit(u.Username, "invite.create", code, u.TenantID)
 	_ = s.save()
 	writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": inv})
 }
@@ -452,6 +520,7 @@ func (s *server) handleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.ensureMaps()
 	inv, ok := s.db.Invites[body.Code]
 	if !ok {
 		writeJSON(w, http.StatusNotFound, map[string]any{"code": 404, "msg": "invite not found"})
@@ -474,10 +543,11 @@ func (s *server) handleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	if role == "" {
 		role = "member"
 	}
-	u := user{ID: s.db.Seq, Username: body.Username, Nickname: body.Nickname, Password: hashPassword(body.Password), TenantID: inv.TenantID, Roles: []string{role}, Permissions: []string{"hr:read", "bpm:approve", "app:data-center:use"}}
+	u := user{ID: s.db.Seq, Username: body.Username, Nickname: body.Nickname, Password: hashPassword(body.Password), TenantID: inv.TenantID, Roles: []string{role}, Permissions: defaultPerms(role)}
 	s.db.Users[body.Username] = u
 	inv.UsedBy = body.Username
 	s.db.Invites[body.Code] = inv
+	s.appendAudit(body.Username, "invite.accept", body.Code, inv.TenantID)
 	_ = s.save()
 	out := u
 	out.Password = ""
@@ -542,28 +612,85 @@ func (s *server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 	u.Password = hashPassword(body.NewPassword)
 	s.db.Users[me.Username] = u
+	s.appendAudit(me.Username, "password.change", "", me.TenantID)
 	_ = s.save()
 	writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": true})
 }
 
+func (s *server) handleRoleTemplates(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"code": 405})
+		return
+	}
+	if _, ok := s.userFromRequest(r); !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"code": 401, "msg": "unauthorized"})
+		return
+	}
+	roles := []map[string]any{
+		{"id": "tenant_admin", "name": "企业管理员", "permissions": defaultPerms("tenant_admin")},
+		{"id": "boss", "name": "老板/高管", "permissions": defaultPerms("boss")},
+		{"id": "member", "name": "普通成员", "permissions": defaultPerms("member")},
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": roles, "total": len(roles)})
+}
+
+func (s *server) handleAudit(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"code": 405})
+		return
+	}
+	me, ok := s.userFromRequest(r)
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"code": 401, "msg": "unauthorized"})
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ensureMaps()
+	out := make([]auditEvent, 0)
+	for i := len(s.db.Audit) - 1; i >= 0; i-- {
+		ev := s.db.Audit[i]
+		if me.TenantID != 0 && ev.TenantID != 0 && ev.TenantID != me.TenantID {
+			continue
+		}
+		out = append(out, ev)
+		if len(out) >= 100 {
+			break
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": out, "total": len(out)})
+}
+
 func hashPassword(pw string) string {
-	sum := sha256.Sum256([]byte("nexa$" + pw))
-	return hex.EncodeToString(sum[:])
+	// bcrypt primary; fall back to sha256 prefix for constrained envs
+	b, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+	if err != nil {
+		sum := sha256.Sum256([]byte("nexa$" + pw))
+		return "sha256:" + hex.EncodeToString(sum[:])
+	}
+	return string(b)
 }
 
 func checkPassword(stored, plain string) bool {
 	if stored == "" || plain == "" {
 		return false
 	}
-	// optional smoke bypass only when explicitly enabled
 	if plain == "x" && (os.Getenv("NEXA_ALLOW_SMOKE_BYPASS") == "1" || os.Getenv("NEXA_ALLOW_SMOKE_BYPASS") == "true") {
 		return true
 	}
-	// legacy plaintext migration: accept once, but prefer hash compare
 	if stored == plain {
+		return true // legacy plaintext
+	}
+	if strings.HasPrefix(stored, "sha256:") {
+		sum := sha256.Sum256([]byte("nexa$" + plain))
+		return stored == "sha256:"+hex.EncodeToString(sum[:])
+	}
+	// legacy sha256 without prefix
+	sum := sha256.Sum256([]byte("nexa$" + plain))
+	if stored == hex.EncodeToString(sum[:]) {
 		return true
 	}
-	return stored == hashPassword(plain)
+	return bcrypt.CompareHashAndPassword([]byte(stored), []byte(plain)) == nil
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

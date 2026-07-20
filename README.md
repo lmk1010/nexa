@@ -82,6 +82,17 @@ curl -s -X POST http://127.0.0.1:48080/v1/iam/login \
   -d '{"username":"acme_admin","password":"pass123"}'
 ```
 
+### Admin console
+
+浏览器打开 [http://127.0.0.1:48080/admin/](http://127.0.0.1:48080/admin/)  
+默认演示账号 `boss` / `boss123`（可在控制台改密；密码 bcrypt 存储）。
+
+### Smoke
+
+```bash
+./scripts/smoke.sh
+```
+
 ### Agent (optional)
 
 ```bash
@@ -103,11 +114,15 @@ flutter pub get && flutter run
 | 注册企业 | `POST /v1/iam/tenants/register` |
 | 登录 | `POST /v1/iam/login` |
 | 邀请/加入 | `POST /v1/iam/invites` · `/invites/accept` |
+| 角色模板 / 审计 | `GET /v1/iam/roles/templates` · `/v1/iam/audit` |
+| 工作台 | `GET /v1/workbench/summary` |
+| 审批流程目录 | `GET /v1/bpm/processes` |
 | 技能 | `GET /v1/ai/skills` |
 | 连接器 | `GET /v1/ai/connectors` |
 | 审批待办 | `GET /v1/bpm/tasks/todo` |
 | 员工 | `GET /v1/hr/employees` |
 | 导出 | `GET /v1/data-center/templates` |
+| Admin UI | `GET /admin/` |
 
 业务路由：`Authorization: Bearer <token>`。
 
