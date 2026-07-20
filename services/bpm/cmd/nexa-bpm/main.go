@@ -2,6 +2,8 @@
 package main
 
 import (
+	"bytes"
+	"strings"
 	"context"
 	"encoding/json"
 	"errors"
@@ -187,6 +189,7 @@ func (s *server) handleApprove(w http.ResponseWriter, r *http.Request) {
 			s.db.Tasks[i].Reason = body.Reason
 			s.db.Tasks[i].UpdatedAt = time.Now().Format(time.RFC3339)
 			_ = s.save()
+			go emitSense("bpm.task."+s.db.Tasks[i].Status, "bpm", "info", "task "+body.Action, map[string]any{"taskId": body.TaskID, "action": body.Action})
 			writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": s.db.Tasks[i]})
 			return
 		}
@@ -229,6 +232,32 @@ func (s *server) handleStart(w http.ResponseWriter, r *http.Request) {
 	s.db.Tasks = append(s.db.Tasks, t)
 	_ = s.save()
 	writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": t})
+}
+
+
+func emitSense(senseType, source, severity, message string, payload map[string]any) {
+	body, _ := json.Marshal(map[string]any{
+		"type": senseType, "source": source, "severity": severity, "message": message, "payload": payload,
+	})
+	bases := []string{}
+	if v := os.Getenv("NEXA_AI_URL"); v != "" {
+		bases = append(bases, strings.TrimRight(v, "/"))
+	}
+	bases = append(bases, "http://127.0.0.1:48089")
+	client := &http.Client{Timeout: 1500 * time.Millisecond}
+	for _, base := range bases {
+		req, err := http.NewRequest(http.MethodPost, base+"/v1/ai/sense", bytes.NewReader(body))
+		if err != nil {
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			continue
+		}
+		resp.Body.Close()
+		return
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

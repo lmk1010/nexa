@@ -2,6 +2,8 @@
 package main
 
 import (
+	"bytes"
+	"strings"
 	"context"
 	"encoding/json"
 	"errors"
@@ -186,6 +188,7 @@ func (s *server) handleEmployees(w http.ResponseWriter, r *http.Request) {
 		body.UpdatedAt = time.Now().Format(time.RFC3339)
 		s.db.Employees = append(s.db.Employees, body)
 		_ = s.save()
+		go emitSense("hr.employee.joined", "hr", "info", "employee created", map[string]any{"id": body.ID, "name": body.Name, "jobNo": body.JobNo})
 		writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": body})
 	default:
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"code": 405})
@@ -292,6 +295,7 @@ func (s *server) handleDingSync(w http.ResponseWriter, r *http.Request) {
 		s.db.SyncJobs[0].Stats = map[string]int{"departments": len(s.db.Departments), "employeesUpserted": upserted}
 	}
 	_ = s.save()
+	go emitSense("hr.dingtalk.sync.finished", "hr", "info", "dingtalk sync finished", map[string]any{"jobId": jobID, "mode": body.Mode, "upserted": upserted})
 	writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": s.db.SyncJobs[0]})
 }
 
@@ -315,6 +319,32 @@ func (s *server) handleDingStatus(w http.ResponseWriter, r *http.Request) {
 		"departments": len(s.db.Departments),
 		"lastJob": last,
 	}})
+}
+
+
+func emitSense(senseType, source, severity, message string, payload map[string]any) {
+	body, _ := json.Marshal(map[string]any{
+		"type": senseType, "source": source, "severity": severity, "message": message, "payload": payload,
+	})
+	bases := []string{}
+	if v := os.Getenv("NEXA_AI_URL"); v != "" {
+		bases = append(bases, strings.TrimRight(v, "/"))
+	}
+	bases = append(bases, "http://127.0.0.1:48089")
+	client := &http.Client{Timeout: 1500 * time.Millisecond}
+	for _, base := range bases {
+		req, err := http.NewRequest(http.MethodPost, base+"/v1/ai/sense", bytes.NewReader(body))
+		if err != nil {
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			continue
+		}
+		resp.Body.Close()
+		return
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

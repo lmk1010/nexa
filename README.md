@@ -5,6 +5,14 @@
 > 总目标与里程碑：**[docs/GOAL.md](docs/GOAL.md)**  
 > 能力集成图：[docs/architecture/capability-map.md](docs/architecture/capability-map.md)
 
+## AI-Native
+
+企业能力按 **Skill / 感知 / 自动化** 设计，不只是聊天套壳。
+
+- 架构：`docs/architecture/ai-native.md`
+- 控制面：`services/ai`（skills · intent · sense · automation）
+- Agent：`services/agent/prompts/enterprise-assistant.md`
+
 ## 原则
 
 1. **领域服务全部 Go**，不用 Java 作运行时  

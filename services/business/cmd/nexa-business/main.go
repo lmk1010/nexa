@@ -2,6 +2,8 @@
 package main
 
 import (
+	"bytes"
+	"strings"
 	"context"
 	"encoding/json"
 	"errors"
@@ -148,6 +150,7 @@ func (s *server) handleTodos(w http.ResponseWriter, r *http.Request) {
 		if body.CreatedAt == "" { body.CreatedAt = time.Now().Format(time.RFC3339) }
 		s.db.Todos = append(s.db.Todos, body)
 		_ = s.save()
+		go emitSense("biz.todo.created", "business", "info", "todo created", map[string]any{"id": body.ID, "title": body.Title})
 		writeJSON(w, 200, map[string]any{"code": 0, "data": body})
 	default:
 		writeJSON(w, 405, map[string]any{"code": 405})
@@ -180,6 +183,32 @@ func runHTTP(addr string, mux *http.ServeMux, name, dataPath string) {
 	defer cancel()
 	_ = srv.Shutdown(shCtx)
 }
+
+func emitSense(senseType, source, severity, message string, payload map[string]any) {
+	body, _ := json.Marshal(map[string]any{
+		"type": senseType, "source": source, "severity": severity, "message": message, "payload": payload,
+	})
+	bases := []string{}
+	if v := os.Getenv("NEXA_AI_URL"); v != "" {
+		bases = append(bases, strings.TrimRight(v, "/"))
+	}
+	bases = append(bases, "http://127.0.0.1:48089")
+	client := &http.Client{Timeout: 1500 * time.Millisecond}
+	for _, base := range bases {
+		req, err := http.NewRequest(http.MethodPost, base+"/v1/ai/sense", bytes.NewReader(body))
+		if err != nil {
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			continue
+		}
+		resp.Body.Close()
+		return
+	}
+}
+
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
