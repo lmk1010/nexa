@@ -58,3 +58,35 @@
 
 Agent 白名单：`services/agent/curated/nexa-go-apis.json`  
 本地启动：`scripts/start-dev.sh` / `scripts/stop-dev.sh`
+
+
+## 持久化（dev）
+
+IAM/HR/BPM 默认 `dataDir=./data`（或 `NEXA_DATA_DIR` / config `dataDir`），JSON 文件：
+
+- `data/iam.json`
+- `data/hr.json`
+- `data/bpm.json`
+
+### 钉钉
+
+| Method | Path | 说明 |
+|--------|------|------|
+| POST | `/v1/hr/dingtalk/sync` | `{"mode":"full|directory|roster"}` 模拟同步 |
+| GET | `/v1/hr/dingtalk/jobs` | 同步任务历史 |
+| GET | `/v1/hr/dingtalk/status` | 当前状态 |
+
+### IAM 扩展
+
+| Method | Path |
+|--------|------|
+| GET | `/v1/iam/users` |
+| POST | `/v1/iam/token/introspect` |
+| POST | `/v1/iam/logout` |
+
+### BPM 扩展
+
+| Method | Path |
+|--------|------|
+| GET | `/v1/bpm/tasks/done` |
+| POST | `/v1/bpm/tasks/start` |

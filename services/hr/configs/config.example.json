@@ -1,6 +1,5 @@
 {
   "name": "nexa-hr",
   "http": { "addr": ":48083" },
-  "log": { "level": "info" },
-  "mysql": { "dsn": "" }
+  "dataDir": "./data"
 }

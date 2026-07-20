@@ -1,6 +1,5 @@
 {
   "name": "nexa-bpm",
   "http": { "addr": ":48082" },
-  "log": { "level": "info" },
-  "mysql": { "dsn": "" }
+  "dataDir": "./data"
 }

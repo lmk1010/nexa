@@ -122,6 +122,41 @@
       "method": "GET",
       "path": "/v1/ai/reception/records",
       "summary": "Reception records"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/hr/dingtalk/status",
+      "summary": "DingTalk sync status"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/hr/dingtalk/jobs",
+      "summary": "DingTalk sync jobs"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/hr/dingtalk/sync",
+      "summary": "Trigger DingTalk sync"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/bpm/tasks/done",
+      "summary": "Completed approval tasks"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/bpm/tasks/start",
+      "summary": "Start approval task"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/iam/users",
+      "summary": "List users"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/iam/token/introspect",
+      "summary": "Introspect token"
     }
   ]
 }

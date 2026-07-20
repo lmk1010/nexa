@@ -1,0 +1,5 @@
+{
+  "name": "nexa-hr",
+  "http": {"addr": ":48083"},
+  "dataDir": "/data"
+}

@@ -56,19 +56,19 @@
 - [x] 可用 API：iam 登录/me/perms + hr 员工/部门 + bpm 待办/审批
 - [x] agent `.env.example` 指向 gateway；`curated/nexa-go-apis.json` 白名单
 
-### M2 — IAM（企业助手底座） ✅ demo
-- [x] 内存用户 admin/boss + 角色权限点
-- [x] 登录发 token；`/v1/iam/me` `/v1/iam/permissions`
-- [ ] MySQL 持久化 / 预登录 / 租户切换完整语义
+### M2 — IAM（企业助手底座） ✅ file-backed
+- [x] 用户 admin/boss + 角色权限点（JSON store）
+- [x] 登录 token / me / permissions / users / introspect / logout
+- [ ] MySQL 与预登录/租户切换完整语义
 
-### M3 — HR + 钉钉 ✅ demo employees
-- [x] `/v1/hr/employees` `/v1/hr/departments/tree`（demo 数据）
-- [ ] MySQL 员工主数据
-- [ ] 钉钉同步 Go 实现
+### M3 — HR + 钉钉 ✅ file-backed + sync skeleton
+- [x] employees / departments tree（JSON store）
+- [x] DingTalk sync skeleton：`POST /v1/hr/dingtalk/sync` + jobs/status（模拟 OpenAPI，可换真客户端）
+- [ ] 真钉钉 OpenAPI 凭证与增量同步
 
-### M4 — BPM ✅ demo todo
-- [x] `/v1/bpm/tasks/todo` + `/v1/bpm/tasks/approve`
-- [ ] 持久化流程实例 / 完整状态机
+### M4 — BPM ✅ file-backed
+- [x] todo/done/approve/start 持久化到 JSON
+- [ ] 完整流程定义与多节点状态机
 
 ### M5 — Business + 数据 ✅ demo
 - [x] 待办 / 工作要求 / 日历 / 接待 latest
@@ -90,9 +90,9 @@
 | 域 | 服务 | Agent 能力示例 | 状态 |
 |----|------|----------------|------|
 | 对话 | agent | 自然语言查数/审批/人事 | NeoX 已迁入 |
-| 身份 | iam | 我是谁、权限、组织 | demo API |
-| 审批 | bpm | 待办、通过、进度 | demo API |
-| 人事 | hr | 花名册、考勤、入职 | demo API + legacy 对照 |
+| 身份 | iam | 我是谁、权限、组织 | file-backed |
+| 审批 | bpm | 待办、通过、进度 | file-backed |
+| 人事 | hr | 花名册、考勤、入职 | file-backed + dingtalk skeleton |
 | 协同 | business | 待办、要求、接待 | demo API |
 | 经营数据 | data-center + cdc | 导出、KPI、明细 | 导出/CDC 已有 |
 | 进销存 | erp | 库存/采购查询 | demo API |
@@ -100,7 +100,7 @@
 | 消息 | im | 会话/通知 | demo API |
 | 运维 | op | 健康、发布、审计 | demo API |
 | 智能 | ai | 接待、ASR | demo API |
-| 钉钉 | hr + agent | 登录、同步、机器人 | 资产+legacy |
+| 钉钉 | hr + agent | 登录、同步、机器人 | sync skeleton + 资产 |
 
 ## 明确不做
 
@@ -115,6 +115,7 @@
 | 2026-07-20 | 抽 data-center/cdc/钉钉/app/agent；方案 A；Go 领域 skeleton×10；本 GOAL |
 | 2026-07-20 | gateway 反向代理；IAM/HR/BPM 可调用 demo API；agent 对接 gateway；smoke 通过 |
 | 2026-07-20 | business/erp/finance/im/op/ai demo API；start-dev/stop-dev；agent curated 全量 path |
+| 2026-07-20 | file-backed IAM/HR/BPM；钉钉 sync skeleton；Dockerfiles + compose；nexa-common httpx/store |
 
 ## 执行原则（无人值守）
 

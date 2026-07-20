@@ -1,0 +1,88 @@
+services:
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    ports: ["48080:48080"]
+    depends_on: [iam, bpm, hr, business, erp, finance, im, op, ai]
+    restart: unless-stopped
+
+  iam:
+    build: { context: ./services/iam, dockerfile: Dockerfile }
+    ports: ["48081:48081"]
+    volumes: ["iam-data:/data"]
+    environment:
+      NEXA_DATA_DIR: /data
+    restart: unless-stopped
+
+  bpm:
+    build: { context: ./services/bpm, dockerfile: Dockerfile }
+    ports: ["48082:48082"]
+    volumes: ["bpm-data:/data"]
+    restart: unless-stopped
+
+  hr:
+    build: { context: ./services/hr, dockerfile: Dockerfile }
+    ports: ["48083:48083"]
+    volumes: ["hr-data:/data"]
+    restart: unless-stopped
+
+  business:
+    build: { context: ./services/business, dockerfile: Dockerfile }
+    ports: ["48084:48084"]
+    restart: unless-stopped
+
+  erp:
+    build: { context: ./services/erp, dockerfile: Dockerfile }
+    ports: ["48085:48085"]
+    restart: unless-stopped
+
+  finance:
+    build: { context: ./services/finance, dockerfile: Dockerfile }
+    ports: ["48086:48086"]
+    restart: unless-stopped
+
+  im:
+    build: { context: ./services/im, dockerfile: Dockerfile }
+    ports: ["48087:48087"]
+    restart: unless-stopped
+
+  op:
+    build: { context: ./services/op, dockerfile: Dockerfile }
+    ports: ["48088:48088"]
+    restart: unless-stopped
+
+  ai:
+    build: { context: ./services/ai, dockerfile: Dockerfile }
+    ports: ["48089:48089"]
+    restart: unless-stopped
+
+  agent:
+    build: { context: ./services/agent, dockerfile: Dockerfile }
+    ports: ["48091:48091"]
+    environment:
+      SERVICE_PORT: "48091"
+      AGENT_USE_MOCK: "true"
+      NEXA_GATEWAY_URL: http://gateway:48080
+      KYX_GATEWAY_URL: http://gateway:48080
+      OA_API_BASE_URL: http://gateway:48080
+      INTERNAL_API_BASE_URL: http://gateway:48080
+    depends_on: [gateway]
+    restart: unless-stopped
+
+  data-center:
+    build: { context: ./services/data-center, dockerfile: Dockerfile }
+    ports: ["48092:48092"]
+    restart: unless-stopped
+    profiles: ["full"]
+
+  cdc-mysql:
+    build: { context: ./services/cdc-mysql, dockerfile: Dockerfile }
+    ports: ["6060:6060"]
+    restart: unless-stopped
+    profiles: ["full"]
+
+volumes:
+  iam-data:
+  bpm-data:
+  hr-data:

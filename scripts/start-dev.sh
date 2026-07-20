@@ -17,6 +17,7 @@ build() {
 start_one() {
   local svc="$1"
   local conf="$ROOT/services/$svc/configs/config.example.json"
+  if [[ -f "$ROOT/.run/configs/$svc.json" ]]; then conf="$ROOT/.run/configs/$svc.json"; fi
   local pidfile="$PIDDIR/$svc.pid"
   if [[ -f "$pidfile" ]] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
     echo "[skip] $svc already running pid=$(cat "$pidfile")"
@@ -33,6 +34,17 @@ start_one() {
   fi
   echo $! >"$pidfile"
 }
+
+
+# file-backed configs for core services
+mkdir -p "$ROOT/.run/data/iam" "$ROOT/.run/data/hr" "$ROOT/.run/data/bpm" "$ROOT/.run/configs"
+for svc_port in "iam:48081" "hr:48083" "bpm:48082"; do
+  svc="${svc_port%%:*}"
+  port="${svc_port##*:}"
+  cat > "$ROOT/.run/configs/$svc.json" <<JSON
+{"name":"nexa-$svc","http":{"addr":":$port"},"dataDir":"$ROOT/.run/data/$svc"}
+JSON
+done
 
 SERVICES=(iam bpm hr business erp finance im op ai gateway)
 
