@@ -222,8 +222,7 @@ func isPublic(cfg config, path string) bool {
 		"/v1/ai/skills":                 true,
 		"/v1/ai/intent/route":           true,
 		"/v1/ai/assistant/bootstrap":    true,
-			"/v1/ai/connectors": true,
-		"/v1/ai/sense":                  true,
+			"/v1/ai/sense":                  true,
 	}
 	if exact[path] {
 		return true

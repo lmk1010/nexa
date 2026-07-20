@@ -169,7 +169,7 @@ func authMiddleware(iamURL string, next http.Handler) http.Handler {
 		"/v1/iam/login": true, "/v1/iam/tenants/register": true, "/v1/iam/invites/accept": true,
 		"/app-api/system/auth/login": true, "/admin-api/system/auth/login": true,
 		"/v1/ai/skills": true, "/v1/ai/intent/route": true, "/v1/ai/assistant/bootstrap": true,
-		"/v1/ai/connectors": true, "/v1/ai/sense": true,
+		"/v1/ai/sense": true,
 	}
 	publicPrefix := []string{"/agent", "/app-api/agent", "/admin-api/agent", "/v1/iam/login", "/v1/iam/tenants/register", "/v1/iam/invites/accept"}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
