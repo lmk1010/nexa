@@ -377,9 +377,13 @@ type task struct {
 	UpdatedAt   string `json:"updatedAt"`
 }
 type todo struct {
-	ID                                        string `json:"id"`
-	TenantID                                  int64  `json:"tenantId,omitempty"`
-	Title, Assignee, Status, DueAt, CreatedAt string
+	ID        string `json:"id"`
+	TenantID  int64  `json:"tenantId,omitempty"`
+	Title     string `json:"title"`
+	Assignee  string `json:"assignee"`
+	Status    string `json:"status"`
+	DueAt     string `json:"dueAt,omitempty"`
+	CreatedAt string `json:"createdAt"`
 }
 type stockItem struct {
 	TenantID  int64  `json:"tenantId,omitempty"`
