@@ -17,6 +17,7 @@ This project is pre-1.0; entries are grouped by date on `main`.
 
 ### Added
 
+- Multi-node BPM approvals (purchase/leave/expense/onboard node advance)
 - Admin console at `/admin` (overview, members, approvals, todos, IM, connectors, workbench, audit, onboarding)
 - Workbench summary API and BPM process catalog
 - IAM role templates + audit log

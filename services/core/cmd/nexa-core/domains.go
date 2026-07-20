@@ -179,6 +179,55 @@ func registerHR(mux *http.ServeMux, s *store) {
 	})
 }
 
+
+func processNodes(processName string) []string {
+	switch processName {
+	case "leave":
+		return []string{"start", "manager_approve", "end"}
+	case "expense":
+		return []string{"start", "finance_approve", "end"}
+	case "purchase":
+		return []string{"start", "manager_approve", "finance_approve", "end"}
+	case "onboard":
+		return []string{"start", "hr_approve", "end"}
+	default:
+		return []string{"start", "manager_approve", "end"}
+	}
+}
+
+func nextApprovalNode(nodes []string, current string) (string, bool) {
+	// returns next node after current; done=true when next is end or past end
+	if len(nodes) == 0 {
+		return "end", true
+	}
+	idx := -1
+	for i, n := range nodes {
+		if n == current {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		// if current empty, jump to first non-start
+		for _, n := range nodes {
+			if n != "start" && n != "end" {
+				return n, false
+			}
+		}
+		return "end", true
+	}
+	for j := idx + 1; j < len(nodes); j++ {
+		n := nodes[j]
+		if n == "end" {
+			return "end", true
+		}
+		if n != "start" {
+			return n, false
+		}
+	}
+	return "end", true
+}
+
 func registerBPM(mux *http.ServeMux, s *store) {
 	todo := func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
@@ -250,10 +299,13 @@ func registerBPM(mux *http.ServeMux, s *store) {
 		if body.ProcessName == "" {
 			body.ProcessName = "general"
 		}
+		nodes := processNodes(body.ProcessName)
+		cur, _ := nextApprovalNode(nodes, "start")
 		t := task{
 			ID: "t" + time.Now().Format("150405.000"), TenantID: tenantID(r), Title: body.Title, ProcessName: body.ProcessName,
-			Starter: body.Starter, Assignee: body.Assignee, Status: "pending", CreatedAt: now, UpdatedAt: now,
-			History: []taskEvent{{At: now, Actor: body.Starter, Action: "start", To: "pending", Note: "created"}},
+			Starter: body.Starter, Assignee: body.Assignee, Status: "pending", CurrentNode: cur, Nodes: nodes,
+			CreatedAt: now, UpdatedAt: now,
+			History: []taskEvent{{At: now, Actor: body.Starter, Action: "start", To: "pending", Note: "node=" + cur}},
 		}
 		s.db.Tasks = append(s.db.Tasks, t)
 		_ = s.save()
@@ -300,7 +352,23 @@ func registerBPM(mux *http.ServeMux, s *store) {
 					writeJSON(w, 409, map[string]any{"code": 409, "msg": "only pending can be approved"})
 					return
 				}
-				next = "approved"
+				nodes := s.db.Tasks[i].Nodes
+				if len(nodes) == 0 {
+					nodes = processNodes(s.db.Tasks[i].ProcessName)
+					s.db.Tasks[i].Nodes = nodes
+				}
+				currNode := s.db.Tasks[i].CurrentNode
+				if currNode == "" {
+					currNode = "start"
+				}
+				nn, done := nextApprovalNode(nodes, currNode)
+				if done {
+					next = "approved"
+					s.db.Tasks[i].CurrentNode = "end"
+				} else {
+					next = "pending"
+					s.db.Tasks[i].CurrentNode = nn
+				}
 			case "reject":
 				if cur != "pending" {
 					writeJSON(w, 409, map[string]any{"code": 409, "msg": "only pending can be rejected"})
@@ -319,12 +387,27 @@ func registerBPM(mux *http.ServeMux, s *store) {
 					return
 				}
 				next = "pending"
+				nodes := s.db.Tasks[i].Nodes
+				if len(nodes) == 0 {
+					nodes = processNodes(s.db.Tasks[i].ProcessName)
+					s.db.Tasks[i].Nodes = nodes
+				}
+				nn, _ := nextApprovalNode(nodes, "start")
+				s.db.Tasks[i].CurrentNode = nn
 			}
 			now := time.Now().Format(time.RFC3339)
 			s.db.Tasks[i].Status = next
 			s.db.Tasks[i].Reason = body.Reason
 			s.db.Tasks[i].UpdatedAt = now
-			s.db.Tasks[i].History = append(s.db.Tasks[i].History, taskEvent{At: now, Actor: actor, Action: action, From: cur, To: next, Note: body.Reason})
+			note := body.Reason
+			if s.db.Tasks[i].CurrentNode != "" {
+				if note != "" {
+					note = note + "; node=" + s.db.Tasks[i].CurrentNode
+				} else {
+					note = "node=" + s.db.Tasks[i].CurrentNode
+				}
+			}
+			s.db.Tasks[i].History = append(s.db.Tasks[i].History, taskEvent{At: now, Actor: actor, Action: action, From: cur, To: next, Note: note})
 			_ = s.save()
 			writeJSON(w, 200, map[string]any{"code": 0, "data": s.db.Tasks[i]})
 			return

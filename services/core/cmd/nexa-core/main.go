@@ -414,6 +414,8 @@ type task struct {
 	Starter     string      `json:"starter"`
 	Assignee    string      `json:"assignee"`
 	Status      string      `json:"status"` // pending|approved|rejected|cancelled
+	CurrentNode string      `json:"currentNode,omitempty"`
+	Nodes       []string    `json:"nodes,omitempty"`
 	Reason      string      `json:"reason,omitempty"`
 	CreatedAt   string      `json:"createdAt"`
 	UpdatedAt   string      `json:"updatedAt"`
