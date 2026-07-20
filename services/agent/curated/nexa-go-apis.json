@@ -217,6 +217,36 @@
       "method": "GET",
       "path": "/v1/op/probe",
       "summary": "Probe all services"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/data-center/templates",
+      "summary": "Export templates"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/data-center/jobs",
+      "summary": "Export jobs"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/data-center/jobs",
+      "summary": "Create export job"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/data-center/hall",
+      "summary": "Data center hall"
+    },
+    {
+      "method": "GET",
+      "path": "/templates",
+      "summary": "Export templates (stripped)"
+    },
+    {
+      "method": "POST",
+      "path": "/jobs",
+      "summary": "Create export job (stripped)"
     }
   ]
 }

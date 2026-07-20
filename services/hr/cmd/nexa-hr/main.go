@@ -16,6 +16,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/lmk1010/nexa/services/hr/internal/dingtalk"
 )
 
 var version = "0.3.0-m3"
@@ -235,7 +237,7 @@ func (s *server) handleDingSync(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		Mode string `json:"mode"` // directory | roster | full
+		Mode string `json:"mode"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 	if body.Mode == "" {
@@ -249,28 +251,82 @@ func (s *server) handleDingSync(w http.ResponseWriter, r *http.Request) {
 	_ = s.save()
 	s.mu.Unlock()
 
-	// Simulated remote payload (replace with DingTalk OpenAPI client).
-	remoteDepts := []department{
-		{ID: 1, Name: "HQ", ParentID: 0},
-		{ID: 10, Name: "R&D", ParentID: 1},
-		{ID: 20, Name: "Ops", ParentID: 1},
-		{ID: 30, Name: "HR", ParentID: 1},
-		{ID: 40, Name: "Finance", ParentID: 1},
-	}
-	remoteEmps := []employee{
-		{ID: 1001, Name: "Zhang San", Mobile: "13800000001", DeptID: 10, DeptName: "R&D", JobNo: "KYX001", Status: "active", DingTalkID: "dt_zhangsan"},
-		{ID: 1002, Name: "Li Si", Mobile: "13800000002", DeptID: 20, DeptName: "Ops", JobNo: "KYX002", Status: "active", DingTalkID: "dt_lisi"},
-		{ID: 1003, Name: "Wang Wu", Mobile: "13800000003", DeptID: 30, DeptName: "HR", JobNo: "KYX003", Status: "active", DingTalkID: "dt_wangwu"},
-		{ID: 1004, Name: "Zhao Liu", Mobile: "13800000004", DeptID: 40, DeptName: "Finance", JobNo: "KYX004", Status: "active", DingTalkID: "dt_zhaoliu"},
+	cfg := dingtalk.ConfigFromEnv()
+	modeLabel := "simulated"
+	var remoteDepts []department
+	var remoteEmps []employee
+	upserted := 0
+
+	if cfg.Enabled() {
+		modeLabel = "openapi"
+		cli := dingtalk.NewClient(cfg)
+		depts, users, err := cli.FetchDirectory(500)
+		if err != nil {
+			s.mu.Lock()
+			if len(s.db.SyncJobs) > 0 && s.db.SyncJobs[0].ID == jobID {
+				s.db.SyncJobs[0].Status = "failed"
+				s.db.SyncJobs[0].Message = "dingtalk openapi: " + err.Error()
+				s.db.SyncJobs[0].FinishedAt = time.Now().Format(time.RFC3339)
+			}
+			_ = s.save()
+			s.mu.Unlock()
+			writeJSON(w, http.StatusBadGateway, map[string]any{"code": 502, "msg": err.Error(), "jobId": jobID})
+			return
+		}
+		for _, d := range depts {
+			remoteDepts = append(remoteDepts, department{ID: d.DeptID, Name: d.Name, ParentID: d.ParentID})
+		}
+		for i, u := range users {
+			deptID := int64(0)
+			deptName := ""
+			if len(u.DeptIDList) > 0 {
+				deptID = u.DeptIDList[0]
+			}
+			for _, d := range remoteDepts {
+				if d.ID == deptID {
+					deptName = d.Name
+					break
+				}
+			}
+			status := "active"
+			if !u.Active {
+				status = "inactive"
+			}
+			jobNo := u.JobNumber
+			if jobNo == "" {
+				jobNo = u.UserID
+			}
+			remoteEmps = append(remoteEmps, employee{
+				ID: int64(2000 + i), Name: u.Name, Mobile: u.Mobile, DeptID: deptID, DeptName: deptName,
+				JobNo: jobNo, Status: status, DingTalkID: u.UserID, UpdatedAt: time.Now().Format(time.RFC3339),
+			})
+		}
+	} else {
+		remoteDepts = []department{
+			{ID: 1, Name: "HQ", ParentID: 0},
+			{ID: 10, Name: "R&D", ParentID: 1},
+			{ID: 20, Name: "Ops", ParentID: 1},
+			{ID: 30, Name: "HR", ParentID: 1},
+			{ID: 40, Name: "Finance", ParentID: 1},
+		}
+		remoteEmps = []employee{
+			{ID: 1001, Name: "Zhang San", Mobile: "13800000001", DeptID: 10, DeptName: "R&D", JobNo: "KYX001", Status: "active", DingTalkID: "dt_zhangsan"},
+			{ID: 1002, Name: "Li Si", Mobile: "13800000002", DeptID: 20, DeptName: "Ops", JobNo: "KYX002", Status: "active", DingTalkID: "dt_lisi"},
+			{ID: 1003, Name: "Wang Wu", Mobile: "13800000003", DeptID: 30, DeptName: "HR", JobNo: "KYX003", Status: "active", DingTalkID: "dt_wangwu"},
+			{ID: 1004, Name: "Zhao Liu", Mobile: "13800000004", DeptID: 40, DeptName: "Finance", JobNo: "KYX004", Status: "active", DingTalkID: "dt_zhaoliu"},
+		}
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if body.Mode == "directory" || body.Mode == "full" {
 		s.db.Departments = remoteDepts
-		s.db.SeqDept = 40
+		for _, d := range remoteDepts {
+			if d.ID > s.db.SeqDept {
+				s.db.SeqDept = d.ID
+			}
+		}
 	}
-	upserted := 0
 	if body.Mode == "roster" || body.Mode == "full" {
 		byJob := map[string]int{}
 		for i, e := range s.db.Employees {
@@ -280,8 +336,13 @@ func (s *server) handleDingSync(w http.ResponseWriter, r *http.Request) {
 		for _, re := range remoteEmps {
 			re.UpdatedAt = now
 			if idx, ok := byJob[re.JobNo]; ok {
+				re.ID = s.db.Employees[idx].ID
 				s.db.Employees[idx] = re
 			} else {
+				if re.ID == 0 {
+					s.db.SeqEmp++
+					re.ID = s.db.SeqEmp
+				}
 				s.db.Employees = append(s.db.Employees, re)
 			}
 			upserted++
@@ -293,12 +354,12 @@ func (s *server) handleDingSync(w http.ResponseWriter, r *http.Request) {
 	finished := time.Now().Format(time.RFC3339)
 	if len(s.db.SyncJobs) > 0 && s.db.SyncJobs[0].ID == jobID {
 		s.db.SyncJobs[0].Status = "success"
-		s.db.SyncJobs[0].Message = "sync completed (simulated OpenAPI)"
+		s.db.SyncJobs[0].Message = "sync completed (" + modeLabel + ")"
 		s.db.SyncJobs[0].FinishedAt = finished
 		s.db.SyncJobs[0].Stats = map[string]int{"departments": len(s.db.Departments), "employeesUpserted": upserted}
 	}
 	_ = s.save()
-	go emitSense("hr.dingtalk.sync.finished", "hr", "info", "dingtalk sync finished", map[string]any{"jobId": jobID, "mode": body.Mode, "upserted": upserted})
+	go emitSense("hr.dingtalk.sync.finished", "hr", "info", "dingtalk sync finished", map[string]any{"jobId": jobID, "mode": body.Mode, "upserted": upserted, "provider": modeLabel})
 	writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": s.db.SyncJobs[0]})
 }
 

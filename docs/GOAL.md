@@ -65,7 +65,8 @@
 ### M3 — HR + 钉钉 ✅ file-backed + sync skeleton
 - [x] employees / departments tree（JSON store）
 - [x] DingTalk sync skeleton：`POST /v1/hr/dingtalk/sync` + jobs/status（模拟 OpenAPI，可换真客户端）
-- [ ] 真钉钉 OpenAPI 凭证与增量同步
+- [x] 真钉钉 OpenAPI client（环境变量开启）+ 无凭证时模拟同步
+- [ ] 增量同步/字段全量映射增强
 
 ### M4 — BPM ✅ file-backed
 - [x] todo/done/approve/start 持久化到 JSON
@@ -132,6 +133,7 @@
 | 2026-07-20 | business/erp/finance file-backed stores |
 | 2026-07-20 | AI control plane skills/intent/sense/automation；gateway AI edge；agent enterprise prompt |
 | 2026-07-20 | im/op file-backed + agent nexa tools + mobile gateway default |
+| 2026-07-20 | dingtalk openapi client (env-gated) + data-center lite local export surface |
 
 ## 执行原则（无人值守）
 

@@ -1,18 +1,16 @@
 # Autonomous execution log
 
 ## Status
-Running on docs/GOAL.md — full enterprise AI assistant stack.
+Continuing GOAL.md — AI-native enterprise assistant.
 
-## Latest commits track
-- AI control plane + gateway edge
-- Domain sense emitters
-- IM/OP file-backed
-- Agent enterprise prompt + nexa_intent_route/skills/bootstrap tools
-- Mobile default baseUrl -> nexa gateway
+## Latest
+- DingTalk Go client (token/dept/user) env-gated in HR sync
+- data-center lite stdlib service for local agent/export demos
+- start-dev starts dc-lite on :48092
+- gateway/mobile/agent integrations already in place
 
 ## Next
-1. Expand gateway compat routes for mobile /app-api legacy paths still missing
-2. Real DingTalk OpenAPI client in hr
-3. data-center path through gateway auth
-4. docker compose smoke when docker available
-5. MySQL-backed stores behind same APIs
+1. MySQL store adapters behind same APIs
+2. data-center full engine go.mod tidy when proxy available
+3. richer dingtalk roster field mapping
+4. docker compose smoke

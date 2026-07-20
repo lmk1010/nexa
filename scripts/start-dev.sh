@@ -65,3 +65,17 @@ for port in 48081 48082 48083 48084 48085 48086 48087 48088 48089 48080; do
 done
 echo "logs: $LOGDIR"
 echo "stop: $ROOT/scripts/stop-dev.sh"
+
+
+# data-center lite (stdlib export surface for local AI/agent)
+echo "[build] data-center lite"
+(cd "$ROOT/services/data-center" && go build -o "$BIN/nexa-dc-lite.exe" ./cmd/nexa-dc-lite)
+mkdir -p "$ROOT/.run/data/data-center"
+cat > "$ROOT/.run/configs/data-center.json" <<JSON
+{"name":"nexa-data-center","http":{"addr":":48092"},"templatesDir":"$ROOT/services/data-center/templates","dataDir":"$ROOT/.run/data/data-center"}
+JSON
+if [[ ! -f "$PIDDIR/data-center.pid" ]] || ! kill -0 "$(cat "$PIDDIR/data-center.pid" 2>/dev/null)" 2>/dev/null; then
+  nohup "$BIN/nexa-dc-lite.exe" -config "$ROOT/.run/configs/data-center.json" >"$LOGDIR/data-center.log" 2>&1 &
+  echo $! > "$PIDDIR/data-center.pid"
+  echo "[start] data-center lite"
+fi
