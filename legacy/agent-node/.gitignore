@@ -1,0 +1,11 @@
+node_modules/
+logs/
+coverage/
+.env
+.env.*
+.npmrc
+npm-debug.log*
+
+# Embedding vectors — 11+ MB binary; regenerate via scripts/build-embeddings.mjs.
+# meta.json is committed so retrieval falls back gracefully when bin is missing.
+generated/api-embeddings.bin

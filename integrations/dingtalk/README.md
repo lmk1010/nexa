@@ -1,40 +1,25 @@
-# 企业钉钉集成（从 ltoa/kyx-service-hr 抽出）
+# 企业钉钉（产品侧资产）
 
-原包路径：`com.kyx.service.hr.integration.dingtalk` 等。  
-此处按职责分目录存放，**保留原 Java 文件内容**，方便对照重写或迁回 monorepo 模块。
+nexa 的钉钉能力：**登录入口、同步管理、SQL 模型**。  
+运行时实现目标为 **Go**（Agent 通道 + 同步服务），不用 Java。
 
-## 目录
+## 本目录
 
-| 目录 | 原位置 | 内容 |
-|------|--------|------|
-| `java/` | `.../integration/dingtalk` | client / job / listener / model / service |
-| `java-api/` | `hr-api/.../api/dingtalk` | RPC 接口 + DTO |
-| `java-api-impl/` | `hr-core/.../api/dingtalk` | RPC 实现 |
-| `controller/` | `.../controller/admin/integration` | 管理端 API + VO |
-| `dal/` | `.../dal/.../integration` | DO + Mapper |
-| `config/` | `.../config/DingTalkProperties` | 配置项 |
-| `attendance/` | `.../service/attendance/dingtalk` | 考勤 access token |
-| `frontend/` | `web-antd` HR 钉钉页 + 登录入口 | Vue / TS |
-| `sql/` | `backend/sql/business/hr-dingtalk-*` | 表结构 / 菜单 / 清理脚本 |
+| 路径 | 说明 |
+|------|------|
+| `frontend/` | OA 管理页、钉钉登录 / 移动入口（Vue/TS 参考） |
+| `sql/` | 绑定、同步历史、快照、花名册、菜单等 DDL |
 
-## 能力清单
+## 能力（产品）
 
-- 通讯录 / 部门 / 员工同步
-- 花名册同步
-- 考勤 / 请假同步
+- 通讯录 / 部门 / 员工 / 花名册同步
+- 考勤 / 请假
 - 用户绑定（含移动端）
-- Stream 事件监听
-- 审批状态 Kafka 监听
-- 审批 / 需求 / 系统更新通知
-- 同步历史与快照
-- 定时同步 Job
+- Stream / 审批通知
+- 与 Agent 对话入口联动
 
-架构文档：`docs/hr/hr-dingtalk-sync-architecture.md`
+## 对照与重写
 
-## 使用说明
-
-当前为 **源码快照**，未改 package / 依赖，不能单独编译。后续可选：
-
-1. 继续作为 ltoa HR 子模块引用  
-2. 抽成独立 Java module  
-3. 用 Go 按同样能力重写（与 data-center / cdc 统一）  
+- Java 旧实现：`legacy/dingtalk-java/`（只读参考）
+- Agent 侧钉钉通道：`services/agent`（Go）
+- 架构文档：`docs/hr/hr-dingtalk-sync-architecture.md`

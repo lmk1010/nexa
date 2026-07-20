@@ -1,0 +1,19 @@
+# nexa-agent example config
+http:
+  addr: ":48091"
+
+log:
+  level: info
+
+# Upstream services (fill in deployment)
+data_center:
+  base_url: "http://127.0.0.1:48092"
+
+warehouse:
+  # read-only DSN for analysis tools
+  dsn: ""
+
+dingtalk:
+  # robot / stream credentials — prefer env overrides in prod
+  app_key: ""
+  app_secret: ""

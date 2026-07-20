@@ -1,135 +1,90 @@
 # nexa
 
-企业数据与协同能力平台（从 `ltoa` 抽离）。
+开源通用企业协作与数据平台。
 
-目标：把原先嵌在 `ltoa` 单体里的 **数据管理 / CDC / 掌上企业钉钉 / 数据分析** 能力，拆成独立 monorepo，便于 Go 重写、独立部署与复用。
+**钉钉 Agent + 掌上企业 App + 后端业务**：组织人事、审批协同、数据中心、运维与数据分析等，能力覆盖接近传统 OA。  
+实现以 **Go**（Agent / API / 数据中心 / CDC）+ **Flutter**（掌上 App）为主，**不用 Java 作为运行时**。
 
 ## 仓库
 
 | 仓库 | 说明 |
 |------|------|
-| `git@github.com:lmk1010/nexa.git` | 本 monorepo（数据中心、钉钉、App 数据页、CDC 骨架） |
-| `git@github.com:lmk1010/nexa-cdc-mysql.git` | 预留：MySQL CDC 独立仓库（尚未初始化；本仓 `services/cdc-mysql` 为 Go 重写起点） |
+| [`lmk1010/nexa`](https://github.com/lmk1010/nexa) | 本 monorepo |
+| [`lmk1010/nexa-cdc-mysql`](https://github.com/lmk1010/nexa-cdc-mysql) | MySQL CDC 独立仓（完整 Go 实现；本仓 `services/cdc-mysql` 与其同构） |
 
-## 目录结构
+## 目录
 
 ```
 nexa/
-├── apps/
-│   └── mobile/                 # 掌上企业（Flutter 数据相关页，从 ltoa/app 抽出）
-│       └── lib/
-│           ├── pages/          # 数据中心 / 运维监控 / 驾驶舱
-│           └── services/       # 对应 API service + 权限
+├── apps/mobile/                 # 掌上企业 Flutter App（完整工程）
 ├── services/
-│   ├── data-center/            # Go 数据中心导出平台（原 kyx-data-center）
-│   │   ├── cmd/
-│   │   ├── internal/
-│   │   ├── templates/          # 业务导出模板 JSON
-│   │   └── legacy-agent/       # 原 agent 侧 export/dashboard 参考实现
-│   └── cdc-mysql/              # Go 重写的 MySQL CDC（canal 替代方案骨架）
-├── integrations/
-│   └── dingtalk/               # 企业钉钉集成（Java 源 + Vue + SQL）
-│       ├── java/               # OpenAPI client / sync services / stream
-│       ├── java-api/           # RPC API 接口
-│       ├── java-api-impl/
-│       ├── controller/         # 管理端 API
-│       ├── dal/                # DO + Mapper
-│       ├── config/
-│       ├── attendance/
-│       ├── frontend/           # OA 管理页 + 登录入口
-│       └── sql/
-├── docs/
-│   ├── architecture/           # 总架构
-│   ├── design/                 # 数据交付 / 看板方案
-│   └── hr/                     # 钉钉同步架构
-├── sql/                        # 跨服务公共 SQL
+│   ├── agent/                   # 钉钉/企业 Agent（Go 骨架）
+│   ├── data-center/             # 数据中心导出（Go，可运行）
+│   └── cdc-mysql/               # MySQL→warehouse CDC（Go，同 nexa-cdc-mysql）
+├── integrations/dingtalk/       # 钉钉 SQL + 前端参考（Go 重写目标）
+├── docs/                        # 架构 / 数据方案 / 钉钉架构
+├── legacy/                      # Node Agent、Java 钉钉（仅对照，非运行依赖）
+├── sql/
 └── scripts/
 ```
 
-## 能力矩阵
+## 能力
 
-| 能力 | 来源（ltoa） | 当前位置 | 状态 |
-|------|--------------|----------|------|
-| 数据中心明细导出 | `backend/kyx-data-center` | `services/data-center` | 已复制，可独立编译 |
-| App 数据中心 / 运维 / 驾驶舱 | `app/lib/pages|services` | `apps/mobile/lib/...` | 页面/服务已抽出（依赖宿主 App 壳） |
-| 企业钉钉同步（通讯录/花名册/考勤/审批） | `kyx-service-hr/.../dingtalk` | `integrations/dingtalk` | Java 源 + SQL + 前端已抽出 |
-| 灵活取数 / ODS / ADS 方案 | `docs/design/*` | `docs/design` | 文档已迁入 |
-| MySQL CDC（binlog → warehouse） | canal 运行态 + 方案文档 | `services/cdc-mysql` | **Go 重写骨架**（替代 canal 三件套） |
-| Agent 导出 / 看板 | `kyx-service-agent` | `services/data-center/legacy-agent` | 参考代码 |
+| 能力 | 路径 | 语言 | 状态 |
+|------|------|------|------|
+| 企业钉钉 Agent | `services/agent` | Go | 骨架；对照 `legacy/agent-node` |
+| 数据中心 | `services/data-center` | Go | 已迁入 |
+| 掌上企业 | `apps/mobile` | Flutter | 完整 App 已迁入 |
+| 钉钉集成 | `integrations/dingtalk` + legacy | Go 目标 | SQL/前端已抽；Java 仅 legacy |
+| MySQL CDC | `services/cdc-mysql` | Go | 与独立仓同步的完整实现 |
+| 数据分析方案 | `docs/design` | — | ODS/ADS/导出文档 |
 
-## 架构（目标）
+## 架构
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  掌上企业 App / OA / Agent / BI                              │
-└───────────────┬───────────────────┬─────────────────────────┘
-                │                   │
-        ┌───────▼───────┐   ┌───────▼────────┐
-        │ data-center   │   │ dingtalk       │
-        │ (Go 导出/API) │   │ (同步/通知)    │
-        └───────┬───────┘   └───────┬────────┘
-                │                   │
-        ┌───────▼───────────────────▼────────┐
-        │           warehouse (MySQL ODS/ADS) │
-        └───────▲────────────────────────────┘
-                │ upsert / stream
-        ┌───────┴───────┐
-        │  cdc-mysql    │  ← Go 重写（读源库 binlog）
-        │  (nexa-cdc)   │
-        └───────┬───────┘
-                │ binlog ROW
-        ┌───────▼───────┐
-        │ ordersys 等源库│
-        └───────────────┘
+钉钉 / 掌上 App / Web
+        │
+        ▼
+ services/agent  ──► data-center（导出）
+        │        ──► warehouse（分析）
+        │        ──► 业务 API（OA 类，Go 演进）
+        ▼
+   warehouse (ODS/ADS)
+        ▲
+ services/cdc-mysql  ← 只读业务库 binlog
 ```
 
-三层数据（详见 `docs/design/flexible-data-delivery-plan.md`）：
-
-1. **L3 ADS** — 预聚合 KPI（秒级）
-2. **L2 ODS** — CDC 同步明细仓（灵活探索 / 导出）
-3. **L1 源库** — 仅点查兜底
+详见 `docs/architecture/overview.md`。
 
 ## 快速开始
 
-### 1. 数据中心（Go）
-
 ```bash
-cd services/data-center
-cp config.yaml.example config.yaml   # 改 DSN / 路径
-go mod tidy
-go run ./cmd/kyx-data-center -config ./config.yaml
+# 数据中心
+cd services/data-center && cp config.yaml.example config.yaml
+go mod tidy && go run ./cmd/kyx-data-center -config ./config.yaml
+
+# CDC（或使用独立仓 nexa-cdc-mysql）
+cd services/cdc-mysql && cp config.example.yaml config.yaml
+go mod tidy && go run ./cmd/nexa-cdc -c config.yaml
+
+# Agent
+cd services/agent && cp configs/config.example.yaml configs/config.yaml
+go mod tidy && go run ./cmd/nexa-agent -config ./configs/config.yaml
+
+# 掌上 App
+cd apps/mobile && flutter pub get && flutter run
 ```
 
-默认健康检查：`GET /actuator/health`  
-业务路由需网关透传登录用户，并具备 `app:data-center:use` 权限点。
+## 来源与原则
 
-### 2. CDC MySQL（Go 骨架）
+能力与参考实现抽自内部项目，在 nexa 中按**开源通用产品**重组：
 
-```bash
-cd services/cdc-mysql
-cp configs/config.example.yaml configs/config.yaml
-go mod tidy
-go run ./cmd/nexa-cdc-mysql -config ./configs/config.yaml
-```
+- 运行时 **Go / Flutter**，不用 Java  
+- `legacy/` 只作对照  
+- 密钥与生产配置不进仓  
 
-当前为可运行骨架：配置加载 + 生命周期 + 表过滤 + 位点存储接口。  
-binlog dump / row 解析 / sink 到 warehouse 为下一阶段实现。
+抽出对照表：`docs/SOURCE_MAP.md`。
 
-### 3. 钉钉集成
+## License
 
-`integrations/dingtalk` 保留原 Java 包路径与 SQL，便于对照重写或作为 library 迁回。  
-架构说明：`docs/hr/hr-dingtalk-sync-architecture.md`。
-
-## 源码出处
-
-从 `E:\code\ltoa` 抽取，对应主要 commit 线：
-
-- `feat(data-center+ops+perms)` 数据中心明细导出平台
-- HR 钉钉花名册 / 通讯录同步
-- 灵活数据交付方案文档
-
-`ltoa` 原仓继续服务业务；本仓用于独立演进与 Go 化。
-
-## 许可
-
-内部项目，未开源。
+待定（建议 Apache-2.0 或 MIT；CDC 子仓当前为 MIT）。

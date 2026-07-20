@@ -1,0 +1,678 @@
+{
+  "_note": "Hand-authored purpose sentences for the endpoints the boss cares about most. These override any auto-generated purpose during the merge step in scripts/build-api-index.mjs.",
+  "endpoints": [
+    {
+      "path": "/user/statistics/sh/pf",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "售后【赔付/损失金额】月度统计。老板问『平台本月赔了多少』『平台承担占比多少』『车损、施工费、成本费花了多少』时用这个。字段：myMoney=平台承担；outletsMoney=门店承担；sellerMoney=卖家承担；totalMoney=合计；bcMoney=保险；csMoney=车损；sgMoney=施工费；cbMoney=成本费。平台承担占比=myMoney/totalMoney。",
+      "params": [
+        {
+          "name": "beginTime",
+          "type": "string",
+          "required": true,
+          "notes": "开始时间 YYYY-MM-DD HH:mm:ss，例：2026-07-01 00:00:00。**不是 month**，写 month 会 SQL 崩"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "notes": "结束时间 YYYY-MM-DD HH:mm:ss，例：2026-07-31 23:59:59"
+        }
+      ],
+      "response": "list[]，每项 { deptName, myMoney, outletsMoney, sellerMoney, totalMoney, bcMoney, csMoney, sgMoney, cbMoney }",
+      "keywords": [
+        "赔付",
+        "损失",
+        "承担",
+        "平台承担",
+        "车损",
+        "施工费",
+        "成本费",
+        "myMoney",
+        "outletsMoney",
+        "compensation",
+        "损失金额",
+        "月度赔付"
+      ]
+    },
+    {
+      "path": "/user/statistics/sh/order",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "售后【订单/营业额/利润】月度统计。老板问『本月营业额多少』『哪个部门订单多但利润低』『卖家活跃度』『回访覆盖够不够』时用。字段：sellerCount=下单卖家个数；orderCount=订单数；hfCount=回访量；sumOrderTotal=营业额；installPriceTotal=安装成本。利润=sumOrderTotal-installPriceTotal。",
+      "params": [
+        {
+          "name": "beginTime",
+          "type": "string",
+          "required": true,
+          "notes": "开始时间 YYYY-MM-DD HH:mm:ss，例：2026-07-01 00:00:00。**不是 month**，写 month 会 SQL 崩"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "notes": "结束时间 YYYY-MM-DD HH:mm:ss，例：2026-07-31 23:59:59"
+        }
+      ],
+      "response": "list[]，每项 { deptName, sellerCount, orderCount, hfCount, sumOrderTotal, installPriceTotal }",
+      "keywords": [
+        "订单",
+        "营业额",
+        "利润",
+        "sumOrderTotal",
+        "installPriceTotal",
+        "orderCount",
+        "sellerCount",
+        "回访量",
+        "hfCount",
+        "月度订单",
+        "销售额"
+      ]
+    },
+    {
+      "path": "/user/statistics/sh/work",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "售后【工单处理产能】月度统计。老板问『谁处理工单最快』『谁积压最多』『工单主要来自卖家还是财务』『催安装/换店/未标记的完结量』时用。字段：handleWorkCount=处理工单；sellerWorkCount=卖家发起；cwWorkCount=财务发起；finishWorkCount=已完结；urgeWorkCount=催安装完结；exchangeWorkCount=换店完结；afterNoHintWorkCount=未标记完结。",
+      "params": [
+        {
+          "name": "beginTime",
+          "type": "string",
+          "required": true,
+          "notes": "开始时间 YYYY-MM-DD HH:mm:ss，例：2026-07-01 00:00:00。**不是 month**，写 month 会 SQL 崩"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "notes": "结束时间 YYYY-MM-DD HH:mm:ss，例：2026-07-31 23:59:59"
+        }
+      ],
+      "response": "list[]，每项 { deptName, handleWorkCount, sellerWorkCount, cwWorkCount, finishWorkCount, urgeWorkCount, exchangeWorkCount, afterNoHintWorkCount }",
+      "keywords": [
+        "工单",
+        "处理",
+        "完结",
+        "handleWorkCount",
+        "finishWorkCount",
+        "催安装",
+        "urgeWork",
+        "工单产能",
+        "工单量",
+        "工单统计"
+      ]
+    },
+    {
+      "path": "/user/statistics/sh/bf",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "售后【补发率】月度统计，玻璃膜和车衣改色两个品类。老板问『玻璃膜补发率多少』『车衣改色补发率』『补发是施工问题还是非施工』时用。玻璃膜施工补发率 = sgGlassFilmBfCount/glassFilmInstallCount；车衣改色施工补发率 = sgWrapBfCount/wrapInstallCount。字段：glassFilmInstallCount 玻璃膜已安装、sgGlassFilmBfCount 玻璃膜施工补发、nsgGlassFilmBfCount 玻璃膜非施工补发、totalGlassFilmBfCount 玻璃膜总补发；车衣同 wrap*。",
+      "params": [
+        {
+          "name": "beginTime",
+          "type": "string",
+          "required": true,
+          "notes": "开始时间 YYYY-MM-DD HH:mm:ss，例：2026-07-01 00:00:00。**不是 month**，写 month 会 SQL 崩"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "notes": "结束时间 YYYY-MM-DD HH:mm:ss，例：2026-07-31 23:59:59"
+        }
+      ],
+      "response": "list[]，每项 { deptName, glassFilmInstallCount, sgGlassFilmBfCount, nsgGlassFilmBfCount, totalGlassFilmBfCount, wrapInstallCount, sgWrapBfCount, nsgWrapBfCount, totalWrapBfCount }",
+      "keywords": [
+        "补发",
+        "补发率",
+        "玻璃膜",
+        "车衣改色",
+        "施工补发",
+        "非施工补发",
+        "glassFilm",
+        "wrap",
+        "reissue",
+        "bf"
+      ]
+    },
+    {
+      "path": "/user/statistics/sh/rate",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "售后【好评差评/服务质量】月度统计。老板问『好评率多少』『差评是真差评还是可申诉的误判』『哪个部门真实差评最多』时用。好评率 = totalGoodRateCount/handleWorkCount；实际差评 = totalBadRateCount - rejectSuccessRateCount。字段：totalRateCount 评价数、sellerGoodRateCount 卖家好评、userGoodRateCount 客服好评、totalGoodRateCount 总好评、sellerBadRateCount 卖家差评、userBadRateCount 客服差评、totalBadRateCount 总差评、rejectSuccessRateCount 成功驳回。",
+      "params": [
+        {
+          "name": "beginTime",
+          "type": "string",
+          "required": true,
+          "notes": "开始时间 YYYY-MM-DD HH:mm:ss，例：2026-07-01 00:00:00。**不是 month**，写 month 会 SQL 崩"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "notes": "结束时间 YYYY-MM-DD HH:mm:ss，例：2026-07-31 23:59:59"
+        }
+      ],
+      "response": "list[]，每项 { deptName, handleWorkCount, totalRateCount, sellerGoodRateCount, userGoodRateCount, totalGoodRateCount, sellerBadRateCount, userBadRateCount, totalBadRateCount, rejectSuccessRateCount }",
+      "keywords": [
+        "好评",
+        "差评",
+        "好评率",
+        "差评率",
+        "实际差评",
+        "评价",
+        "驳回",
+        "服务质量",
+        "rate",
+        "goodRate",
+        "badRate"
+      ]
+    },
+    {
+      "path": "/user/statistics/sh/workHint",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "售后【问题原因分类/责任归因】月度统计。老板问『问题到底出在产品、门店、施工、客服还是车主』时用，帮判断该罚门店/改产品/训客服。字段：projectHintCount 产品问题二次安装、zjHintCount 到店涨价拒单、syHintCount 评价产品/翘单/爽约/态度不好、qpHintCount 气泡划痕、sgHintCount 投诉门店服务不好安装不到位、badRateHintCount 中差评、tsHintCount 施工导致的退款投诉、carDamagesCount 车损。",
+      "params": [
+        {
+          "name": "beginTime",
+          "type": "string",
+          "required": true,
+          "notes": "开始时间 YYYY-MM-DD HH:mm:ss，例：2026-07-01 00:00:00。**不是 month**，写 month 会 SQL 崩"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "notes": "结束时间 YYYY-MM-DD HH:mm:ss，例：2026-07-31 23:59:59"
+        }
+      ],
+      "response": "list[]，每项 { deptName, projectHintCount, zjHintCount, syHintCount, qpHintCount, sgHintCount, badRateHintCount, tsHintCount, carDamagesCount }",
+      "keywords": [
+        "问题原因",
+        "责任归因",
+        "售后标记",
+        "workHint",
+        "产品问题",
+        "施工问题",
+        "门店问题",
+        "车损",
+        "carDamages",
+        "投诉分类"
+      ]
+    },
+    {
+      "path": "/user/statistics/sh/revoke",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "售后【撤单原因】月度统计。老板问『撤单是谁造成的』『门店/车主/卖家哪个责任最大』时用。字段：shCdCount 售后撤单总量、shopCdCount 门店原因、ownerCdCount 车主原因、sellerCdCount 商家原因。撤单直接影响收入和履约效率。",
+      "params": [
+        {
+          "name": "beginTime",
+          "type": "string",
+          "required": true,
+          "notes": "开始时间 YYYY-MM-DD HH:mm:ss，例：2026-07-01 00:00:00。**不是 month**，写 month 会 SQL 崩"
+        },
+        {
+          "name": "endTime",
+          "type": "string",
+          "required": true,
+          "notes": "结束时间 YYYY-MM-DD HH:mm:ss，例：2026-07-31 23:59:59"
+        }
+      ],
+      "response": "list[]，每项 { deptName, shCdCount, shopCdCount, ownerCdCount, sellerCdCount }",
+      "keywords": [
+        "撤单",
+        "撤单原因",
+        "门店原因撤单",
+        "车主原因",
+        "商家原因",
+        "revoke",
+        "shCdCount"
+      ]
+    },
+    {
+      "path": "/user/statistics/rank/compensation",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "承担损失金额【部门排行榜】。老板最常问『谁在烧钱？损失来自哪个部门？本月能不能压下来？』时用这个。这是最直接的利润黑洞，红黑榜首选。字段：deptName 部门/队伍、myMoney 平台承担金额。",
+      "params": [
+        {
+          "name": "queryTime",
+          "type": "string",
+          "required": true,
+          "notes": "查询日期 YYYY-MM-DD（单个日期，后端按该日期所在月/周聚合）。**不要传 beginTime/endTime，会 SQL 崩**"
+        }
+      ],
+      "response": "list[]，每项 { deptName, myMoney }，按 myMoney 降序",
+      "keywords": [
+        "赔付排行",
+        "损失排行",
+        "承担损失",
+        "compensation",
+        "myMoney",
+        "烧钱",
+        "亏损",
+        "赔最多"
+      ]
+    },
+    {
+      "path": "/user/statistics/rank/weight",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "错误率/派单质量【部门排行榜】。老板问『错误是客服录入错、派单错、价格错，还是车型信息缺失』时用，是前端返工/客诉/赔付的源头。字段：y1=派单项目地址删减错误率、y2=卖家下单项目和订单下单价格匹配错误率、y3=车型未填错误率、y4=卖家下单项目和安装项目匹配错误率。",
+      "params": [
+        {
+          "name": "weightTime",
+          "type": "string",
+          "required": true,
+          "notes": "查询日期 YYYY-MM-DD（单个日期）。此接口用 weightTime 不是 queryTime"
+        }
+      ],
+      "response": "list[]，每项 { x, y1, y2, y3, y4 } (x=部门/队伍)",
+      "keywords": [
+        "错误率",
+        "派单错误",
+        "派单质量",
+        "weight",
+        "价格匹配错误",
+        "车型未填",
+        "地址删减错误"
+      ]
+    },
+    {
+      "path": "/user/statistics/rank/order",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "订单排行榜【部门/队伍下单能力】。老板问『哪个部门订单量最高』『增长来自卖家多还是单个卖家复购』时用，判断销售/渠道/部门产能。字段：x=部门/队伍、y1=订单数、y2=下单卖家个数。",
+      "params": [
+        {
+          "name": "queryTime",
+          "type": "string",
+          "required": true,
+          "notes": "查询日期 YYYY-MM-DD（单个日期，后端按该日期所在月/周聚合）。**不要传 beginTime/endTime，会 SQL 崩**"
+        }
+      ],
+      "response": "list[]，每项 { x, y1, y2 }",
+      "keywords": [
+        "订单排行",
+        "部门订单",
+        "下单能力",
+        "orderCount",
+        "sellerCount",
+        "销售排行"
+      ]
+    },
+    {
+      "path": "/user/statistics/rank/work",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "已完结工单【部门排行榜】。老板问『谁处理得快』『避免订单堆积』时用，看履约处理能力。字段：deptName 部门、finishWorkCount 已完结工单数。",
+      "params": [
+        {
+          "name": "queryTime",
+          "type": "string",
+          "required": true,
+          "notes": "查询日期 YYYY-MM-DD（单个日期，后端按该日期所在月/周聚合）。**不要传 beginTime/endTime，会 SQL 崩**"
+        }
+      ],
+      "response": "list[]，每项 { deptName, finishWorkCount }",
+      "keywords": [
+        "完结工单排行",
+        "工单排行",
+        "履约能力",
+        "finishWorkCount",
+        "处理能力"
+      ]
+    },
+    {
+      "path": "/user/statistics/rank/reissue",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "补发排行榜。玻璃膜补发和车衣改色补发的部门/队伍排行。老板问『哪个部门补发最多』『补发主要品类是玻璃膜还是车衣』时用。补发就是成本 + 履约失败 + 客户体验问题。",
+      "params": [
+        {
+          "name": "queryTime",
+          "type": "string",
+          "required": true,
+          "notes": "查询日期 YYYY-MM-DD（单个日期，后端按该日期所在月/周聚合）。**不要传 beginTime/endTime，会 SQL 崩**"
+        }
+      ],
+      "response": "list[]，玻璃膜和车衣补发排行",
+      "keywords": [
+        "补发排行",
+        "玻璃膜补发",
+        "车衣补发",
+        "reissue排行",
+        "补发量"
+      ]
+    },
+    {
+      "path": "/user/statistics/rank/evaluation",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "好评率/差评率【部门排行榜】。老板问『哪个部门客户最满意』『售后服务质量红黑榜』时用。",
+      "params": [
+        {
+          "name": "queryTime",
+          "type": "string",
+          "required": true,
+          "notes": "查询日期 YYYY-MM-DD（单个日期，后端按该日期所在月/周聚合）。**不要传 beginTime/endTime，会 SQL 崩**"
+        }
+      ],
+      "response": "list[]，每项 { deptName, goodRate/badRate 相关字段 }",
+      "keywords": [
+        "好评率排行",
+        "差评率排行",
+        "客户满意度",
+        "evaluation排行",
+        "服务质量红黑榜"
+      ]
+    },
+    {
+      "path": "/work/timeout/list",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "超时工单【明细列表】。老板问『哪些工单快爆了』『哪个人/部门超时最多』『超时原因是什么』时用。超时是客户体验恶化/投诉/赔付的前兆。返回 rows[] 明细和 total。",
+      "params": [
+        {
+          "name": "orderNo",
+          "type": "string",
+          "notes": "订单编号"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "notes": "用户名"
+        },
+        {
+          "name": "deptId",
+          "type": "int",
+          "notes": "部门ID（在 params 嵌套下 params.deptId）"
+        },
+        {
+          "name": "type",
+          "type": "int",
+          "notes": "工单类型（字典 t_work_type）"
+        },
+        {
+          "name": "timeoutType",
+          "type": "int",
+          "notes": "超时类型（字典 t_work_timeout_type）"
+        },
+        {
+          "name": "beginCreateTime",
+          "type": "string"
+        },
+        {
+          "name": "endCreateTime",
+          "type": "string"
+        },
+        {
+          "name": "pageNum",
+          "type": "int",
+          "notes": "默认 1"
+        },
+        {
+          "name": "pageSize",
+          "type": "int",
+          "notes": "默认 20，最大 30；查总数用 pageSize=1 看 total"
+        }
+      ],
+      "response": "{ rows: 工单明细列表, total: 超时工单总数 }",
+      "keywords": [
+        "超时",
+        "超时工单",
+        "工单超时",
+        "timeout",
+        "催单",
+        "履约超时",
+        "超时排行"
+      ]
+    },
+    {
+      "path": "/admin/ttask/list",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "连图【任务看板】任务列表。老板问『某人今天在做什么』『任务看板某项目进度』『某状态任务多少个』时用。这是连图 ordersys 的任务看板，不是 OA 待办或 OA 需求。",
+      "params": [
+        {
+          "name": "pageNum",
+          "type": "int",
+          "notes": "默认 1"
+        },
+        {
+          "name": "pageSize",
+          "type": "int",
+          "notes": "默认 20，最大 30"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "notes": "任务标题关键词"
+        },
+        {
+          "name": "status",
+          "type": "int",
+          "notes": "任务状态"
+        },
+        {
+          "name": "assigneeId",
+          "type": "int",
+          "notes": "负责人 userId"
+        },
+        {
+          "name": "projectId",
+          "type": "int",
+          "notes": "所属项目 ID"
+        }
+      ],
+      "response": "{ rows: 任务明细, total: 总数 }",
+      "keywords": [
+        "任务看板",
+        "连图任务",
+        "ttask",
+        "我的任务",
+        "项目任务",
+        "task board",
+        "任务列表"
+      ]
+    },
+    {
+      "path": "/admin/ttask/dashboard/statistics",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "连图【任务看板概览/统计仪表盘】。老板问『任务看板整体趋势』『按状态/团队/负责人的任务分布』时用，一次拿聚合数据。",
+      "params": [
+        {
+          "name": "projectId",
+          "type": "int",
+          "notes": "可选，项目 ID"
+        }
+      ],
+      "response": "仪表盘聚合数据，各状态/团队计数",
+      "keywords": [
+        "任务看板概览",
+        "任务仪表盘",
+        "ttask dashboard",
+        "任务统计",
+        "看板统计"
+      ]
+    },
+    {
+      "path": "/workbench/todo/list",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "连图【工作台待办】列表。老板问『我的连图待办』『某人待办任务』时用。区别：这是连图 workbench 待办，不是 OA 待办。",
+      "params": [
+        {
+          "name": "pageNum",
+          "type": "int"
+        },
+        {
+          "name": "pageSize",
+          "type": "int",
+          "notes": "默认 20，最大 30"
+        },
+        {
+          "name": "status",
+          "type": "int"
+        },
+        {
+          "name": "keyword",
+          "type": "string"
+        }
+      ],
+      "response": "{ rows, total }",
+      "keywords": [
+        "连图待办",
+        "工作台待办",
+        "workbench todo",
+        "待办列表"
+      ]
+    },
+    {
+      "path": "/admin/outlets/getShopOrderList",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "门店订单查询【分页明细】。给出门店/项目/车型/地区筛选，返回订单条目列表。**返回体可能非常大（21MB+），必须传 pageSize=10~30 + 时间/关键词过滤，否则拉全表**。老板问『某门店最近多少订单』『某项目全国多少单』时用。",
+      "params": [
+        { "name": "pageNum", "type": "int", "required": true, "notes": "页码，默认 1" },
+        { "name": "pageSize", "type": "int", "required": true, "notes": "**必填！默认 10、最大 30；不传或传大值后端会返回全表 20MB+**" },
+        { "name": "shopName", "type": "string", "notes": "门店名（模糊）" },
+        { "name": "mobile", "type": "string", "notes": "手机号" },
+        { "name": "itemName", "type": "string", "notes": "项目名" },
+        { "name": "regionName", "type": "string", "notes": "地区" },
+        { "name": "outletsName", "type": "string" }
+      ],
+      "response": "{ rows:[订单条目], total }",
+      "keywords": ["门店订单", "shop order", "outlets", "shopOrderList", "门店订单查询"]
+    },
+    {
+      "path": "/order/outlets/shop/list",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "门店订单查询（另一路径）。参数同 /admin/outlets/getShopOrderList。**必须传 pageSize 否则大响应**。",
+      "params": [
+        { "name": "pageNum", "type": "int", "required": true },
+        { "name": "pageSize", "type": "int", "required": true, "notes": "必填，默认 10、最大 30" },
+        { "name": "shopName", "type": "string" },
+        { "name": "itemName", "type": "string" }
+      ],
+      "response": "{ rows, total }",
+      "keywords": ["门店订单", "shop order"]
+    },
+    {
+      "path": "/custom/order/list",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "工单客服订单查询【分页明细】。**必须传 pageNum + pageSize + 时间范围**，否则 12s 超时。",
+      "params": [
+        { "name": "pageNum", "type": "int", "required": true, "notes": "默认 1" },
+        { "name": "pageSize", "type": "int", "required": true, "notes": "**必填，默认 10、最大 30**" },
+        { "name": "beginTime", "type": "string", "notes": "开始时间 YYYY-MM-DD HH:mm:ss（强烈建议传，否则很慢）" },
+        { "name": "endTime", "type": "string", "notes": "结束时间" }
+      ],
+      "response": "{ rows, total }",
+      "keywords": ["工单客服订单", "custom order list", "客服订单查询"]
+    },
+    {
+      "path": "/means/community/list",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "门店【社区帖子列表】分页。按板块 societyId + 标题 headline + 状态 status 查询社区帖子（施工经验、车型讨论、故障案例这类）。**这是门店社区，不是客服问题（/employees/community/list 是客服）**。老板问『某车型施工帖』『社区最新帖子』时用这里。",
+      "params": [
+        { "name": "pageNum", "type": "int", "required": true, "notes": "默认 1" },
+        { "name": "pageSize", "type": "int", "required": true, "notes": "默认 10、最大 30" },
+        { "name": "societyId", "type": "int", "notes": "板块 ID，1=安装工单，2=其他板块…要多个板块合并请并发多个调用" },
+        { "name": "headline", "type": "string", "notes": "标题关键词（模糊查询）" },
+        { "name": "status", "type": "int", "notes": "帖子状态" }
+      ],
+      "response": "{ rows:[{id, headline, content, societyId, status, createTime, createBy}], total }",
+      "keywords": ["社区帖子", "门店社区", "施工帖", "车型讨论", "means community", "帖子列表"]
+    },
+    {
+      "path": "/means/notice/list",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "【活动通知列表】分页。查询平台向门店发的活动通知、公告、政策变更等。",
+      "params": [
+        { "name": "pageNum", "type": "int", "required": true },
+        { "name": "pageSize", "type": "int", "required": true, "notes": "默认 10、最大 30" },
+        { "name": "title", "type": "string", "notes": "标题模糊" },
+        { "name": "status", "type": "int" }
+      ],
+      "response": "{ rows:[通知], total }",
+      "keywords": ["活动通知", "公告", "notice"]
+    },
+    {
+      "path": "/user/statistics/pd/order",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "派单部门【订单数据】统计。运营主管用，看派单侧订单分布和承接量。相比 sh 系列更聚焦派单环节。",
+      "params": [
+        {
+          "name": "beginTime",
+          "type": "string"
+        },
+        {
+          "name": "endTime",
+          "type": "string"
+        }
+      ],
+      "response": "list[]，派单部门订单数据",
+      "keywords": [
+        "派单部门",
+        "pd 订单",
+        "派单订单"
+      ]
+    },
+    {
+      "path": "/user/statistics/pd/work",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "派单部门【工单数据】统计。看派单环节工单量、处理速度、积压等。",
+      "params": [
+        {
+          "name": "beginTime",
+          "type": "string"
+        },
+        {
+          "name": "endTime",
+          "type": "string"
+        }
+      ],
+      "response": "list[]",
+      "keywords": [
+        "派单工单",
+        "pd 工单",
+        "派单部门工单"
+      ]
+    },
+    {
+      "path": "/user/statistics/seller",
+      "domain": "ordersys",
+      "method": "GET",
+      "purpose": "卖家【统计】。老板问『卖家活跃度』『新增卖家数』『卖家分布』时用。",
+      "params": [
+        {
+          "name": "beginTime",
+          "type": "string"
+        },
+        {
+          "name": "endTime",
+          "type": "string"
+        }
+      ],
+      "response": "list[]，卖家维度统计",
+      "keywords": [
+        "卖家统计",
+        "卖家数",
+        "卖家活跃度",
+        "seller"
+      ]
+    }
+  ]
+}

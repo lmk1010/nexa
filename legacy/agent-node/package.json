@@ -1,0 +1,23 @@
+{
+  "name": "@kyx/service-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "KYX Node.js agent service powered by NeoX SDK.",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "generate:api-index": "node scripts/generate-oa-api-index.mjs",
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@mk-co/neox-sdk": "0.4.1",
+    "exceljs": "^4.4.0",
+    "minio": "^8.0.7",
+    "mysql2": "^3.15.3",
+    "zod": "^3.25.76"
+  }
+}

@@ -1,30 +1,28 @@
-# 掌上企业 · 数据相关页面（从 ltoa/app 抽出）
+# 掌上企业 App
 
-Flutter 源文件快照，**不能单独 `flutter run`**，需挂回 App 壳（路由、鉴权、主题、网络层）。
+从 `ltoa/app` 抽出的 **完整 Flutter 工程**（Android/iOS/桌面/Web 壳 + 业务页）。
 
-## 页面
+在 nexa 中作为开源「掌上企业」客户端：登录、工作台、数据中心、运维监控、驾驶舱、审批、HR 自助等。
 
-| 文件 | 说明 |
-|------|------|
-| `pages/data_center_page.dart` | 数据中心：模板列表 / 筛选 / 导出任务 |
-| `pages/ops_monitor_page.dart` | 运维监控 v2 |
-| `pages/executive_cockpit_page.dart` | 经营驾驶舱 |
+## 运行
 
-## 服务
+```bash
+cd apps/mobile
+flutter pub get
+flutter run
+```
 
-| 文件 | 说明 |
-|------|------|
-| `services/data_center_service.dart` | 调 data-center / gateway |
-| `services/ops_service.dart` | 运维指标 |
-| `services/executive_cockpit_service.dart` | 驾驶舱聚合 |
-| `services/permissions_service.dart` | 权限点 |
-| `services/user_permission_service.dart` | 用户权限缓存 |
+需配置后端网关 / Agent 地址（见 `lib/config` 与各 service）。
 
-## 权限点
+## 与 nexa 后端
 
-- `app:data-center:use` — 数据中心导出（与 Go 服务一致）
+| App 能力 | 后端 |
+|----------|------|
+| 数据中心导出 | `services/data-center` |
+| 对话 / 工具取数 | `services/agent` |
+| 分析明细 | warehouse（由 `services/cdc-mysql` 灌入） |
+| 钉钉登录 / 同步 | `integrations/dingtalk` + agent 钉钉通道 |
 
-## 后端
+## 说明
 
-- 导出：`services/data-center`（Go）
-- 看板部分历史实现参考：`services/data-center/legacy-agent/dashboardEndpoints.js`
+原工程与内部 OA 网关、IM 等有耦合；开源化时逐步改为 nexa 自有 API 与配置，不依赖 Java 服务。

@@ -1,41 +1,48 @@
 # 抽出清单（ltoa → nexa）
 
-生成日期：2026-07-20
+生成日期：2026-07-20  
+定位修正：**nexa = 开源通用「钉钉 Agent + 掌上企业 + 业务后端」**；实现用 **Go / Flutter**，不用 Java。
 
-## 已复制
+## 已迁入
 
 ### services/data-center
 - 源：`ltoa/backend/kyx-data-center/**`
-- 含：Go 导出服务、templates、Dockerfile、legacy-agent（exportTool/templateExport/dashboardEndpoints）
-
-### apps/mobile
-- 源：`ltoa/app/lib/pages/{data_center,ops_monitor,executive_cockpit}_page.dart`
-- 源：`ltoa/app/lib/services/{data_center,ops,executive_cockpit,permissions,user_permission}_service.dart`
-
-### integrations/dingtalk
-- Java integration 全量
-- API / API impl / Controller / DAL / Config / Attendance token
-- 前端：`dingtalk/index.vue`、API ts、登录入口
-- SQL：`hr-dingtalk-*.sql` + clean 脚本
-
-### docs
-- `flexible-data-delivery-plan.md`
-- `ordersys-oa-dashboard-data-plan.md`
-- `hr-dingtalk-sync-architecture.md`
+- Go 导出平台 + 业务 templates + Dockerfile
 
 ### services/cdc-mysql
-- **新建** Go 骨架（非 ltoa 直接复制；对应原先 canal 运行态 + 方案文档）
+- 与独立仓 [`lmk1010/nexa-cdc-mysql`](https://github.com/lmk1010/nexa-cdc-mysql) **同构**（go-mysql 完整 CDC，非空骨架）
+- monorepo 内副本便于联调；独立仓已有生产向提交历史
 
-## 未整包迁入（有意）
+### services/agent
+- **新建** Go 骨架（HTTP / 配置 / chat 占位）
+- 能力对照：`legacy/agent-node`（原 Node agent）
+
+### apps/mobile
+- 源：完整 `ltoa/app` Flutter 工程（掌上企业 APK）
+- 含数据中心 / 运维 / 驾驶舱 / 登录 / 工作台等
+
+### integrations/dingtalk
+- 产品资产：`sql/` + `frontend/`（登录、同步管理页）
+- Java 运行时代码 → `legacy/dingtalk-java/`（仅对照）
+
+### docs
+- 灵活取数 / 看板方案、钉钉同步架构、本清单
+
+### legacy/
+- `agent-node`：完整 Node agent 参考（无 node_modules/generated）
+- `dingtalk-java`：钉钉 Java 全量参考
+
+## 有意未整包迁入
 
 | 项 | 原因 |
 |----|------|
-| 完整 Flutter App 壳 | 体量大，与 IM/登录强耦合；只抽数据相关页 |
-| kyx-service-hr 全服务 | 只抽钉钉相关；员工主数据仍在 ltoa |
-| canal 二进制 / 部署机配置 | 运行态在服务器；本仓用 Go 重写替代 |
-| gateway / nginx 路由 | 部署层，后续在 nexa/deploy 补 |
+| ltoa 全量 Java 微服务 | nexa 不跑 Java；业务能力 Go 重写 |
+| canal JVM 部署 | 由 `nexa-cdc-mysql` Go 二进制替代 |
+| 内部网关/密钥/生产 compose | 开源仓不带私密配置 |
 
-## 独立仓
+## 仓库
 
-- `lmk1010/nexa` — 本 monorepo ✅
-- `lmk1010/nexa-cdc-mysql` — 远程尚无仓库；代码在 `services/cdc-mysql`，成熟后 `git subtree split` 或单独 push
+| 远程 | 状态 |
+|------|------|
+| `git@github.com:lmk1010/nexa.git` | monorepo |
+| `git@github.com:lmk1010/nexa-cdc-mysql.git` | 已有完整 Go CDC（main 领先 monorepo 副本应保持同步） |

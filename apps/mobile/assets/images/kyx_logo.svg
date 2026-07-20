@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F766E"/>
+      <stop offset="0.50" stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="252" y1="770" x2="782" y2="770" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FDE68A"/>
+      <stop offset="0.22" stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect x="86" y="86" width="852" height="852" rx="206" fill="none" stroke="#FFFFFF" stroke-opacity="0.16" stroke-width="20"/>
+  <text x="376" y="642" text-anchor="middle" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-size="390" font-weight="800" fill="#FFFFFF">K</text>
+  <text x="664" y="642" text-anchor="middle" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-size="390" font-weight="800" fill="#EAF2FF">Y</text>
+  <path d="M318 770h390" stroke="url(#accent)" stroke-width="32" stroke-linecap="round"/>
+  <circle cx="262" cy="770" r="22" fill="#FDE68A"/>
+  <circle cx="762" cy="770" r="22" fill="#F59E0B"/>
+</svg>
