@@ -10,8 +10,12 @@ desktop.ini
 *.swp
 
 # Secrets / local config
+.env
 **/.env
-**/.env.*
+*.env.local
+**/.env.local
+# allow committed examples (must come after .env rules)
+!.env.example
 !**/.env.example
 **/config.yaml
 !**/config.yaml.example
