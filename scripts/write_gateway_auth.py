@@ -1,4 +1,7 @@
-// nexa-gateway — reverse proxy + optional IAM token check (Go only).
+from pathlib import Path
+
+Path("E:/code/nexa/services/gateway/cmd/nexa-gateway/main.go").write_text(
+    r'''// nexa-gateway — reverse proxy + optional IAM token check (Go only).
 package main
 
 import (
@@ -258,3 +261,7 @@ func writeJSONStatus(w http.ResponseWriter, status int, v any) {
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
 }
+''',
+    encoding="utf-8",
+)
+print("gateway written")

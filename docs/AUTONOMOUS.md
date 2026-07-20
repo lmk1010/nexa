@@ -14,8 +14,8 @@ Running continuously against docs/GOAL.md
 - start-dev / stop-dev scripts
 
 ## Next
-1. Gateway auth middleware via IAM introspect
-2. Business/ERP/Finance file-backed stores
-3. Wire agent tools to nexa-go-apis explicitly
-4. Real DingTalk OpenAPI client behind same routes
-5. compose up smoke when Docker available
+1. Business/ERP/Finance file-backed stores
+2. Wire agent tools to nexa-go-apis explicitly
+3. Real DingTalk OpenAPI client behind same routes
+4. compose up smoke when Docker available
+5. Mobile app base URL -> gateway

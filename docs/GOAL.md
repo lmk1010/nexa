@@ -50,9 +50,10 @@
 - [x] 十大 Go 领域服务 skeleton（可 `/healthz`）
 - [x] GOAL / 能力矩阵 / 集成图文档
 
-### M1 — 统一入口与契约 ✅ partial
-- [x] gateway：反向代理路由到各服务（20 routes），透传 Authorization
-- [ ] `packages/nexa-common`：错误码、分页、鉴权上下文
+### M1 — 统一入口与契约 ✅
+- [x] gateway：反向代理路由到各服务（20 routes）
+- [x] gateway auth：IAM introspect 鉴权（login/agent/health 放行）
+- [x] `packages/nexa-common`：httpx + FileStore
 - [x] 可用 API：iam 登录/me/perms + hr 员工/部门 + bpm 待办/审批
 - [x] agent `.env.example` 指向 gateway；`curated/nexa-go-apis.json` 白名单
 
@@ -116,6 +117,7 @@
 | 2026-07-20 | gateway 反向代理；IAM/HR/BPM 可调用 demo API；agent 对接 gateway；smoke 通过 |
 | 2026-07-20 | business/erp/finance/im/op/ai demo API；start-dev/stop-dev；agent curated 全量 path |
 | 2026-07-20 | file-backed IAM/HR/BPM；钉钉 sync skeleton；Dockerfiles + compose；nexa-common httpx/store |
+| 2026-07-20 | gateway IAM introspect auth |
 
 ## 执行原则（无人值守）
 
