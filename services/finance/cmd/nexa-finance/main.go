@@ -1,4 +1,4 @@
-// nexa-finance — Finance (Go-only enterprise platform service).
+// nexa-finance — ledger / report query surface (Go).
 package main
 
 import (
@@ -13,62 +13,47 @@ import (
 	"time"
 )
 
-var version = "0.1.0-skeleton"
+var version = "0.2.0-m6-partial"
 
 type config struct {
 	Name string `json:"name"`
 	HTTP struct {
 		Addr string `json:"addr"`
 	} `json:"http"`
-	Log struct {
-		Level string `json:"level"`
-	} `json:"log"`
-	MySQL struct {
-		DSN string `json:"dsn"`
-	} `json:"mysql"`
 }
 
-func loadConfig(path string) config {
+func main() {
+	cfgPath := flag.String("config", "./configs/config.json", "config path")
+	flag.Parse()
 	cfg := config{Name: "nexa-finance"}
 	cfg.HTTP.Addr = ":48086"
-	cfg.Log.Level = "info"
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			log.Printf("config read: %v (using defaults)", err)
-		}
-		return cfg
-	}
-	if err := json.Unmarshal(raw, &cfg); err != nil {
-		log.Fatalf("config parse: %v", err)
+	if raw, err := os.ReadFile(*cfgPath); err == nil {
+		_ = json.Unmarshal(raw, &cfg)
 	}
 	if cfg.HTTP.Addr == "" {
 		cfg.HTTP.Addr = ":48086"
 	}
-	if cfg.Name == "" {
-		cfg.Name = "nexa-finance"
-	}
-	return cfg
-}
-
-func main() {
-	cfgPath := flag.String("config", "./configs/config.json", "config path (JSON)")
-	flag.Parse()
-	cfg := loadConfig(*cfgPath)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, map[string]any{"status": "UP", "service": cfg.Name, "version": version})
 	})
+	mux.HandleFunc("/v1/finance/summary/monthly", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]any{"code": 0, "data": map[string]any{
+			"month": time.Now().Format("2006-01"),
+			"income": 128000.0,
+			"expense": 76450.5,
+			"profit": 51549.5,
+		}})
+	})
+	mux.HandleFunc("/v1/finance/ledger/recent", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]any{"code": 0, "data": []map[string]any{
+			{"id": "L1", "title": "Office rent", "amount": -12000, "at": time.Now().Add(-48 * time.Hour).Format(time.RFC3339)},
+			{"id": "L2", "title": "Service revenue", "amount": 35000, "at": time.Now().Add(-24 * time.Hour).Format(time.RFC3339)},
+		}})
+	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, map[string]any{
-			"service":  cfg.Name,
-			"title":    "Finance",
-			"version":  version,
-			"status":   "skeleton",
-			"runtime":  "go",
-			"note":     "Go rewrite only; domain APIs module-by-module",
-		})
+		writeJSON(w, map[string]any{"service": cfg.Name, "version": version, "apis": []string{"/v1/finance/summary/monthly", "/v1/finance/ledger/recent"}})
 	})
 
 	srv := &http.Server{Addr: cfg.HTTP.Addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}

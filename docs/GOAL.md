@@ -70,15 +70,15 @@
 - [x] `/v1/bpm/tasks/todo` + `/v1/bpm/tasks/approve`
 - [ ] 持久化流程实例 / 完整状态机
 
-### M5 — Business + 数据
-- [ ] 待办 / 工作要求 / 日历
+### M5 — Business + 数据 ✅ demo
+- [x] 待办 / 工作要求 / 日历 / 接待 latest
 - [ ] data-center 与 agent 导出工具打通
 - [ ] cdc 表清单与 ADS 任务
 
-### M6 — ERP / Finance / IM / OP / AI
-- [ ] 按业务优先级逐域 API
-- [ ] op 对接运维监控页
-- [ ] ai 对接接待/ASR 配置
+### M6 — ERP / Finance / IM / OP / AI ✅ demo APIs
+- [x] erp/finance/im/op/ai 查询面 demo API
+- [ ] MySQL 持久化与真实对接
+- [ ] op 与 App 运维页联调
 
 ### M7 — 客户端与发布
 - [ ] mobile 配置切 nexa gateway
@@ -90,16 +90,16 @@
 | 域 | 服务 | Agent 能力示例 | 状态 |
 |----|------|----------------|------|
 | 对话 | agent | 自然语言查数/审批/人事 | NeoX 已迁入 |
-| 身份 | iam | 我是谁、权限、组织 | skeleton |
-| 审批 | bpm | 待办、通过、进度 | skeleton |
-| 人事 | hr | 花名册、考勤、入职 | skeleton + legacy 对照 |
-| 协同 | business | 待办、要求、接待 | skeleton |
+| 身份 | iam | 我是谁、权限、组织 | demo API |
+| 审批 | bpm | 待办、通过、进度 | demo API |
+| 人事 | hr | 花名册、考勤、入职 | demo API + legacy 对照 |
+| 协同 | business | 待办、要求、接待 | demo API |
 | 经营数据 | data-center + cdc | 导出、KPI、明细 | 导出/CDC 已有 |
-| 进销存 | erp | 库存/采购查询 | skeleton |
-| 财务 | finance | 报表/流水查询 | skeleton |
-| 消息 | im | 会话/通知 | skeleton |
-| 运维 | op | 健康、发布、审计 | skeleton |
-| 智能 | ai | 接待、ASR | skeleton |
+| 进销存 | erp | 库存/采购查询 | demo API |
+| 财务 | finance | 报表/流水查询 | demo API |
+| 消息 | im | 会话/通知 | demo API |
+| 运维 | op | 健康、发布、审计 | demo API |
+| 智能 | ai | 接待、ASR | demo API |
 | 钉钉 | hr + agent | 登录、同步、机器人 | 资产+legacy |
 
 ## 明确不做
@@ -114,6 +114,7 @@
 |------|------|
 | 2026-07-20 | 抽 data-center/cdc/钉钉/app/agent；方案 A；Go 领域 skeleton×10；本 GOAL |
 | 2026-07-20 | gateway 反向代理；IAM/HR/BPM 可调用 demo API；agent 对接 gateway；smoke 通过 |
+| 2026-07-20 | business/erp/finance/im/op/ai demo API；start-dev/stop-dev；agent curated 全量 path |
 
 ## 执行原则（无人值守）
 

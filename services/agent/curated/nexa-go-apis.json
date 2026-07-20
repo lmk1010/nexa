@@ -3,13 +3,125 @@
   "description": "Go-rewritten nexa domain APIs for enterprise assistant tools",
   "base": "http://127.0.0.1:48080",
   "endpoints": [
-    {"method": "GET", "path": "/v1/hr/employees", "summary": "List employees"},
-    {"method": "GET", "path": "/v1/hr/departments/tree", "summary": "Department tree"},
-    {"method": "GET", "path": "/v1/bpm/tasks/todo", "summary": "Approval todo list"},
-    {"method": "POST", "path": "/v1/bpm/tasks/approve", "summary": "Approve or reject task"},
-    {"method": "POST", "path": "/v1/iam/login", "summary": "Login"},
-    {"method": "GET", "path": "/v1/iam/me", "summary": "Current user"},
-    {"method": "GET", "path": "/v1/iam/permissions", "summary": "Current permissions"},
-    {"method": "GET", "path": "/v1/platform/services", "summary": "Gateway service map"}
+    {
+      "method": "GET",
+      "path": "/v1/hr/employees",
+      "summary": "List employees"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/hr/departments/tree",
+      "summary": "Department tree"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/bpm/tasks/todo",
+      "summary": "Approval todo list"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/bpm/tasks/approve",
+      "summary": "Approve or reject task"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/iam/login",
+      "summary": "Login"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/iam/me",
+      "summary": "Current user"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/iam/permissions",
+      "summary": "Current permissions"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/platform/services",
+      "summary": "Gateway service map"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/business/todos",
+      "summary": "Business todos"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/business/todos",
+      "summary": "Create todo"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/business/work-requirements",
+      "summary": "Work requirements"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/business/calendar/events",
+      "summary": "Calendar events"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/business/reception/latest",
+      "summary": "Latest reception"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/erp/stock/summary",
+      "summary": "Stock summary"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/erp/purchase/orders",
+      "summary": "Purchase orders"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/finance/summary/monthly",
+      "summary": "Monthly finance summary"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/finance/ledger/recent",
+      "summary": "Recent ledger"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/im/conversations",
+      "summary": "IM conversations"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/im/contacts",
+      "summary": "IM contacts"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/op/status",
+      "summary": "Ops status"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/op/audit/recent",
+      "summary": "Recent audit"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/ai/models",
+      "summary": "AI models"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/ai/reception/config",
+      "summary": "Reception config"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/ai/reception/records",
+      "summary": "Reception records"
+    }
   ]
 }

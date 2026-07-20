@@ -1,4 +1,4 @@
-// nexa-im — IM (Go-only enterprise platform service).
+// nexa-im — conversation / contacts surface (Go).
 package main
 
 import (
@@ -13,62 +13,45 @@ import (
 	"time"
 )
 
-var version = "0.1.0-skeleton"
+var version = "0.2.0-m6-partial"
 
 type config struct {
 	Name string `json:"name"`
 	HTTP struct {
 		Addr string `json:"addr"`
 	} `json:"http"`
-	Log struct {
-		Level string `json:"level"`
-	} `json:"log"`
-	MySQL struct {
-		DSN string `json:"dsn"`
-	} `json:"mysql"`
 }
 
-func loadConfig(path string) config {
+func main() {
+	cfgPath := flag.String("config", "./configs/config.json", "config path")
+	flag.Parse()
 	cfg := config{Name: "nexa-im"}
 	cfg.HTTP.Addr = ":48087"
-	cfg.Log.Level = "info"
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			log.Printf("config read: %v (using defaults)", err)
-		}
-		return cfg
-	}
-	if err := json.Unmarshal(raw, &cfg); err != nil {
-		log.Fatalf("config parse: %v", err)
+	if raw, err := os.ReadFile(*cfgPath); err == nil {
+		_ = json.Unmarshal(raw, &cfg)
 	}
 	if cfg.HTTP.Addr == "" {
 		cfg.HTTP.Addr = ":48087"
 	}
-	if cfg.Name == "" {
-		cfg.Name = "nexa-im"
-	}
-	return cfg
-}
-
-func main() {
-	cfgPath := flag.String("config", "./configs/config.json", "config path (JSON)")
-	flag.Parse()
-	cfg := loadConfig(*cfgPath)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, map[string]any{"status": "UP", "service": cfg.Name, "version": version})
 	})
+	mux.HandleFunc("/v1/im/conversations", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]any{"code": 0, "data": []map[string]any{
+			{"id": "c1", "title": "Ops group", "unread": 2, "updatedAt": time.Now().Add(-15 * time.Minute).Format(time.RFC3339)},
+			{"id": "c2", "title": "HR notice", "unread": 0, "updatedAt": time.Now().Add(-2 * time.Hour).Format(time.RFC3339)},
+		}})
+	})
+	mux.HandleFunc("/v1/im/contacts", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]any{"code": 0, "data": []map[string]any{
+			{"id": 1001, "name": "Zhang San", "dept": "R&D"},
+			{"id": 1002, "name": "Li Si", "dept": "Ops"},
+		}})
+	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, map[string]any{
-			"service":  cfg.Name,
-			"title":    "IM",
-			"version":  version,
-			"status":   "skeleton",
-			"runtime":  "go",
-			"note":     "Go rewrite only; domain APIs module-by-module",
-		})
+		writeJSON(w, map[string]any{"service": cfg.Name, "version": version, "apis": []string{"/v1/im/conversations", "/v1/im/contacts"}})
 	})
 
 	srv := &http.Server{Addr: cfg.HTTP.Addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
