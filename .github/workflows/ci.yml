@@ -1,0 +1,30 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  build-go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Build iam
+        run: cd services/iam && go build -o /tmp/nexa-iam ./cmd/nexa-iam
+      - name: Build core
+        run: cd services/core && go build -o /tmp/nexa-core ./cmd/nexa-core
+      - name: Smoke boot
+        run: |
+          mkdir -p /tmp/nexa-data/iam /tmp/nexa-data/core
+          echo '{"name":"nexa-iam","http":{"addr":":48081"},"dataDir":"/tmp/nexa-data/iam"}' > /tmp/iam.json
+          echo '{"name":"nexa-core","http":{"addr":":48080"},"dataDir":"/tmp/nexa-data/core","iamUrl":"http://127.0.0.1:48081","agentUrl":"http://127.0.0.1:48091","auth":{"enabled":true}}' > /tmp/core.json
+          /tmp/nexa-iam -config /tmp/iam.json &
+          sleep 1
+          /tmp/nexa-core -config /tmp/core.json &
+          sleep 1
+          curl -sf http://127.0.0.1:48080/healthz
+          curl -sf -X POST http://127.0.0.1:48080/v1/iam/login -H 'Content-Type: application/json' -d '{"username":"boss","password":"boss123"}' | head -c 120
+          kill %1 %2 || true

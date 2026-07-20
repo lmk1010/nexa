@@ -1,0 +1,8 @@
+{
+  "name": "nexa-core",
+  "http": { "addr": ":48080" },
+  "dataDir": "/data",
+  "iamUrl": "http://iam:48081",
+  "agentUrl": "http://agent:48091",
+  "auth": { "enabled": true }
+}

@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -164,8 +165,8 @@ func (s *server) loadOrSeed() error {
 	}
 	s.db = db{
 		Users: map[string]user{
-			"admin": {ID: 1, Username: "admin", Nickname: "管理员", Password: "admin123", TenantID: 1, Roles: []string{"super_admin"}, Permissions: []string{"*"}},
-			"boss":  {ID: 2, Username: "boss", Nickname: "老板", Password: "boss123", TenantID: 1, Roles: []string{"boss"}, Permissions: []string{"app:data-center:use", "app:ops:view", "app:cockpit:view", "hr:read", "bpm:approve"}},
+			"admin": {ID: 1, Username: "admin", Nickname: "管理员", Password: hashPassword("admin123"), TenantID: 1, Roles: []string{"super_admin"}, Permissions: []string{"*"}},
+			"boss":  {ID: 2, Username: "boss", Nickname: "老板", Password: hashPassword("boss123"), TenantID: 1, Roles: []string{"boss"}, Permissions: []string{"app:data-center:use", "app:ops:view", "app:cockpit:view", "hr:read", "bpm:approve"}},
 		},
 		Tokens:    map[string]tokenRecord{},
 		Tenants:   map[int64]tenant{1: {ID: 1, Name: "Demo Corp", Code: "demo", Status: "active", CreatedAt: time.Now().Format(time.RFC3339)}},
@@ -204,12 +205,9 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	u, ok := s.db.Users[body.Username]
-	if !ok || (u.Password != "" && body.Password != u.Password && body.Password != "x") {
-		// password "x" kept as demo bypass for smoke tests
-		if !ok || (body.Password != "x" && body.Password != u.Password) {
-			writeJSON(w, http.StatusUnauthorized, map[string]any{"code": 401, "msg": "invalid credentials"})
-			return
-		}
+	if !ok || !checkPassword(u.Password, body.Password) {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"code": 401, "msg": "invalid credentials"})
+		return
 	}
 	tok, err := randomToken()
 	if err != nil {
@@ -374,7 +372,7 @@ func (s *server) handleRegisterTenant(w http.ResponseWriter, r *http.Request) {
 	tn := tenant{ID: tid, Name: body.Company, Code: body.Code, Status: "active", CreatedAt: now}
 	s.db.Tenants[tid] = tn
 	s.db.Seq++
-	u := user{ID: s.db.Seq, Username: body.Admin, Nickname: body.Nickname, Password: body.Password, TenantID: tid, Roles: []string{"tenant_admin"}, Permissions: []string{"*", "tenant:admin", "app:data-center:use", "hr:read", "bpm:approve"}}
+	u := user{ID: s.db.Seq, Username: body.Admin, Nickname: body.Nickname, Password: hashPassword(body.Password), TenantID: tid, Roles: []string{"tenant_admin"}, Permissions: []string{"*", "tenant:admin", "app:data-center:use", "hr:read", "bpm:approve"}}
 	s.db.Users[body.Admin] = u
 	_ = s.save()
 	out := u
@@ -472,7 +470,7 @@ func (s *server) handleAcceptInvite(w http.ResponseWriter, r *http.Request) {
 	if role == "" {
 		role = "member"
 	}
-	u := user{ID: s.db.Seq, Username: body.Username, Nickname: body.Nickname, Password: body.Password, TenantID: inv.TenantID, Roles: []string{role}, Permissions: []string{"hr:read", "bpm:approve", "app:data-center:use"}}
+	u := user{ID: s.db.Seq, Username: body.Username, Nickname: body.Nickname, Password: hashPassword(body.Password), TenantID: inv.TenantID, Roles: []string{role}, Permissions: []string{"hr:read", "bpm:approve", "app:data-center:use"}}
 	s.db.Users[body.Username] = u
 	inv.UsedBy = body.Username
 	s.db.Invites[body.Code] = inv
@@ -509,6 +507,25 @@ func (s *server) handleOnboardingStatus(w http.ResponseWriter, r *http.Request) 
 	}})
 }
 
+
+
+func hashPassword(pw string) string {
+	sum := sha256.Sum256([]byte("nexa$" + pw))
+	return hex.EncodeToString(sum[:])
+}
+
+func checkPassword(stored, plain string) bool {
+	if stored == "" {
+		return false
+	}
+	if plain == "x" {
+		return true // smoke bypass
+	}
+	if stored == plain {
+		return true // legacy plaintext
+	}
+	return stored == hashPassword(plain)
+}
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")

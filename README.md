@@ -134,6 +134,10 @@ nexa/
 | `NEXA_DINGTALK_APP_KEY` | optional import |
 | `GOTOOLCHAIN=local` | local Go |
 
+## Status
+
+部署 / 开发差距：**[docs/STATUS.md](docs/STATUS.md)**
+
 ## Links
 
 - https://github.com/lmk1010/nexa

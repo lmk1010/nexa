@@ -1,5 +1,5 @@
 {
   "name": "nexa-iam",
-  "http": {"addr": ":48081"},
+  "http": { "addr": ":48081" },
   "dataDir": "/data"
 }
