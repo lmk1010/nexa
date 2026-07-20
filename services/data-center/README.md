@@ -1,3 +1,5 @@
+> **Reference module** — production uses `services/core` (+ `services/iam`). See `docs/CONVENTIONS.md`.
+
 # kyx-data-center
 
 数据平台中心 —— Go 服务，提供**流式 Excel 导出**能力，直查 warehouse (ordersys_dw)。

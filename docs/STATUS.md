@@ -1,5 +1,7 @@
 # nexa 现状：部署 vs 开发
 
+规范见 [CONVENTIONS.md](CONVENTIONS.md) · 变更见 [CHANGELOG.md](../CHANGELOG.md)
+
 > 产品：可接入的企业钉钉本体（见 PRODUCT.md）
 > 进程：core(:48080) + iam(:48081) + 可选 agent/cdc
 

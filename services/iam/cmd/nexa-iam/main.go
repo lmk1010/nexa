@@ -49,13 +49,13 @@ type invite struct {
 }
 
 type user struct {
-	ID           int64    `json:"id"`
-	Username     string   `json:"username"`
-	Nickname     string   `json:"nickname"`
-	Password     string   `json:"password,omitempty"`
-	TenantID     int64    `json:"tenantId"`
-	Roles        []string `json:"roles"`
-	Permissions  []string `json:"permissions"`
+	ID          int64    `json:"id"`
+	Username    string   `json:"username"`
+	Nickname    string   `json:"nickname"`
+	Password    string   `json:"password,omitempty"`
+	TenantID    int64    `json:"tenantId"`
+	Roles       []string `json:"roles"`
+	Permissions []string `json:"permissions"`
 }
 
 type db struct {
@@ -73,9 +73,9 @@ type tokenRecord struct {
 }
 
 type server struct {
-	cfg config
-	mu  sync.Mutex
-	db  db
+	cfg  config
+	mu   sync.Mutex
+	db   db
 	path string
 }
 
@@ -324,7 +324,6 @@ func randomToken() (string, error) {
 	return "nexa_" + hex.EncodeToString(b), nil
 }
 
-
 func (s *server) handleRegisterTenant(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"code": 405, "msg": "POST only"})
@@ -506,8 +505,6 @@ func (s *server) handleOnboardingStatus(w http.ResponseWriter, r *http.Request) 
 		},
 	}})
 }
-
-
 
 func hashPassword(pw string) string {
 	sum := sha256.Sum256([]byte("nexa$" + pw))

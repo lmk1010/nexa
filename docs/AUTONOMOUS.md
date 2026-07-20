@@ -3,8 +3,11 @@
 ## Rule
 Keep building and pushing. Do not wait for user confirmation.
 
-## Product
-nexa = joinable enterprise DingTalk body. Not OA-dingtalk adapter.
+## Standards
+- Production path: `services/core` + `services/iam` (+ optional agent/cdc)
+- Docs: PRODUCT / GOAL / STATUS / CONVENTIONS / CHANGELOG
+- Always `go build` core+iam and prefer `scripts/smoke.sh`
 
-## Pushed continuously to
-https://github.com/lmk1010/nexa
+## Product
+nexa = joinable enterprise DingTalk product body.
+DingTalk OpenAPI / business DB = optional connectors only.

@@ -286,7 +286,9 @@ func registerAI(mux *http.ServeMux, s *store) {
 		writeJSON(w, 200, map[string]any{"code": 0, "data": skills, "total": len(skills)})
 	})
 	jsonAlias(mux, []string{"/v1/ai/intent/route"}, func(w http.ResponseWriter, r *http.Request) {
-		var body struct{ Text string `json:"text"` }
+		var body struct {
+			Text string `json:"text"`
+		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		matches := []map[string]any{}
 		low := strings.ToLower(body.Text)
@@ -312,9 +314,9 @@ func registerAI(mux *http.ServeMux, s *store) {
 	})
 	jsonAlias(mux, []string{"/v1/ai/assistant/bootstrap"}, func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"code": 0, "data": map[string]any{
-			"assistant": map[string]any{"name": "Nexa", "mission": "可接入的企业钉钉 · 协作本体 + Agent"},
+			"assistant":   map[string]any{"name": "Nexa", "mission": "可接入的企业钉钉 · 协作本体 + Agent"},
 			"skillsTotal": len(skills),
-			"processes": []string{"nexa-core", "nexa-iam", "nexa-agent"},
+			"processes":   []string{"nexa-core", "nexa-iam", "nexa-agent"},
 		}})
 	})
 	jsonAlias(mux, []string{"/v1/ai/sense"}, func(w http.ResponseWriter, r *http.Request) {

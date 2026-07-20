@@ -12,8 +12,10 @@
 <p align="center">
   <a href="docs/PRODUCT.md">Product</a> ·
   <a href="docs/GOAL.md">Roadmap</a> ·
+  <a href="docs/STATUS.md">Status</a> ·
   <a href="docs/api/README.md">API</a> ·
-  <a href="deploy/README.md">Deploy</a>
+  <a href="deploy/README.md">Deploy</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
 ---
@@ -136,7 +138,8 @@ nexa/
 
 ## Status
 
-部署 / 开发差距：**[docs/STATUS.md](docs/STATUS.md)**
+部署 / 开发差距：**[docs/STATUS.md](docs/STATUS.md)**  
+仓库规范：**[docs/CONVENTIONS.md](docs/CONVENTIONS.md)** · [CHANGELOG](CHANGELOG.md)
 
 ## Links
 
@@ -146,4 +149,4 @@ nexa/
 
 ## License
 
-TBD (CDC MIT).
+[MIT](LICENSE)

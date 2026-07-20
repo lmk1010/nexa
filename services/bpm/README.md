@@ -1,3 +1,5 @@
+> **Reference module** — production uses `services/core` (+ `services/iam`). See `docs/CONVENTIONS.md`.
+
 # nexa-bpm
 
 **BPM** — Go-only service for the nexa enterprise assistant platform.

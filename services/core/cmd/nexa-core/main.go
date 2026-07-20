@@ -25,14 +25,14 @@ import (
 var version = "1.0.0-core"
 
 type config struct {
-	Name   string `json:"name"`
-	HTTP   struct {
+	Name string `json:"name"`
+	HTTP struct {
 		Addr string `json:"addr"`
 	} `json:"http"`
-	DataDir string `json:"dataDir"`
-	IAMURL  string `json:"iamUrl"`
+	DataDir  string `json:"dataDir"`
+	IAMURL   string `json:"iamUrl"`
 	AgentURL string `json:"agentUrl"`
-	Auth    struct {
+	Auth     struct {
 		Enabled bool `json:"enabled"`
 	} `json:"auth"`
 }
@@ -276,20 +276,20 @@ type store struct {
 }
 
 type coreDB struct {
-	Employees   []employee   `json:"employees"`
-	Departments []department `json:"departments"`
-	Tasks       []task       `json:"tasks"`
-	Todos       []todo       `json:"todos"`
-	Stock       []stockItem  `json:"stock"`
-	Purchases   []purchase   `json:"purchases"`
-	Ledger      []ledger     `json:"ledger"`
-	Conversations []conv     `json:"conversations"`
-	Messages    []msg        `json:"messages"`
-	Sense       []senseEv    `json:"sense"`
-	Rules       []autoRule   `json:"rules"`
-	ExportJobs  []exportJob  `json:"exportJobs"`
-	SyncJobs    []syncJob    `json:"syncJobs"`
-	Seq         int64        `json:"seq"`
+	Employees     []employee   `json:"employees"`
+	Departments   []department `json:"departments"`
+	Tasks         []task       `json:"tasks"`
+	Todos         []todo       `json:"todos"`
+	Stock         []stockItem  `json:"stock"`
+	Purchases     []purchase   `json:"purchases"`
+	Ledger        []ledger     `json:"ledger"`
+	Conversations []conv       `json:"conversations"`
+	Messages      []msg        `json:"messages"`
+	Sense         []senseEv    `json:"sense"`
+	Rules         []autoRule   `json:"rules"`
+	ExportJobs    []exportJob  `json:"exportJobs"`
+	SyncJobs      []syncJob    `json:"syncJobs"`
+	Seq           int64        `json:"seq"`
 }
 
 func newStore(dir string) *store { return &store{dir: dir} }
@@ -304,24 +304,24 @@ func (s *store) loadOrSeed() {
 	}
 	now := time.Now()
 	s.db = coreDB{
-		Departments: []department{{ID:1, Name:"HQ", ParentID:0}, {ID:10, Name:"R&D", ParentID:1}, {ID:20, Name:"Ops", ParentID:1}, {ID:30, Name:"HR", ParentID:1}},
+		Departments: []department{{ID: 1, Name: "HQ", ParentID: 0}, {ID: 10, Name: "R&D", ParentID: 1}, {ID: 20, Name: "Ops", ParentID: 1}, {ID: 30, Name: "HR", ParentID: 1}},
 		Employees: []employee{
-			{ID:1001, TenantID:1, Name:"Zhang San", Mobile:"13800000001", DeptID:10, DeptName:"R&D", JobNo:"NEXA001", Status:"active", UpdatedAt:now.Format(time.RFC3339)},
-			{ID:1002, TenantID:1, Name:"Li Si", Mobile:"13800000002", DeptID:20, DeptName:"Ops", JobNo:"NEXA002", Status:"active", UpdatedAt:now.Format(time.RFC3339)},
+			{ID: 1001, TenantID: 1, Name: "Zhang San", Mobile: "13800000001", DeptID: 10, DeptName: "R&D", JobNo: "NEXA001", Status: "active", UpdatedAt: now.Format(time.RFC3339)},
+			{ID: 1002, TenantID: 1, Name: "Li Si", Mobile: "13800000002", DeptID: 20, DeptName: "Ops", JobNo: "NEXA002", Status: "active", UpdatedAt: now.Format(time.RFC3339)},
 		},
 		Tasks: []task{
-			{ID:"t1", TenantID:1, Title:"Leave request", ProcessName:"leave", Starter:"Zhang San", Assignee:"boss", Status:"pending", CreatedAt:now.Add(-2*time.Hour).Format(time.RFC3339), UpdatedAt:now.Add(-2*time.Hour).Format(time.RFC3339)},
+			{ID: "t1", TenantID: 1, Title: "Leave request", ProcessName: "leave", Starter: "Zhang San", Assignee: "boss", Status: "pending", CreatedAt: now.Add(-2 * time.Hour).Format(time.RFC3339), UpdatedAt: now.Add(-2 * time.Hour).Format(time.RFC3339)},
 		},
-		Todos: []todo{{ID:"td1", TenantID:1, Title:"Review weekly report", Assignee:"boss", Status:"open", DueAt:now.Add(24*time.Hour).Format(time.RFC3339), CreatedAt:now.Format(time.RFC3339)}},
-		Stock: []stockItem{{SKU:"SKU-001", Name:"Widget A", Qty:120, Warehouse:"WH-East"}, {SKU:"SKU-002", Name:"Widget B", Qty:45, Warehouse:"WH-East"}},
-		Purchases: []purchase{{ID:"PO-1", Vendor:"Supplier X", Amount:3200.5, Status:"open", CreatedAt:now.Add(-48*time.Hour).Format(time.RFC3339)}},
-		Ledger: []ledger{{ID:"L1", Title:"Service revenue", Amount:35000, At:now.Add(-24*time.Hour).Format(time.RFC3339)}},
-		Conversations: []conv{{ID:"c1", Title:"Ops group", Unread:0, UpdatedAt:now.Format(time.RFC3339)}},
-		Messages: []msg{},
-		Sense: []senseEv{},
+		Todos:         []todo{{ID: "td1", TenantID: 1, Title: "Review weekly report", Assignee: "boss", Status: "open", DueAt: now.Add(24 * time.Hour).Format(time.RFC3339), CreatedAt: now.Format(time.RFC3339)}},
+		Stock:         []stockItem{{SKU: "SKU-001", Name: "Widget A", Qty: 120, Warehouse: "WH-East"}, {SKU: "SKU-002", Name: "Widget B", Qty: 45, Warehouse: "WH-East"}},
+		Purchases:     []purchase{{ID: "PO-1", Vendor: "Supplier X", Amount: 3200.5, Status: "open", CreatedAt: now.Add(-48 * time.Hour).Format(time.RFC3339)}},
+		Ledger:        []ledger{{ID: "L1", Title: "Service revenue", Amount: 35000, At: now.Add(-24 * time.Hour).Format(time.RFC3339)}},
+		Conversations: []conv{{ID: "c1", Title: "Ops group", Unread: 0, UpdatedAt: now.Format(time.RFC3339)}},
+		Messages:      []msg{},
+		Sense:         []senseEv{},
 		Rules: []autoRule{
-			{ID:"rule_bpm", Name:"审批超时", Enabled:true, SenseType:"bpm.task.overdue", Actions:[]string{"notify:assignee"}},
-			{ID:"rule_join", Name:"入职待办", Enabled:true, SenseType:"hr.employee.joined", Actions:[]string{"biz.todo.create"}},
+			{ID: "rule_bpm", Name: "审批超时", Enabled: true, SenseType: "bpm.task.overdue", Actions: []string{"notify:assignee"}},
+			{ID: "rule_join", Name: "入职待办", Enabled: true, SenseType: "hr.employee.joined", Actions: []string{"biz.todo.create"}},
 		},
 		Seq: 1002,
 	}
@@ -371,8 +371,8 @@ type task struct {
 	UpdatedAt   string `json:"updatedAt"`
 }
 type todo struct {
-	ID string `json:"id"`
-	TenantID int64 `json:"tenantId,omitempty"`
+	ID                                        string `json:"id"`
+	TenantID                                  int64  `json:"tenantId,omitempty"`
 	Title, Assignee, Status, DueAt, CreatedAt string
 }
 type stockItem struct {
@@ -403,9 +403,9 @@ type conv struct {
 type msg struct{ ID, ConversationID, From, Text, At string }
 type senseEv struct {
 	ID, Type, Source, Severity, Message, At string
-	Handled bool
-	Actions []string
-	Payload map[string]any
+	Handled                                 bool
+	Actions                                 []string
+	Payload                                 map[string]any
 }
 type autoRule struct {
 	ID        string
@@ -419,7 +419,7 @@ type exportJob struct {
 }
 type syncJob struct {
 	ID, Type, Status, Message, StartedAt, FinishedAt string
-	Stats map[string]int
+	Stats                                            map[string]int
 }
 
 func jsonAlias(mux *http.ServeMux, paths []string, h http.HandlerFunc) {

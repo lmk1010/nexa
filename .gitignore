@@ -8,19 +8,22 @@ desktop.ini
 .vscode/
 *.iml
 *.swp
+*~
 
 # Secrets / local config
 .env
 **/.env
 *.env.local
 **/.env.local
-# allow committed examples (must come after .env rules)
 !.env.example
 !**/.env.example
 **/config.yaml
 !**/config.yaml.example
 !**/configs/config.example.yaml
 **/configs/config.yaml
+**/configs/config.json
+!**/configs/config.example.json
+!**/configs/config.docker.json
 *.pem
 *.key
 credentials*.json
@@ -32,22 +35,34 @@ credentials*.json
 *.exe
 *.test
 *.out
+**/coverage.out
+
+# Runtime data (local)
+data/
 **/data/
+!**/configs/**
+.run/
+exports/
 **/exports/
 
-# Node / frontend residual
+# Node
 node_modules/
-dist/
 .pnpm-store/
+npm-debug.log*
+yarn-error.log*
 
-# Flutter residual
+# Flutter
 .dart_tool/
 .packages
 build/
 *.apk
 *.ipa
+**/android/.gradle/
+**/android/local.properties
+**/ios/Pods/
+**/ios/.symlinks/
 
-# Logs
+# Logs / crash
 *.log
 hs_err_pid*
 replay_pid*
@@ -55,9 +70,6 @@ replay_pid*
 # Git
 *.orig
 
-# local run
-.run/
-
-
-data/
-
+# Python cache from scripts
+**/__pycache__/
+*.pyc
