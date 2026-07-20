@@ -3,6 +3,7 @@ logs/
 coverage/
 .env
 .env.*
+!.env.example
 .npmrc
 npm-debug.log*
 
