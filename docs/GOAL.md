@@ -153,3 +153,4 @@
 5. 阻塞（私有 npm、外网 proxy）记入 `docs/BLOCKERS.md`，换路径继续，不空等。
 
 | 2026-07-20 | PRODUCT.md 定位纠正：nexa=可接入企业钉钉本体；租户注册/邀请 API |
+| 2026-07-20 | nexa-core 合并业务端口；logo+GitHub README；start-dev 仅 iam+core |

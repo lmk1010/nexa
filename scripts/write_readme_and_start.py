@@ -1,4 +1,60 @@
-<p align="center">
+from pathlib import Path
+
+Path("E:/code/nexa/scripts/start-dev.sh").write_text(
+    """#!/usr/bin/env bash
+# Minimal nexa: core (all business) + iam (auth). Agent optional.
+set -euo pipefail
+export PATH=\"/e/tools/go/bin:${PATH:-}\"
+export GOTOOLCHAIN=local
+ROOT=\"$(cd \"$(dirname \"$0\")/..\" && pwd)\"
+BIN=\"${NEXA_BIN_DIR:-/tmp}\"
+LOGDIR=\"${NEXA_LOG_DIR:-$ROOT/.run/logs}\"
+PIDDIR=\"${NEXA_PID_DIR:-$ROOT/.run/pids}\"
+mkdir -p \"$LOGDIR\" \"$PIDDIR\" \"$ROOT/.run/data/core\" \"$ROOT/.run/data/iam\" \"$ROOT/.run/configs\"
+
+echo \"[build] iam\"
+(cd \"$ROOT/services/iam\" && go build -o \"$BIN/nexa-iam.exe\" ./cmd/nexa-iam)
+echo \"[build] core\"
+(cd \"$ROOT/services/core\" && go build -o \"$BIN/nexa-core.exe\" ./cmd/nexa-core)
+
+cat > \"$ROOT/.run/configs/iam.json\" <<JSON
+{\"name\":\"nexa-iam\",\"http\":{\"addr\":\":48081\"},\"dataDir\":\"$ROOT/.run/data/iam\"}
+JSON
+cat > \"$ROOT/.run/configs/core.json\" <<JSON
+{\"name\":\"nexa-core\",\"http\":{\"addr\":\":48080\"},\"dataDir\":\"$ROOT/.run/data/core\",\"iamUrl\":\"http://127.0.0.1:48081\",\"agentUrl\":\"http://127.0.0.1:48091\",\"auth\":{\"enabled\":true}}
+JSON
+
+start_one() {
+  local name=\"$1\" bin=\"$2\" conf=\"$3\"
+  local pidfile=\"$PIDDIR/$name.pid\"
+  if [[ -f \"$pidfile\" ]] && kill -0 \"$(cat \"$pidfile\")\" 2>/dev/null; then
+    echo \"[skip] $name running\"
+    return
+  fi
+  echo \"[start] $name\"
+  nohup \"$bin\" -config \"$conf\" >\"$LOGDIR/$name.log\" 2>&1 &
+  echo $! >\"$pidfile\"
+}
+
+start_one iam \"$BIN/nexa-iam.exe\" \"$ROOT/.run/configs/iam.json\"
+sleep 0.3
+start_one core \"$BIN/nexa-core.exe\" \"$ROOT/.run/configs/core.json\"
+sleep 0.8
+echo \"[health]\"
+for port in 48081 48080; do
+  code=$(curl -s -o /dev/null -w \"%{http_code}\" \"http://127.0.0.1:$port/healthz\" || true)
+  echo \"  :$port -> $code\"
+done
+echo \"processes: iam:48081 + core:48080 (all business merged)\"
+echo \"optional agent: cd services/agent && AGENT_USE_MOCK=true npm run dev\"
+echo \"stop: $ROOT/scripts/stop-dev.sh\"
+""",
+    encoding="utf-8",
+    newline="\n",
+)
+
+Path("E:/code/nexa/README.md").write_text(
+    """<p align="center">
   <img src="assets/logo.svg" width="128" height="128" alt="nexa logo"/>
 </p>
 
@@ -71,12 +127,12 @@ export GOTOOLCHAIN=local
 ### Open a company
 
 ```bash
-curl -s -X POST http://127.0.0.1:48080/v1/iam/tenants/register \
-  -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:48080/v1/iam/tenants/register \\
+  -H "Content-Type: application/json" \\
   -d '{"company":"Acme","adminUsername":"acme_admin","password":"pass123"}'
 
-curl -s -X POST http://127.0.0.1:48080/v1/iam/login \
-  -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:48080/v1/iam/login \\
+  -H "Content-Type: application/json" \\
   -d '{"username":"acme_admin","password":"pass123"}'
 ```
 
@@ -143,3 +199,26 @@ nexa/
 ## License
 
 TBD (CDC MIT).
+""",
+    encoding="utf-8",
+)
+
+g = Path("E:/code/nexa/docs/GOAL.md")
+gt = g.read_text(encoding="utf-8")
+if "nexa-core 合并业务" not in gt:
+    g.write_text(
+        gt.rstrip()
+        + "\n| 2026-07-20 | nexa-core 合并业务端口；logo+GitHub README；start-dev 仅 iam+core |\n",
+        encoding="utf-8",
+    )
+
+p = Path("E:/code/nexa/docs/PRODUCT.md")
+pt = p.read_text(encoding="utf-8")
+if "nexa-core" not in pt:
+    p.write_text(
+        pt
+        + "\n## 部署形态（省资源）\n\n- **nexa-core** 单端口承载全部业务域 + 网关\n- **nexa-iam** 独立认证/租户\n- **nexa-agent** 独立对话\n",
+        encoding="utf-8",
+    )
+
+print("files written")

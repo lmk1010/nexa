@@ -1,81 +1,47 @@
 #!/usr/bin/env bash
-# Start core nexa Go services for local demo (Windows Git Bash / Linux).
+# Minimal nexa: core (all business) + iam (auth). Agent optional.
 set -euo pipefail
 export PATH="/e/tools/go/bin:${PATH:-}"
+export GOTOOLCHAIN=local
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN="${NEXA_BIN_DIR:-/tmp}"
 LOGDIR="${NEXA_LOG_DIR:-$ROOT/.run/logs}"
 PIDDIR="${NEXA_PID_DIR:-$ROOT/.run/pids}"
-mkdir -p "$LOGDIR" "$PIDDIR"
+mkdir -p "$LOGDIR" "$PIDDIR" "$ROOT/.run/data/core" "$ROOT/.run/data/iam" "$ROOT/.run/configs"
 
-build() {
-  local svc="$1"
-  echo "[build] $svc"
-  (cd "$ROOT/services/$svc" && go build -o "$BIN/nexa-$svc.exe" "./cmd/nexa-$svc")
-}
+echo "[build] iam"
+(cd "$ROOT/services/iam" && go build -o "$BIN/nexa-iam.exe" ./cmd/nexa-iam)
+echo "[build] core"
+(cd "$ROOT/services/core" && go build -o "$BIN/nexa-core.exe" ./cmd/nexa-core)
+
+cat > "$ROOT/.run/configs/iam.json" <<JSON
+{"name":"nexa-iam","http":{"addr":":48081"},"dataDir":"$ROOT/.run/data/iam"}
+JSON
+cat > "$ROOT/.run/configs/core.json" <<JSON
+{"name":"nexa-core","http":{"addr":":48080"},"dataDir":"$ROOT/.run/data/core","iamUrl":"http://127.0.0.1:48081","agentUrl":"http://127.0.0.1:48091","auth":{"enabled":true}}
+JSON
 
 start_one() {
-  local svc="$1"
-  local conf="$ROOT/services/$svc/configs/config.example.json"
-  if [[ -f "$ROOT/.run/configs/$svc.json" ]]; then conf="$ROOT/.run/configs/$svc.json"; fi
-  local pidfile="$PIDDIR/$svc.pid"
+  local name="$1" bin="$2" conf="$3"
+  local pidfile="$PIDDIR/$name.pid"
   if [[ -f "$pidfile" ]] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
-    echo "[skip] $svc already running pid=$(cat "$pidfile")"
+    echo "[skip] $name running"
     return
   fi
-  if [[ ! -x "$BIN/nexa-$svc.exe" && ! -f "$BIN/nexa-$svc.exe" ]]; then
-    build "$svc"
-  fi
-  echo "[start] $svc"
-  if [[ -f "$conf" ]]; then
-    nohup "$BIN/nexa-$svc.exe" -config "$conf" >"$LOGDIR/$svc.log" 2>&1 &
-  else
-    nohup "$BIN/nexa-$svc.exe" >"$LOGDIR/$svc.log" 2>&1 &
-  fi
+  echo "[start] $name"
+  nohup "$bin" -config "$conf" >"$LOGDIR/$name.log" 2>&1 &
   echo $! >"$pidfile"
 }
 
-
-# file-backed configs for core services
-mkdir -p "$ROOT/.run/data/iam" "$ROOT/.run/data/hr" "$ROOT/.run/data/bpm" "$ROOT/.run/configs"
-for svc_port in "iam:48081" "bpm:48082" "hr:48083" "business:48084" "erp:48085" "finance:48086" "im:48087" "op:48088" "ai:48089"; do
-  svc="${svc_port%%:*}"
-  port="${svc_port##*:}"
-  mkdir -p "$ROOT/.run/data/$svc"
-  cat > "$ROOT/.run/configs/$svc.json" <<JSON
-{"name":"nexa-$svc","http":{"addr":":$port"},"dataDir":"$ROOT/.run/data/$svc"}
-JSON
-done
-
-SERVICES=(iam bpm hr business erp finance im op ai gateway)
-
-for s in "${SERVICES[@]}"; do
-  build "$s"
-done
-
-for s in "${SERVICES[@]}"; do
-  start_one "$s"
-done
-
-sleep 1
+start_one iam "$BIN/nexa-iam.exe" "$ROOT/.run/configs/iam.json"
+sleep 0.3
+start_one core "$BIN/nexa-core.exe" "$ROOT/.run/configs/core.json"
+sleep 0.8
 echo "[health]"
-for port in 48081 48082 48083 48084 48085 48086 48087 48088 48089 48080; do
+for port in 48081 48080; do
   code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$port/healthz" || true)
   echo "  :$port -> $code"
 done
-echo "logs: $LOGDIR"
+echo "processes: iam:48081 + core:48080 (all business merged)"
+echo "optional agent: cd services/agent && AGENT_USE_MOCK=true npm run dev"
 echo "stop: $ROOT/scripts/stop-dev.sh"
-
-
-# data-center lite (stdlib export surface for local AI/agent)
-echo "[build] data-center lite"
-(cd "$ROOT/services/data-center" && go build -o "$BIN/nexa-dc-lite.exe" ./cmd/nexa-dc-lite)
-mkdir -p "$ROOT/.run/data/data-center"
-cat > "$ROOT/.run/configs/data-center.json" <<JSON
-{"name":"nexa-data-center","http":{"addr":":48092"},"templatesDir":"$ROOT/services/data-center/templates","dataDir":"$ROOT/.run/data/data-center"}
-JSON
-if [[ ! -f "$PIDDIR/data-center.pid" ]] || ! kill -0 "$(cat "$PIDDIR/data-center.pid" 2>/dev/null)" 2>/dev/null; then
-  nohup "$BIN/nexa-dc-lite.exe" -config "$ROOT/.run/configs/data-center.json" >"$LOGDIR/data-center.log" 2>&1 &
-  echo $! > "$PIDDIR/data-center.pid"
-  echo "[start] data-center lite"
-fi
