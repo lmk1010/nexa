@@ -2,53 +2,50 @@
 
 ## 定位
 
-**开源通用**企业协作与数据平台：钉钉 Agent + 掌上企业 App + 后端业务（组织人事、审批协同、数据中心、运维分析等），能力覆盖接近传统 OA。
+开源通用企业协作与数据平台：钉钉 Agent + 掌上企业 App + 后端业务（组织人事、审批协同、数据中心、运维分析等）。
 
-实现语言：**Go**（Agent / 业务 API / 数据中心 / CDC）、**Flutter**（掌上 App）。**不使用 Java 作为运行时**；`legacy/` 仅保留旧实现对照。
+## 方案 A（已采纳）
 
-## 子系统
+| 子系统 | 职责 | 运行时 | 状态 |
+|--------|------|--------|------|
+| `services/agent` | 钉钉/企业对话：NeoX loop + tools | **Node + `@mk-co/neox-sdk`** | 主路径 |
+| `services/data-center` | 模板导出、任务队列、XLSX | **Go** | 已迁入 |
+| `services/cdc-mysql` | binlog → warehouse ODS | **Go** | 与独立仓同步 |
+| `integrations/dingtalk` | 登录/同步产品资产 | SQL + 前端参考；同步 Go 演进 | 资产已抽 |
+| `apps/mobile` | 掌上企业 | Flutter | 完整工程 |
 
-| 子系统 | 职责 | 语言 | 状态 |
-|--------|------|------|------|
-| `services/agent` | 钉钉/企业 Agent：会话、工具、权限、取数 | Go | 目录已建；参考 `legacy/agent-node` |
-| `services/data-center` | 模板化明细导出、任务队列、XLSX | Go | 已从 ltoa 迁入可运行服务 |
-| `services/cdc-mysql` | MySQL binlog → warehouse ODS | Go | 可运行骨架；独立仓 `nexa-cdc-mysql` |
-| `integrations/dingtalk` | 登录、同步、通知（产品能力 + SQL/前端参考） | Go 目标 | SQL/前端已抽出；Java 在 `legacy/dingtalk-java` |
-| `apps/mobile` | 掌上企业：数据中心 / 运维 / 驾驶舱 | Flutter | 页面与 service 已抽出 |
+**融合**：Agent 与 Go 服务通过 **HTTP tools** 集成，不共享进程、不强行 Go 化 NeoX。
 
 ## 数据流
 
 ```
-业务 MySQL（ordersys 等）
-        │ ROW binlog（只读）
-        ▼
-  cdc-mysql  ──位点──► store
-        │
-        ▼
- warehouse (ODS 明细 → ADS 预聚合)
-        ▲
-   ┌────┴────┬────────────┐
-   │         │            │
-data-center  agent     BI 只读
-   App导出   对话取数   Metabase 等
+业务 MySQL
+    │ ROW binlog
+    ▼
+cdc-mysql (Go)
+    ▼
+warehouse (ODS → ADS)
+    ▲
+    │ RO / 导出任务
+agent (Node/NeoX) ──► data-center (Go)
+    │
+    └──► OA/ordersys 只读 API（网关）
 ```
 
-## 产品约束
+## 约束
 
-1. CDC **只读** 源库 binlog；热路径不对业务表 SELECT（全量 backfill 除外）。
-2. warehouse 对业务账号默认 **只读**；写权限仅 cdc sink 与 ADS job。
-3. data-center 导出走 warehouse，不直连生产 OLTP。
-4. App / 管理端：前端隐藏 + 后端 permission 双校验。
+1. CDC 只读源库 binlog。  
+2. warehouse 业务账号默认只读。  
+3. 大导出优先 data-center，不直连生产 OLTP。  
+4. Agent 鉴权依赖网关透传 + 下游 API 权限。  
 
-## 与内部 ltoa 的关系
+## 与 neox 的关系
 
-- **ltoa**：既有内部 OA 单体（历史 Java/Node）。
-- **nexa**：开源通用产品线；能力从 ltoa 抽离后 **Go 重写**，不绑定内部包名与部署。
+- **neox-sdk（TS/Node）**：Agent 运行时（`Agent.run` / `stream` / `tool`）。  
+- **nexa**：产品与业务编排；agent 服务是 neox 的宿主。  
+- **不**在 nexa 内维护 Go 版全量 neox；若未来需要，独立做 `neox-sdk-go` 最小子集。
 
 ## 仓库策略
 
-| 阶段 | 动作 |
-|------|------|
-| 现在 | monorepo `nexa` 聚合 Agent、App、数据中心、钉钉、CDC |
-| 并行 | `nexa-cdc-mysql` 独立仓与 `services/cdc-mysql` 同构演进 |
-| 可选 | 再拆 `nexa-data-center` / `nexa-agent` 等 |
+- monorepo `nexa`：Agent(Node) + App + data-center + cdc 副本 + 文档  
+- `nexa-cdc-mysql`：CDC 独立演进  

@@ -1,0 +1,71 @@
+{
+  "_note": "OA 侧手工业务定义句 overlay。经营驾驶舱聚合口、员工身份卡片、需求管理最常用查询等，都在这里保证 purpose 是人话。",
+  "endpoints": [
+    {
+      "path": "/admin-api/business/executive-cockpit/overview",
+      "domain": "oa",
+      "method": "GET",
+      "purpose": "【总裁驾驶舱概览】一次拿回所有经营指标：本月需求分布、状态趋势、负责人负载、逾期风险、连图任务看板最近工单摘要。老板问『大盘怎么样』『我们最近整体情况』时优先用这个，一步到位不用组多个查询。",
+      "params": [
+        { "name": "days", "type": "int", "notes": "回看天数 7~90，默认 30" }
+      ],
+      "response": "{ metrics, trend, statusDistribution, ownerLoad, riskItems, ordersysRecent }",
+      "keywords": ["驾驶舱", "总裁驾驶舱", "经营大盘", "cockpit", "overview", "老板视角", "大盘概览", "经营总览"]
+    },
+    {
+      "path": "/admin-api/hr/employee/page",
+      "domain": "oa",
+      "method": "GET",
+      "purpose": "员工花名册【分页查询】。按姓名/工号/部门/状态/入职日期筛选。data.list[].id 是 HR profileId（不是 userId）；data.total 是总数——查人数直接看 total，别拉大列表自己数。",
+      "params": [
+        { "name": "pageNo", "type": "int", "notes": "默认 1" },
+        { "name": "pageSize", "type": "int", "notes": "默认 30，最大 30；查 count 用 pageSize=1 看 total" },
+        { "name": "name", "type": "string", "notes": "姓名精确/模糊查询" },
+        { "name": "employeeNo", "type": "string", "notes": "工号" },
+        { "name": "deptId", "type": "int", "notes": "部门ID" },
+        { "name": "status", "type": "int", "notes": "1=在职 2=试用期 3=离职中 4=已离职" }
+      ],
+      "response": "{ list:[{ id(=profileId), userId, name, employeeNo, deptName, jobName, hireDate }], total }",
+      "keywords": ["员工", "花名册", "员工分页", "员工列表", "profileId", "在职", "入职日期", "部门员工"]
+    },
+    {
+      "path": "/admin-api/hr/employee/current",
+      "domain": "oa",
+      "method": "GET",
+      "purpose": "当前登录用户的员工档案。一次返回姓名、工号、部门、岗位、入职日期、直属上级。用户说『我』『我的』相关问题第一步先调这个；不用先查 userId。",
+      "params": [],
+      "response": "{ id(=profileId), userId, name, employeeNo, deptName, jobName, hireDate, directManagerName }",
+      "keywords": ["当前用户", "我是谁", "我的档案", "我的部门", "employee current", "自己"]
+    },
+    {
+      "path": "/admin-api/business/work/requirement/page",
+      "domain": "oa",
+      "method": "GET",
+      "purpose": "需求管理【分页查询】。按状态/优先级/负责人/提出人筛选。status: 0待分派/1待开发/2开发中/3测试中/4待验收/5已完成/6已取消/7已挂起；priority: 1低/2中/3高/4紧急。data.total 是总数；查负责人负载/状态分布优先用 overview 或 total，别拉长列表自己数。",
+      "params": [
+        { "name": "pageNo", "type": "int" },
+        { "name": "pageSize", "type": "int", "notes": "最大 30" },
+        { "name": "keyword", "type": "string" },
+        { "name": "status", "type": "int" },
+        { "name": "priority", "type": "int" },
+        { "name": "assigneeName", "type": "string" },
+        { "name": "assigneeUserId", "type": "long" },
+        { "name": "proposerName", "type": "string" },
+        { "name": "proposerUserId", "type": "long" }
+      ],
+      "response": "{ list:[{id, title, status, priority, assigneeName, proposerName, deadline}], total }",
+      "keywords": ["需求", "需求分页", "需求列表", "requirement", "负责人需求", "逾期需求", "需求状态"]
+    },
+    {
+      "path": "/admin-api/business/work/requirement/overview",
+      "domain": "oa",
+      "method": "GET",
+      "purpose": "需求管理【概览统计】。一次返回各状态需求数、优先级分布、逾期数、负责人负载 top。查需求整体情况优先用这个，不用分别调分页统计。",
+      "params": [
+        { "name": "scope", "type": "string", "notes": "可选：my/dept/all" }
+      ],
+      "response": "{ statusCounts, priorityCounts, overdueCount, ownerLoad[] }",
+      "keywords": ["需求概览", "需求统计", "需求分布", "需求 overview", "各状态需求"]
+    }
+  ]
+}

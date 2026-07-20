@@ -1,0 +1,74 @@
+{
+  "_note": "白名单/拒名单：agent 通过 api_call 执行 GET 时的执行策略。api_search 依然会返回所有索引里的接口，但 api_call 遇到 _allowed=false 会拒。ordersys 和 OA 都用 allow_all + explicit deny 模式：Java/Vue scanner 已经在生成索引时剥离了写动词，index 里默认只有 GET；deny_prefixes 拒明确敏感前缀，deny_keywords 兜底拦路径里的写动词。",
+  "policies": {
+    "ordersys": {
+      "mode": "allow_all",
+      "_reason": "ordersys 索引来自 Vue axios + Java Controller 扫描，已剥离写动词。默认全部可 GET 调用（10 分钟前把 explicit 白名单从 60 个前缀改为 allow_all 是因为老板真会问的接口打不完补丁）。仍有 4 道保护：单请求 12s 超时 + 单响应 512KB 截断 + 每轮 120s agent 硬顶 + APP 停止按钮 signal.abort()。",
+      "deny_prefixes": [
+        "/order/pf/list",
+        "/order/pf/",
+        "/admin/amount/",
+        "/admin/setting/",
+        "/admin/seller/integral/",
+        "/admin/seller/coupon/",
+        "/finance/seller/",
+        "/finance/getOrderByTxId/",
+        "/admin/assess/",
+        "/admin/config/",
+        "/admin/dict/",
+        "/admin/permission/",
+        "/admin/role/",
+        "/admin/user/password"
+      ],
+      "deny_keywords": [
+        "/delete",
+        "/remove",
+        "/update",
+        "/edit",
+        "/save",
+        "/create",
+        "/insert",
+        "/add",
+        "/modify",
+        "/reset",
+        "/enable",
+        "/disable",
+        "/disband",
+        "/upload",
+        "/import",
+        "/export/config",
+        "/password",
+        "/reset-password",
+        "/change-password",
+        "/refund",
+        "/withdraw",
+        "/pay",
+        "/transfer"
+      ],
+      "_deny_examples": [
+        "/order/pf/list       — 财务赔付明细，无分页全表扫，且财务敏感",
+        "/admin/amount/*      — 赔付扣款明细，PII 风险",
+        "/admin/setting/*     — 系统配置",
+        "/admin/seller/integral/**  — 积分/充值/提现/税点，PII + 财务",
+        "/finance/seller/**   — 卖家付款记录，敏感财务",
+        "/*/delete /*/remove /*/update 等动词 —— deny_keywords 兜底拦，即使 scanner 漏过滤"
+      ]
+    },
+    "oa": {
+      "mode": "allow_all",
+      "_reason": "OA 索引来自 Java controller 扫描，scanner 已过滤所有写动词。每个 OA endpoint 后端都有 @PreAuthorize / SecurityFrameworkUtils 自守。",
+      "deny_prefixes": [],
+      "deny_keywords": [
+        "/delete",
+        "/remove",
+        "/update",
+        "/edit",
+        "/save",
+        "/create",
+        "/insert",
+        "/reset-password",
+        "/change-password"
+      ]
+    }
+  }
+}
