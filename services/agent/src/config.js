@@ -1,3 +1,6 @@
+import { readFileSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { loadLocalEnv } from './env.js';
 
 loadLocalEnv();
@@ -67,6 +70,41 @@ function enumValue(name, fallback, allowedValues) {
     throw new Error(`${name} must be one of: ${Array.from(allowedValues).join(', ')}`);
   }
   return value;
+}
+
+
+function loadEnterprisePrompt() {
+  try {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const candidates = [
+      join(here, '../prompts/enterprise-assistant.md'),
+      join(process.cwd(), 'prompts/enterprise-assistant.md'),
+      join(process.cwd(), 'services/agent/prompts/enterprise-assistant.md'),
+    ];
+    for (const file of candidates) {
+      if (existsSync(file)) {
+        return readFileSync(file, 'utf8');
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return '';
+}
+
+function composeSystemPrompt() {
+  if (process.env.AGENT_SYSTEM_PROMPT) {
+    return process.env.AGENT_SYSTEM_PROMPT;
+  }
+  const enterprise = loadEnterprisePrompt();
+  if (enterprise) {
+    return `${enterprise}
+
+---
+
+${defaultSystemPrompt()}`;
+  }
+  return defaultSystemPrompt();
 }
 
 function defaultSystemPrompt() {
@@ -202,7 +240,7 @@ export const config = {
     toolSearchEnabled: isTruthy(process.env.AGENT_ENABLE_TOOL_SEARCH),
     toolSearchMaxCallsPerRun: parseInteger('AGENT_TOOL_SEARCH_MAX_CALLS_PER_RUN', 2),
     permission: enumValue('AGENT_PERMISSION', 'auto', permissionModes),
-    systemPrompt: process.env.AGENT_SYSTEM_PROMPT || defaultSystemPrompt(),
+    systemPrompt: composeSystemPrompt(),
     useMock: isTruthy(process.env.AGENT_USE_MOCK),
     mockResponse: process.env.AGENT_MOCK_RESPONSE || 'ok',
     streamThinking: isTruthy(process.env.AGENT_STREAM_THINKING),

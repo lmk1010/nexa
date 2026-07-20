@@ -76,8 +76,10 @@
 - [ ] data-center 与 agent 导出工具打通
 - [ ] cdc 表清单与 ADS 任务
 
-### M6 — ERP / Finance / IM / OP / AI ✅ partial file-backed
-- [x] erp/finance file-backed；im/op/ai 仍为 demo 查询面
+### M6 — ERP / Finance / IM / OP / AI ✅ file-backed baseline
+- [x] erp/finance/im/op file-backed
+- [x] ai control plane skills/intent/sense/automation
+- [x] op live health probe + sense on down
 - [ ] MySQL 持久化与真实对接
 - [ ] op 与 App 运维页联调
 
@@ -85,12 +87,13 @@
 - [x] AI control plane：skills / intent / sense / automation
 - [x] 企业 skill 目录（26+）覆盖 OA 全域
 - [x] Gateway 对 AI 路由/bootstrap 边缘放行
-- [x] Agent curated skills + enterprise prompt
-- [ ] 域事件自动上报 sense（各服务 hook）
+- [x] Agent curated skills + enterprise prompt + nexa_* tools
+- [x] 域事件自动上报 sense（bpm/hr/business/im/op）
 - [ ] 真 LLM intent（可选，当前关键词路由可用）
 
-### M7 — 客户端与发布
-- [ ] mobile 配置切 nexa gateway
+### M7 — 客户端与发布 ✅ partial
+- [x] mobile baseUrl 默认 nexa-gateway :48080
+- [x] agent 默认加载 enterprise prompt + nexa skill tools
 - [ ] admin 最小控制台
 - [ ] docker compose 一键：gateway+iam+agent+data-center+cdc+mysql
 
@@ -128,6 +131,7 @@
 | 2026-07-20 | gateway IAM introspect auth |
 | 2026-07-20 | business/erp/finance file-backed stores |
 | 2026-07-20 | AI control plane skills/intent/sense/automation；gateway AI edge；agent enterprise prompt |
+| 2026-07-20 | im/op file-backed + agent nexa tools + mobile gateway default |
 
 ## 执行原则（无人值守）
 

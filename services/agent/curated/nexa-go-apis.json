@@ -197,6 +197,26 @@
       "method": "GET",
       "path": "/v1/ai/assistant/bootstrap",
       "summary": "Assistant bootstrap"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/im/messages",
+      "summary": "IM messages"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/im/messages/send",
+      "summary": "Send IM message"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/op/audit",
+      "summary": "Write audit log"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/op/probe",
+      "summary": "Probe all services"
     }
   ]
 }

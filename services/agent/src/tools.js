@@ -35,6 +35,7 @@ import {
 } from './serviceAccountAuth.js';
 import { createPerUserQueue } from './perUserQueue.js';
 import { apiSearchTool, apiCallTool } from './apiTools.js';
+import { createNexaSkillTools } from './nexaSkills.js';
 
 const ADMIN_PREFIX = '/admin-api';
 const EXECUTIVE_COCKPIT_BASE = `${ADMIN_PREFIX}/business/executive-cockpit`;
@@ -635,6 +636,31 @@ export function createTools(context) {
   const argsQueue = [];
   context._toolArgsQueue = argsQueue;
 
+  const nexaTools = createNexaSkillTools().map((def) =>
+    tool({
+      name: def.name,
+      description: def.description,
+      schema: z
+        .object(
+          Object.fromEntries(
+            Object.entries(def.parameters?.properties || {}).map(([k, v]) => [
+              k,
+              v?.type === 'string' ? z.string() : z.any(),
+            ]),
+          ),
+        )
+        .passthrough(),
+      async handler(input) {
+        return def.execute(input || {}, {
+          authorization: context?.authorization || context?.headers?.authorization,
+          token: context?.token,
+          headers: context?.headers,
+          signal: context?.signal,
+        });
+      },
+    }),
+  );
+
   const rawTools = [
     // Foundation —— 只留 LLM 真正常用的时间/shell；jq/pick/math/format 已被 python_exec 取代
     nowTool(),
@@ -647,6 +673,8 @@ export function createTools(context) {
     apiSearchTool(),
     apiCallTool(context),
     paginateAllTool(context),
+    // Nexa AI-native enterprise skills
+    ...nexaTools,
     // Output
     renderChartTool(),
     fetchUrlTool(context),

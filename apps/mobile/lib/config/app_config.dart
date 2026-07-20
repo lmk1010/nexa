@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 /// 集中管理应用的所有配置参数
 /// 包括环境配置、API配置、超时设置等
 class AppConfig {
-  static const String appName = '快易修OA';
+  static const String appName = 'Nexa企业助手';
 
   /// 环境配置
   static const String _appEnv = String.fromEnvironment(
@@ -44,11 +44,11 @@ class AppConfig {
   static bool get isDevelopment => !isProduction;
 
   /// API配置
-  /// 开发环境API基础地址
-  static const String devBaseUrl = 'http://192.168.10.38:48080';
+  /// 开发环境默认指向本地 nexa-gateway :48080（可用 --dart-define=BASE_URL= 覆盖）
+  static const String devBaseUrl = 'http://127.0.0.1:48080';
 
-  /// 生产环境API基础地址
-  static const String prodBaseUrl = 'http://43.139.24.244';
+  /// 生产环境API基础地址（部署 nexa gateway 后替换）
+  static const String prodBaseUrl = 'http://127.0.0.1:48080';
 
   /// 获取当前环境的baseUrl
   /// 根据编译模式自动选择对应的API地址
