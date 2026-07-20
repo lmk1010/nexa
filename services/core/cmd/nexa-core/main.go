@@ -276,20 +276,21 @@ type store struct {
 }
 
 type coreDB struct {
-	Employees     []employee   `json:"employees"`
-	Departments   []department `json:"departments"`
-	Tasks         []task       `json:"tasks"`
-	Todos         []todo       `json:"todos"`
-	Stock         []stockItem  `json:"stock"`
-	Purchases     []purchase   `json:"purchases"`
-	Ledger        []ledger     `json:"ledger"`
-	Conversations []conv       `json:"conversations"`
-	Messages      []msg        `json:"messages"`
-	Sense         []senseEv    `json:"sense"`
-	Rules         []autoRule   `json:"rules"`
-	ExportJobs    []exportJob  `json:"exportJobs"`
-	SyncJobs      []syncJob    `json:"syncJobs"`
-	Seq           int64        `json:"seq"`
+	Employees     []employee              `json:"employees"`
+	Departments   []department            `json:"departments"`
+	Tasks         []task                  `json:"tasks"`
+	Todos         []todo                  `json:"todos"`
+	Stock         []stockItem             `json:"stock"`
+	Purchases     []purchase              `json:"purchases"`
+	Ledger        []ledger                `json:"ledger"`
+	Conversations []conv                  `json:"conversations"`
+	Messages      []msg                   `json:"messages"`
+	Sense         []senseEv               `json:"sense"`
+	Rules         []autoRule              `json:"rules"`
+	ExportJobs    []exportJob             `json:"exportJobs"`
+	SyncJobs      []syncJob               `json:"syncJobs"`
+	Connectors    map[string]connectorCfg `json:"connectors"`
+	Seq           int64                   `json:"seq"`
 }
 
 func newStore(dir string) *store { return &store{dir: dir} }
@@ -300,11 +301,14 @@ func (s *store) loadOrSeed() {
 	_ = os.MkdirAll(s.dir, 0o755)
 	if raw, err := os.ReadFile(s.path()); err == nil {
 		_ = json.Unmarshal(raw, &s.db)
+		if s.db.Connectors == nil {
+			s.db.Connectors = map[string]connectorCfg{}
+		}
 		return
 	}
 	now := time.Now()
 	s.db = coreDB{
-		Departments: []department{{ID: 1, Name: "HQ", ParentID: 0}, {ID: 10, Name: "R&D", ParentID: 1}, {ID: 20, Name: "Ops", ParentID: 1}, {ID: 30, Name: "HR", ParentID: 1}},
+		Departments: []department{{ID: 1, TenantID: 1, Name: "HQ", ParentID: 0}, {ID: 10, TenantID: 1, Name: "R&D", ParentID: 1}, {ID: 20, TenantID: 1, Name: "Ops", ParentID: 1}, {ID: 30, TenantID: 1, Name: "HR", ParentID: 1}},
 		Employees: []employee{
 			{ID: 1001, TenantID: 1, Name: "Zhang San", Mobile: "13800000001", DeptID: 10, DeptName: "R&D", JobNo: "NEXA001", Status: "active", UpdatedAt: now.Format(time.RFC3339)},
 			{ID: 1002, TenantID: 1, Name: "Li Si", Mobile: "13800000002", DeptID: 20, DeptName: "Ops", JobNo: "NEXA002", Status: "active", UpdatedAt: now.Format(time.RFC3339)},
@@ -313,17 +317,18 @@ func (s *store) loadOrSeed() {
 			{ID: "t1", TenantID: 1, Title: "Leave request", ProcessName: "leave", Starter: "Zhang San", Assignee: "boss", Status: "pending", CreatedAt: now.Add(-2 * time.Hour).Format(time.RFC3339), UpdatedAt: now.Add(-2 * time.Hour).Format(time.RFC3339)},
 		},
 		Todos:         []todo{{ID: "td1", TenantID: 1, Title: "Review weekly report", Assignee: "boss", Status: "open", DueAt: now.Add(24 * time.Hour).Format(time.RFC3339), CreatedAt: now.Format(time.RFC3339)}},
-		Stock:         []stockItem{{SKU: "SKU-001", Name: "Widget A", Qty: 120, Warehouse: "WH-East"}, {SKU: "SKU-002", Name: "Widget B", Qty: 45, Warehouse: "WH-East"}},
-		Purchases:     []purchase{{ID: "PO-1", Vendor: "Supplier X", Amount: 3200.5, Status: "open", CreatedAt: now.Add(-48 * time.Hour).Format(time.RFC3339)}},
-		Ledger:        []ledger{{ID: "L1", Title: "Service revenue", Amount: 35000, At: now.Add(-24 * time.Hour).Format(time.RFC3339)}},
-		Conversations: []conv{{ID: "c1", Title: "Ops group", Unread: 0, UpdatedAt: now.Format(time.RFC3339)}},
+		Stock:         []stockItem{{TenantID: 1, SKU: "SKU-001", Name: "Widget A", Qty: 120, Warehouse: "WH-East"}, {TenantID: 1, SKU: "SKU-002", Name: "Widget B", Qty: 45, Warehouse: "WH-East"}},
+		Purchases:     []purchase{{ID: "PO-1", TenantID: 1, Vendor: "Supplier X", Amount: 3200.5, Status: "open", CreatedAt: now.Add(-48 * time.Hour).Format(time.RFC3339)}},
+		Ledger:        []ledger{{ID: "L1", TenantID: 1, Title: "Service revenue", Amount: 35000, At: now.Add(-24 * time.Hour).Format(time.RFC3339)}},
+		Conversations: []conv{{ID: "c1", TenantID: 1, Title: "Ops group", Unread: 0, UpdatedAt: now.Format(time.RFC3339)}},
 		Messages:      []msg{},
 		Sense:         []senseEv{},
 		Rules: []autoRule{
 			{ID: "rule_bpm", Name: "审批超时", Enabled: true, SenseType: "bpm.task.overdue", Actions: []string{"notify:assignee"}},
 			{ID: "rule_join", Name: "入职待办", Enabled: true, SenseType: "hr.employee.joined", Actions: []string{"biz.todo.create"}},
 		},
-		Seq: 1002,
+		Connectors: map[string]connectorCfg{},
+		Seq:        1002,
 	}
 	_ = s.save()
 }
@@ -355,6 +360,7 @@ type employee struct {
 }
 type department struct {
 	ID       int64  `json:"id"`
+	TenantID int64  `json:"tenantId,omitempty"`
 	Name     string `json:"name"`
 	ParentID int64  `json:"parentId"`
 }
@@ -376,6 +382,7 @@ type todo struct {
 	Title, Assignee, Status, DueAt, CreatedAt string
 }
 type stockItem struct {
+	TenantID  int64  `json:"tenantId,omitempty"`
 	SKU       string `json:"sku"`
 	Name      string `json:"name"`
 	Qty       int    `json:"qty"`
@@ -383,29 +390,45 @@ type stockItem struct {
 }
 type purchase struct {
 	ID        string  `json:"id"`
+	TenantID  int64   `json:"tenantId,omitempty"`
 	Vendor    string  `json:"vendor"`
 	Amount    float64 `json:"amount"`
 	Status    string  `json:"status"`
 	CreatedAt string  `json:"createdAt"`
 }
 type ledger struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Amount float64 `json:"amount"`
-	At     string  `json:"at"`
+	ID       string  `json:"id"`
+	TenantID int64   `json:"tenantId,omitempty"`
+	Title    string  `json:"title"`
+	Amount   float64 `json:"amount"`
+	At       string  `json:"at"`
 }
 type conv struct {
 	ID        string `json:"id"`
+	TenantID  int64  `json:"tenantId,omitempty"`
 	Title     string `json:"title"`
 	Unread    int    `json:"unread"`
 	UpdatedAt string `json:"updatedAt"`
 }
-type msg struct{ ID, ConversationID, From, Text, At string }
+type msg struct {
+	ID             string `json:"id"`
+	TenantID       int64  `json:"tenantId,omitempty"`
+	ConversationID string `json:"conversationId"`
+	From           string `json:"from"`
+	Text           string `json:"text"`
+	At             string `json:"at"`
+}
 type senseEv struct {
-	ID, Type, Source, Severity, Message, At string
-	Handled                                 bool
-	Actions                                 []string
-	Payload                                 map[string]any
+	ID       string         `json:"id"`
+	TenantID int64          `json:"tenantId,omitempty"`
+	Type     string         `json:"type"`
+	Source   string         `json:"source"`
+	Severity string         `json:"severity"`
+	Message  string         `json:"message"`
+	At       string         `json:"at"`
+	Handled  bool           `json:"handled"`
+	Actions  []string       `json:"actions,omitempty"`
+	Payload  map[string]any `json:"payload,omitempty"`
 }
 type autoRule struct {
 	ID        string
@@ -415,11 +438,38 @@ type autoRule struct {
 	Actions   []string
 }
 type exportJob struct {
-	ID, TemplateID, State, CreatedAt, Message, Download string
+	ID         string `json:"id"`
+	TenantID   int64  `json:"tenantId,omitempty"`
+	TemplateID string `json:"templateId"`
+	State      string `json:"state"`
+	CreatedAt  string `json:"createdAt"`
+	Message    string `json:"message,omitempty"`
+	Download   string `json:"download,omitempty"`
 }
 type syncJob struct {
-	ID, Type, Status, Message, StartedAt, FinishedAt string
-	Stats                                            map[string]int
+	ID         string         `json:"id"`
+	TenantID   int64          `json:"tenantId,omitempty"`
+	Type       string         `json:"type"`
+	Status     string         `json:"status"`
+	Message    string         `json:"message"`
+	StartedAt  string         `json:"startedAt"`
+	FinishedAt string         `json:"finishedAt,omitempty"`
+	Stats      map[string]int `json:"stats,omitempty"`
+}
+
+type connectorCfg struct {
+	ID        string         `json:"id"`
+	TenantID  int64          `json:"tenantId"`
+	Enabled   bool           `json:"enabled"`
+	Config    map[string]any `json:"config,omitempty"`
+	UpdatedAt string         `json:"updatedAt"`
+}
+
+func matchTenant(tid, row int64) bool {
+	if tid == 0 {
+		return true
+	}
+	return row == 0 || row == tid
 }
 
 func jsonAlias(mux *http.ServeMux, paths []string, h http.HandlerFunc) {

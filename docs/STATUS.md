@@ -56,3 +56,7 @@
 ./scripts/start-dev.sh && ./scripts/smoke.sh
 cd deploy && docker compose up -d --build
 ```
+
+### 2026-07-20 update
+- core tenant filter across domains
+- per-tenant connector config
