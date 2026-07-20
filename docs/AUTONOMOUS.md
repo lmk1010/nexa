@@ -1,16 +1,16 @@
 # Autonomous execution log
 
-## Status
-Continuing GOAL.md — AI-native enterprise assistant.
+## Product truth
+nexa = **enterprise DingTalk product** (multi-tenant, joinable).
+NOT legacy OA syncing DingTalk as a datasource.
 
 ## Latest
-- DingTalk Go client (token/dept/user) env-gated in HR sync
-- data-center lite stdlib service for local agent/export demos
-- start-dev starts dc-lite on :48092
-- gateway/mobile/agent integrations already in place
+- docs/PRODUCT.md positioning correction
+- Tenant register / invite / accept / onboarding status APIs
+- Agent prompt + GOAL/README aligned
 
 ## Next
-1. MySQL store adapters behind same APIs
-2. data-center full engine go.mod tidy when proxy available
-3. richer dingtalk roster field mapping
-4. docker compose smoke
+1. Tenant-aware default data isolation across domains
+2. First-class org/approval/IM product APIs polish
+3. Connector framework naming
+4. App onboarding screens

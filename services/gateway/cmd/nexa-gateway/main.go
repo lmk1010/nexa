@@ -204,6 +204,8 @@ func isPublic(cfg config, path string) bool {
 		"/v1/iam/login":                 true,
 		"/app-api/system/auth/login":    true,
 		"/admin-api/system/auth/login":  true,
+						"/v1/iam/invites/accept": true,
+			"/v1/iam/tenants/register": true,
 		"/v1/ai/skills":                 true,
 		"/v1/ai/intent/route":           true,
 		"/v1/ai/assistant/bootstrap":    true,

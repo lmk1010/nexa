@@ -247,6 +247,30 @@
       "method": "POST",
       "path": "/jobs",
       "summary": "Create export job (stripped)"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/iam/tenants/register",
+      "summary": "注册企业",
+      "skillId": "iam.tenant.register"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/iam/invites",
+      "summary": "邀请成员",
+      "skillId": "iam.invite.create"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/iam/invites/accept",
+      "summary": "接受邀请",
+      "skillId": "iam.invite.accept"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/iam/onboarding/status",
+      "summary": "开通状态",
+      "skillId": "iam.onboarding.status"
     }
   ]
 }

@@ -1,45 +1,45 @@
-# nexa GOAL — 企业全能助手平台
+# nexa GOAL — 企业钉钉（可接入协作平台）
 
-> 用户指令（2026-07-20）：**nexa = 公司企业助手，包含企业所有能力；全部用 Go 重写（不用 Java 运行时）；Agent 融合 NeoX(Node)；设定 goal 后自主推进，勿再追问。**
+> 用户指令（持续有效）：
+> 1. **nexa 就是企业钉钉本体**，不是「旧 OA 对接钉钉数据源」。
+> 2. **支持用户/企业接入开通**（多租户产品）。
+> 3. 领域能力 **Go 重写**；Agent = **NeoX(Node)**；goal 驱动自主推进。
+> 4. 产品定义见 `docs/PRODUCT.md`。
 
 ## 一句话
 
-把内部 OA/业务能力抽到 **nexa**，做成**开源通用企业助手**：对话入口 + 掌上 App + 管理端 + 全领域后端（Go）+ 数据中心 + CDC。
+**nexa = 可接入的企业钉钉**：组织通讯录 · 审批 · 待办 · IM · 工作台 · 数据中心 · 企业 Agent。
+外部业务系统通过 **连接器** 接入 nexa，而不是 nexa 去当旧 OA 的附属同步器。
 
 ## 终态架构
 
 ```
-钉钉 / 掌上 App / Web Admin
-            │
-            ▼
-     services/gateway        (Go)  统一鉴权透传、路由
-            │
-            ├── services/agent     (Node + @mk-co/neox-sdk)  ★ 对话大脑
-            │         tools ──HTTP──► 各 Go 领域服务 + data-center + warehouse
-            │
-            ├── services/iam       (Go)  登录/租户/用户/角色/权限
-            ├── services/bpm       (Go)  审批流
-            ├── services/hr        (Go)  人事/组织/考勤/入职 + 钉钉同步
-            ├── services/business  (Go)  待办/工作要求/日历/接待/酒店
-            ├── services/erp       (Go)  进销存
-            ├── services/finance   (Go)  财务
-            ├── services/im        (Go)  即时通讯对接
-            ├── services/op        (Go)  运维监控
-            ├── services/ai        (Go)  ASR/视觉/接待智能
-            ├── services/data-center (Go) 明细导出
-            └── services/cdc-mysql   (Go) binlog → warehouse
+企业用户 ──注册/登录租户──► nexa（产品本体）
+                               │
+                    ┌──────────┼──────────┐
+                    ▼          ▼          ▼
+                 组织成员    审批/待办    IM/工作台
+                    └──────────┬──────────┘
+                               ▼
+                      Agent（NeoX）企业大脑
+                               │
+              ┌────────────────┼────────────────┐
+              ▼                ▼                ▼
+         nexa 域服务      数据中心/CDC     外部连接器
+         (Go 本体)        (经营分析)     (业务库/API 可选)
 ```
 
 ## 硬性约束
 
 | # | 约束 |
 |---|------|
-| 1 | **运行时无 Java**；Java 只许在 `legacy/java/**` 作对照 |
-| 2 | **Agent = Node + NeoX**（方案 A），不重写 neox 内核 |
-| 3 | 数据面 **Go**（cdc / data-center / 领域 API） |
-| 4 | App = Flutter `apps/mobile`；Admin 后续 Vue 或重做，源码可参考 legacy |
-| 5 | 密钥/生产配置不进仓 |
-| 6 | 大查询走 warehouse / data-center，不打爆 OLTP |
+| 1 | **产品定位**：协作平台本体，不是 OA→钉钉同步插件 |
+| 2 | **运行时无 Java**；Java 只许 `legacy/**` 对照 |
+| 3 | **Agent = Node + NeoX**，tools 调 nexa Go 服务 |
+| 4 | **多租户可接入**：注册/邀请/成员/权限为产品主路径 |
+| 5 | 钉钉 OpenAPI = **可选导入连接器**，不是主数据定义 |
+| 6 | 密钥不进仓；大查询走 warehouse/data-center |
+
 
 ## 里程碑（自主执行顺序）
 
@@ -84,6 +84,13 @@
 - [ ] MySQL 持久化与真实对接
 - [ ] op 与 App 运维页联调
 
+### M9 — 租户接入（产品主路径） 🔄
+- [x] 企业注册 / 创建租户 API
+- [x] 邀请成员 / 接受邀请 API
+- [x] 开通状态 checklist
+- [ ] 租户内角色权限默认模板增强
+- [ ] 开通向导前端/App
+
 ### M8 — AI-Native 企业能力 ✅ baseline
 - [x] AI control plane：skills / intent / sense / automation
 - [x] 企业 skill 目录（26+）覆盖 OA 全域
@@ -113,7 +120,9 @@
 | 消息 | im | 会话/通知 | demo API |
 | 运维 | op | 健康、发布、审计 | demo API |
 | 智能 | ai | 接待、ASR | demo API |
-| 钉钉 | hr + agent | 登录、同步、机器人 | sync skeleton + 资产 |
+| 协作本体 | iam/hr/bpm/im/business | 组织/审批/IM/待办（钉钉类能力） | 主路径建设中 |
+| 连接器-钉钉导入 | hr dingtalk | 可选通讯录导入 | openapi client |
+| 连接器-业务库 | cdc/data-center | 外部经营数据 | 已有 |
 
 ## 明确不做
 
@@ -142,3 +151,5 @@
 3. 能编译的默认要能 `go build`（优先 stdlib，少依赖）。  
 4. 定期 commit + push `nexa`（noreply 作者）。  
 5. 阻塞（私有 npm、外网 proxy）记入 `docs/BLOCKERS.md`，换路径继续，不空等。
+
+| 2026-07-20 | PRODUCT.md 定位纠正：nexa=可接入企业钉钉本体；租户注册/邀请 API |

@@ -1,24 +1,26 @@
 # nexa
 
-**企业全能助手平台**（开源通用）：对话 + 掌上 App + 管理端 + 全领域后端。
+**可接入的企业钉钉**（开源通用企业协作平台）。
 
-> 总目标与里程碑：**[docs/GOAL.md](docs/GOAL.md)**  
-> 能力集成图：[docs/architecture/capability-map.md](docs/architecture/capability-map.md)
+> 定位：**[docs/PRODUCT.md](docs/PRODUCT.md)**
+> 里程碑：**[docs/GOAL.md](docs/GOAL.md)**
+> AI：**[docs/architecture/ai-native.md](docs/architecture/ai-native.md)**
+
+**nexa 不是「旧 OA 对接钉钉」**。
+nexa 本身就是组织、审批、待办、IM、工作台与企业 Agent；企业可 **注册接入**；外部业务系统用连接器挂进来。
 
 ## AI-Native
 
-企业能力按 **Skill / 感知 / 自动化** 设计，不只是聊天套壳。
-
-- 架构：`docs/architecture/ai-native.md`
 - 控制面：`services/ai`（skills · intent · sense · automation）
-- Agent：`services/agent/prompts/enterprise-assistant.md`
+- Agent：`services/agent`（NeoX）+ `prompts/enterprise-assistant.md`
 
 ## 原则
 
-1. **领域服务全部 Go**，不用 Java 作运行时  
-2. **Agent = Node + `@mk-co/neox-sdk`（NeoX）**，tools 调 Go  
-3. 数据：`cdc-mysql` → warehouse → `data-center` / 分析  
-4. `legacy/**` 仅对照  
+1. **产品本体 = 企业钉钉类协作平台**（多租户可接入）
+2. **领域服务全部 Go**，不用 Java 运行时
+3. **Agent = Node + NeoX**，tools 调 nexa
+4. 钉钉 OpenAPI / 业务库 = **可选连接器**
+5. `legacy/**` 仅对照
 
 ## 服务一览
 
