@@ -1,0 +1,193 @@
+---
+
+spring:
+  cloud:
+    nacos:
+      server-addr: 172.16.0.15:8848
+      username: nacos
+      password: nacos
+      discovery:
+        namespace: prod
+        group: DEFAULT_GROUP
+        metadata:
+          version: 1.0.0
+      config:
+        namespace: prod
+        group: DEFAULT_GROUP
+
+---
+spring:
+  autoconfigure:
+    exclude:
+      - com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceAutoConfigure
+  datasource:
+    druid:
+      web-stat-filter:
+        enabled: true
+      stat-view-servlet:
+        enabled: false
+      filter:
+        stat:
+          enabled: true
+          log-slow-sql: true
+          slow-sql-millis: 2000
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true
+    dynamic:
+      druid:
+        initial-size: 10
+        min-idle: 20
+        max-active: 50
+        max-wait: 600000
+        time-between-eviction-runs-millis: 60000
+        min-evictable-idle-time-millis: 300000
+        max-evictable-idle-time-millis: 900000
+        validation-query: SELECT 1 FROM DUAL
+        test-while-idle: true
+        test-on-borrow: false
+        test-on-return: false
+      primary: master
+      datasource:
+        master:
+          url: jdbc:mysql://172.16.0.15:3306/kyx_oa?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true
+          username: kyx_user
+          password: kyx123456
+        ordersys:
+          lazy: true
+          url: jdbc:mysql://${ORDERSYS_MYSQL_HOST:172.16.0.15}:${ORDERSYS_MYSQL_PORT:3306}/${ORDERSYS_MYSQL_DATABASE:order-sys}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true
+          username: ${ORDERSYS_MYSQL_USERNAME:kyx_user}
+          password: ${ORDERSYS_MYSQL_PASSWORD:kyx123456}
+
+  redis:
+    host: 172.16.0.15
+    port: 6379
+    database: 1
+    password: kyx_redis_2024
+    timeout: 6000ms
+    lettuce:
+      pool:
+        max-active: 20
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 2
+
+---
+
+rocketmq:
+  name-server: 172.16.0.15:9092
+
+spring:
+  kafka:
+    bootstrap-servers: 172.16.0.15:9092
+
+---
+
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: 'health,info,metrics'
+
+logging:
+  level:
+    root: INFO
+    com.kyx: INFO
+  file:
+    name: ${LOG_PATH:/app/logs}/${spring.application.name}.log # 支持环境变量，Docker默认使用/app/logs
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+
+foundation:
+  demo: false
+  web:
+    admin-ui:
+      url: ${ADMIN_UI_URL:http://43.139.24.244}
+  file:
+    config:
+      host: http://172.16.0.15:9000
+
+--- #################### 2 核小机型低占用覆盖 ####################
+
+server:
+  tomcat:
+    threads:
+      max: ${SERVER_TOMCAT_THREADS_MAX:48}
+      min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:4}
+    accept-count: ${SERVER_TOMCAT_ACCEPT_COUNT:50}
+    max-connections: ${SERVER_TOMCAT_MAX_CONNECTIONS:512}
+
+spring:
+  jmx:
+    enabled: ${SPRING_JMX_ENABLED:false}
+  task:
+    execution:
+      pool:
+        core-size: ${SPRING_TASK_EXECUTION_CORE_SIZE:2}
+        max-size: ${SPRING_TASK_EXECUTION_MAX_SIZE:8}
+        queue-capacity: ${SPRING_TASK_EXECUTION_QUEUE_CAPACITY:200}
+    scheduling:
+      pool:
+        size: ${SPRING_TASK_SCHEDULING_POOL_SIZE:1}
+  datasource:
+    druid:
+      web-stat-filter:
+        enabled: ${DRUID_WEB_STAT_FILTER_ENABLED:false}
+      filter:
+        stat:
+          enabled: ${DRUID_STAT_FILTER_ENABLED:false}
+    dynamic:
+      druid:
+        initial-size: ${DRUID_INITIAL_SIZE:1}
+        min-idle: ${DRUID_MIN_IDLE:1}
+        max-active: ${DRUID_MAX_ACTIVE:8}
+        max-wait: ${DRUID_MAX_WAIT:30000}
+  redis:
+    lettuce:
+      pool:
+        max-active: ${REDIS_POOL_MAX_ACTIVE:8}
+        max-idle: ${REDIS_POOL_MAX_IDLE:4}
+        min-idle: ${REDIS_POOL_MIN_IDLE:0}
+    redisson:
+      config: |
+        singleServerConfig:
+          address: "redis://${REDIS_HOST:172.16.0.15}:${REDIS_PORT:6379}"
+          password: "${REDIS_PASSWORD:kyx_redis_2024}"
+          database: ${REDIS_DATABASE:1}
+          connectionMinimumIdleSize: ${REDISSON_CONNECTION_MIN_IDLE_SIZE:1}
+          connectionPoolSize: ${REDISSON_CONNECTION_POOL_SIZE:8}
+          subscriptionConnectionMinimumIdleSize: ${REDISSON_SUBSCRIPTION_MIN_IDLE_SIZE:1}
+          subscriptionConnectionPoolSize: ${REDISSON_SUBSCRIPTION_POOL_SIZE:4}
+          idleConnectionTimeout: 10000
+          connectTimeout: 3000
+          timeout: 3000
+        threads: ${REDISSON_THREADS:2}
+        nettyThreads: ${REDISSON_NETTY_THREADS:2}
+  kafka:
+    listener:
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:1}
+    consumer:
+      max-poll-records: ${KAFKA_CONSUMER_MAX_POLL_RECORDS:10}
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:false}
+
+knife4j:
+  enable: ${KNIFE4J_ENABLE:false}
+  gateway:
+    enabled: ${KNIFE4J_GATEWAY_ENABLED:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info}

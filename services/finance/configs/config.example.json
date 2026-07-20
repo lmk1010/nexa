@@ -1,0 +1,6 @@
+{
+  "name": "nexa-finance",
+  "http": { "addr": ":48086" },
+  "log": { "level": "info" },
+  "mysql": { "dsn": "" }
+}

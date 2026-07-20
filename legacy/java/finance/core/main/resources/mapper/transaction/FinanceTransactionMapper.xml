@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyx.service.finance.dal.mysql.transaction.FinanceTransactionMapper">
+
+    <select id="selectIncomeStatementAggregateByPeriodRange" resultType="com.kyx.service.finance.service.report.dto.FinanceIncomeStatementAggregateDTO">
+        SELECT CASE
+                   WHEN t.subject_code IS NOT NULL AND TRIM(t.subject_code) != '' THEN t.subject_code
+                   WHEN t.transaction_type = #{incomeType} THEN #{unclassifiedIncomeCode}
+                   WHEN t.transaction_type = #{expenseType} THEN #{unclassifiedExpenseCode}
+                   ELSE NULL
+                   END AS subjectCode,
+               COALESCE(SUM(CASE WHEN t.transaction_type = #{incomeType} THEN t.amount ELSE 0 END), 0) AS incomeAmount,
+               COALESCE(SUM(CASE WHEN t.transaction_type = #{expenseType} THEN t.amount ELSE 0 END), 0) AS expenseAmount
+        FROM finance_transaction t
+        WHERE t.deleted = 0
+          AND t.company_id = #{companyId}
+          AND t.status = #{successStatus}
+          AND (t.transaction_type = #{incomeType} OR t.transaction_type = #{expenseType})
+          AND t.transaction_period <![CDATA[>=]]> #{startPeriod}
+          AND t.transaction_period <![CDATA[<=]]> #{endPeriod}
+        GROUP BY CASE
+                     WHEN t.subject_code IS NOT NULL AND TRIM(t.subject_code) != '' THEN t.subject_code
+                     WHEN t.transaction_type = #{incomeType} THEN #{unclassifiedIncomeCode}
+                     WHEN t.transaction_type = #{expenseType} THEN #{unclassifiedExpenseCode}
+                     ELSE NULL
+            END
+    </select>
+
+    <select id="selectDashboardTransactionSummary" resultType="com.kyx.service.finance.service.dashboard.dto.FinanceDashboardTransactionSummaryDTO">
+        SELECT COALESCE(SUM(CASE WHEN t.transaction_type = #{incomeType} THEN t.amount ELSE 0 END), 0) AS incomeAmount,
+               COALESCE(SUM(CASE WHEN t.transaction_type = #{expenseType} THEN t.amount ELSE 0 END), 0) AS expenseAmount
+        FROM finance_transaction t
+        WHERE t.deleted = 0
+          AND t.company_id = #{companyId}
+          AND t.status = #{successStatus}
+          AND (t.transaction_type = #{incomeType} OR t.transaction_type = #{expenseType})
+          AND t.transaction_period = #{period}
+    </select>
+
+    <select id="selectDashboardWeeklyCashFlow" resultType="com.kyx.service.finance.service.dashboard.dto.FinanceDashboardWeeklyCashFlowDTO">
+        SELECT DATE_FORMAT(
+                   DATE_SUB(DATE(t.transaction_date), INTERVAL WEEKDAY(DATE(t.transaction_date)) DAY),
+                   '%Y-%m-%d'
+               ) AS weekStartDate,
+               COALESCE(SUM(CASE WHEN t.transaction_type = #{incomeType} THEN t.amount ELSE 0 END), 0) AS incomeAmount,
+               COALESCE(SUM(CASE WHEN t.transaction_type = #{expenseType} THEN t.amount ELSE 0 END), 0) AS expenseAmount
+        FROM finance_transaction t
+        WHERE t.deleted = 0
+          AND t.company_id = #{companyId}
+          AND t.status = #{successStatus}
+          AND (t.transaction_type = #{incomeType} OR t.transaction_type = #{expenseType})
+          AND t.transaction_date <![CDATA[>=]]> #{startTime}
+          AND t.transaction_date <![CDATA[<]]> #{endTime}
+        GROUP BY DATE_FORMAT(
+                     DATE_SUB(DATE(t.transaction_date), INTERVAL WEEKDAY(DATE(t.transaction_date)) DAY),
+                     '%Y-%m-%d'
+                 )
+        ORDER BY weekStartDate ASC
+    </select>
+
+    <select id="selectDashboardCashFlowActivitySummary" resultType="com.kyx.service.finance.service.dashboard.dto.FinanceDashboardCashFlowActivitySummaryDTO">
+        SELECT COALESCE(SUM(CASE
+                                WHEN x.activityType = 'OPERATING' AND x.transaction_type = #{incomeType} THEN x.amount
+                                WHEN x.activityType = 'OPERATING' AND x.transaction_type = #{expenseType} THEN -x.amount
+                                ELSE 0
+            END), 0) AS operatingNetCash,
+               COALESCE(SUM(CASE
+                                WHEN x.activityType = 'INVESTING' AND x.transaction_type = #{incomeType} THEN x.amount
+                                WHEN x.activityType = 'INVESTING' AND x.transaction_type = #{expenseType} THEN -x.amount
+                                ELSE 0
+            END), 0) AS investingNetCash,
+               COALESCE(SUM(CASE
+                                WHEN x.activityType = 'FINANCING' AND x.transaction_type = #{incomeType} THEN x.amount
+                                WHEN x.activityType = 'FINANCING' AND x.transaction_type = #{expenseType} THEN -x.amount
+                                ELSE 0
+            END), 0) AS financingNetCash
+        FROM (
+                 SELECT t.transaction_type,
+                        t.amount,
+                        CASE
+                            WHEN UPPER(COALESCE(t.category, '')) LIKE '%INVEST%'
+                                OR UPPER(COALESCE(t.category, '')) LIKE '%ASSET%'
+                                OR UPPER(COALESCE(t.category, '')) LIKE '%固定资产%'
+                                THEN 'INVESTING'
+                            WHEN UPPER(COALESCE(t.category, '')) LIKE '%FINANC%'
+                                OR UPPER(COALESCE(t.category, '')) LIKE '%LOAN%'
+                                OR UPPER(COALESCE(t.category, '')) LIKE '%BORROW%'
+                                OR UPPER(COALESCE(t.category, '')) LIKE '%CAPITAL%'
+                                OR UPPER(COALESCE(t.category, '')) LIKE '%融资%'
+                                OR UPPER(COALESCE(t.category, '')) LIKE '%借款%'
+                                THEN 'FINANCING'
+                            ELSE 'OPERATING'
+                            END AS activityType
+                 FROM finance_transaction t
+                 WHERE t.deleted = 0
+                   AND t.company_id = #{companyId}
+                   AND t.status = #{successStatus}
+                   AND (t.transaction_type = #{incomeType} OR t.transaction_type = #{expenseType})
+                   AND t.transaction_period = #{period}
+             ) x
+    </select>
+
+</mapper>

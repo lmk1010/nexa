@@ -1,0 +1,239 @@
+---
+
+spring:
+  cloud:
+    nacos:
+      server-addr: ${NACOS_HOST:192.168.10.253}:${NACOS_PORT:8848}
+      username: nacos
+      password: nacos
+      discovery:
+        namespace: mk-dev
+        group: DEFAULT_GROUP
+        metadata:
+          version: 1.0.0
+      config:
+        namespace: mk-dev
+        group: DEFAULT_GROUP
+
+---
+spring:
+
+  autoconfigure:
+    exclude:
+      - com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceAutoConfigure
+  datasource:
+    druid:
+      web-stat-filter:
+        enabled: true
+      stat-view-servlet:
+        enabled: false
+        allow:
+        url-pattern: /druid/*
+        login-username: admin
+        login-password: druid123456
+      filter:
+        stat:
+          enabled: true
+          log-slow-sql: true
+          slow-sql-millis: 2000
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true
+    dynamic:
+      druid:
+        initial-size: 10
+        min-idle: 20
+        max-active: 50
+        max-wait: 600000
+        time-between-eviction-runs-millis: 60000
+        min-evictable-idle-time-millis: 300000
+        max-evictable-idle-time-millis: 900000
+        validation-query: SELECT 1 FROM DUAL
+        test-while-idle: true
+        test-on-borrow: false
+        test-on-return: false
+      primary: master
+      datasource:
+        master:
+          url: jdbc:mysql://${MYSQL_HOST:192.168.10.253}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:kyx_oa}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true
+          username: ${MYSQL_USERNAME:kyx_user}
+          password: ${MYSQL_PASSWORD:kyx123456}
+        slave:
+          lazy: true
+          url: jdbc:mysql://${MYSQL_SLAVE_HOST:192.168.10.253}:${MYSQL_SLAVE_PORT:3306}/${MYSQL_DATABASE:kyx_oa}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true
+          username: ${MYSQL_USERNAME:kyx_user}
+          password: ${MYSQL_PASSWORD:kyx123456}
+
+
+  redis:
+    host: ${REDIS_HOST:192.168.10.253}
+    port: ${REDIS_PORT:6379}
+    database: ${REDIS_DATABASE:1}
+    password: ${REDIS_PASSWORD:kyx_redis_2024}
+    timeout: 6000ms
+    lettuce:
+      pool:
+        max-active: 20
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 2
+
+---
+
+rocketmq:
+  name-server: 192.168.10.253:9092
+
+spring:
+
+  rabbitmq:
+    host: 192.168.10.253
+    port: 5672
+    username: guest
+    password: guest
+
+  kafka:
+    bootstrap-servers: 192.168.10.253:9092
+
+    producer:
+      acks: 1
+      retries: 3
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+
+        connections.max.idle.ms: 60000
+        request.timeout.ms: 10000
+
+        reconnect.backoff.ms: 1000
+        reconnect.backoff.max.ms: 10000
+        retry.backoff.ms: 1000
+
+    consumer:
+      auto-offset-reset: earliest
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      enable-auto-commit: true
+      auto-commit-interval: 5000
+      max-poll-records: 50
+      properties:
+        spring.json.trusted.packages: '*'
+
+        connections.max.idle.ms: 120000
+        session.timeout.ms: 60000
+        heartbeat.interval.ms: 10000
+        request.timeout.ms: 30000
+
+        reconnect.backoff.ms: 1000
+        reconnect.backoff.max.ms: 10000
+        retry.backoff.ms: 1000
+
+    listener:
+      missing-topics-fatal: false
+      type: batch
+      concurrency: 1
+---
+
+---
+
+lock4j:
+  acquire-timeout: 3000
+  expire: 30000
+
+---
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: 'health,info,metrics'
+
+spring:
+  boot:
+    admin:
+
+      client:
+        instance:
+          service-host-type: IP
+
+      context-path: /admin
+
+logging:
+  level:
+    root: INFO
+    com.kyx: INFO
+    org.springframework.security: WARN
+  file:
+    name: ${LOG_PATH:/app/logs}/${spring.application.name}.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+wx:
+  mp:
+    app-id: ${WX_MP_APP_ID:wx041349c6f39b268b}
+    secret: ${WX_MP_SECRET:5abee519483bc9f8cb37ce280e814bd0}
+
+    config-storage:
+      type: RedisTemplate
+      key-prefix: wx
+      http-client-type: HttpClient
+  miniapp:
+    appid: ${WX_MINIAPP_APP_ID:wx62056c0d5e8db250}
+    secret: ${WX_MINIAPP_SECRET:333ae72f41552af1e998fe1f54e1584a}
+    config-storage:
+      type: RedisTemplate
+      key-prefix: wa
+      http-client-type: HttpClient
+
+---
+
+foundation:
+  demo: false
+  file:
+    config:
+      host: http://192.168.10.253:9000
+
+justauth:
+  enabled: true
+  type:
+    DINGTALK:
+      client-id: ${DINGTALK_CLIENT_ID:dingvrnreaje3yqvzhxg}
+      client-secret: ${DINGTALK_CLIENT_SECRET:i8E6iZyDvZj51JIb0tYsYfVQYOks9Cq1lgryEjFRqC79P3iJcrxEwT6Qk2QvLrLI}
+      ignore-check-redirect-uri: true
+    WECHAT_ENTERPRISE:
+      client-id: ${WECHAT_ENTERPRISE_CLIENT_ID:wwd411c69a39ad2e54}
+      client-secret: ${WECHAT_ENTERPRISE_CLIENT_SECRET:1wTb7hYxnpT2TUbIeHGXGo7T0odav1ic10mLdyyATOw}
+      agent-id: ${WECHAT_ENTERPRISE_AGENT_ID:1000004}
+      ignore-check-redirect-uri: true
+    WECHAT_MINI_PROGRAM:
+      client-id: ${wx.miniapp.appid}
+      client-secret: ${wx.miniapp.secret}
+      ignore-check-redirect-uri: true
+      ignore-check-state: true
+    WECHAT_MP:
+      client-id: ${wx.mp.app-id}
+      client-secret: ${wx.mp.secret}
+      ignore-check-redirect-uri: true
+  cache:
+    type: REDIS
+    prefix: 'social_auth_state:'
+    timeout: 24h
+
+
+dingtalk:
+  app:
+    corp-id: ${DINGTALK_CORP_ID:ding5eff0605b6e3b393}
+    app-id: ${DINGTALK_APP_ID:bb6e8fb0-b75a-4aa7-8d5e-ea3a43b082a0}
+    agent-id: ${DINGTALK_AGENT_ID:4434118778}
+    app-key: ${DINGTALK_APP_KEY:ding3xssc8tt3ropf7ed}
+    app-secret: ${DINGTALK_APP_SECRET:RUWm7_-bdhBBOkDW-IAfZEueeK3e5et78YC6P8GP_ywFmc5uBLBFwOJ-Y526tSUA}
+  stream:
+    enabled: ${DINGTALK_STREAM_ENABLED:false}
+    consume-threads: ${DINGTALK_STREAM_CONSUME_THREADS:4}
+    attendance-sync-min-interval-seconds: ${DINGTALK_STREAM_ATTENDANCE_SYNC_MIN_INTERVAL_SECONDS:120}
+    attendance-sync-lookback-minutes: ${DINGTALK_STREAM_ATTENDANCE_SYNC_LOOKBACK_MINUTES:10}
+  requirement-notice:
+    per-user-limit-per-minute: ${DINGTALK_REQUIREMENT_NOTICE_PER_USER_LIMIT_PER_MINUTE:8}
+    tenant-limit-per-minute: ${DINGTALK_REQUIREMENT_NOTICE_TENANT_LIMIT_PER_MINUTE:60}
+    dedup-ttl-minutes: ${DINGTALK_REQUIREMENT_NOTICE_DEDUP_TTL_MINUTES:10}

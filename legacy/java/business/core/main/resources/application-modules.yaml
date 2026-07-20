@@ -1,0 +1,156 @@
+# 模块化单体共享配置。
+# 环境相关配置仍从各领域的 modules/<module>/application-<profile>.yaml 加载。
+spring:
+  jmx:
+    enabled: false
+  main:
+    # 多领域装配初期允许同名 Bean 覆盖，避免迁移期硬失败；后续再收紧。
+    allow-bean-definition-overriding: true
+
+logging:
+  level:
+    root: WARN
+    com.kyx: INFO
+    org.springframework: WARN
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
+    org.apache.ibatis: WARN
+    com.alibaba: WARN
+
+mybatis-plus:
+  configuration:
+    cache-enabled: false
+    lazy-loading-enabled: false
+    aggressive-lazy-loading: false
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+foundation:
+  info:
+    base-package: com.kyx.service
+  swagger:
+    title: KYX Business Monolith
+    description: KYX modular monolith business APIs
+  xss:
+    exclude-urls:
+      - ${management.endpoints.web.base-path}/**
+      - ${spring.boot.admin.context-path}/**
+  tenant:
+    ignore-urls:
+      - /admin-api/system/tenant/get-user-tenant-list
+      - /admin-api/system/tenant/page
+      - /admin-api/hr/public/**
+      - /admin-api/system/auth/login
+      - /admin-api/system/auth/logout
+      - /admin-api/system/auth/refresh-token
+      - /admin-api/system/auth/sms-login
+      - /admin-api/system/auth/send-sms-code
+      - /admin-api/system/auth/reset-password
+      - /admin-api/system/auth/register
+      - /admin-api/system/auth/social-login
+      - /admin-api/system/auth/social-auth-redirect
+      - /app-api/im/invite-code/validate
+      - /app-api/invite-code/validate
+      - /app-api/im/invite-code/use
+      - /app-api/invite-code/use
+    ignore-tables:
+      - finance_subject_template
+    ignore-caches:
+      - user_role_ids
+      - permission_menu_ids
+      - oauth_client
+      - notify_template
+      - mail_account
+      - mail_template
+      - sms_template
+  sms-code:
+    expire-times: 10m
+    send-frequency: 1m
+    send-maximum-quantity-per-day: 10
+    begin-code: 9999
+    end-code: 9999
+  websocket:
+    enable: true
+    path: /infra/ws
+    sender-type: local
+    sender-rocketmq:
+      topic: ${spring.application.name}-websocket
+      consumer-group: ${spring.application.name}-websocket-consumer
+    sender-rabbitmq:
+      exchange: ${spring.application.name}-websocket-exchange
+      queue: ${spring.application.name}-websocket-queue
+    sender-kafka:
+      topic: ${spring.application.name}-websocket
+      consumer-group: ${spring.application.name}-websocket-consumer
+  codegen:
+    base-package: com.kyx
+    db-schemas: ${spring.datasource.dynamic.datasource.master.name}
+    front-type: 20
+    vo-type: 10
+    delete-batch-enable: true
+    unit-test-enable: false
+
+debug: false
+
+dingtalk:
+  app:
+    corp-id: ${DINGTALK_CORP_ID:ding5eff0605b6e3b393}
+    app-id: ${DINGTALK_APP_ID:bb6e8fb0-b75a-4aa7-8d5e-ea3a43b082a0}
+    agent-id: ${DINGTALK_AGENT_ID:4434118778}
+    app-key: ${DINGTALK_APP_KEY:ding3xssc8tt3ropf7ed}
+    app-secret: ${DINGTALK_APP_SECRET:RUWm7_-bdhBBOkDW-IAfZEueeK3e5et78YC6P8GP_ywFmc5uBLBFwOJ-Y526tSUA}
+  access-token:
+    endpoint: ${DINGTALK_ACCESS_TOKEN_ENDPOINT:https://api.dingtalk.com/v1.0/oauth2/accessToken}
+    refresh-before-seconds: ${DINGTALK_ACCESS_TOKEN_REFRESH_BEFORE_SECONDS:300}
+  api:
+    max-qps: ${DINGTALK_API_MAX_QPS:3}
+  sync:
+    enabled: ${DINGTALK_SYNC_ENABLED:true}
+    fixed-delay-ms: ${DINGTALK_SYNC_FIXED_DELAY_MS:86400000}
+    employee-schedule-start-delay-ms: ${DINGTALK_SYNC_EMPLOYEE_SCHEDULE_START_DELAY_MS:0}
+    cron: ${DINGTALK_SYNC_CRON:0 0 2 * * ?}
+    zone-id: ${DINGTALK_SYNC_ZONE_ID:Asia/Shanghai}
+    attendance-lookback-minutes: ${DINGTALK_SYNC_ATTENDANCE_LOOKBACK_MINUTES:1440}
+    root-dept-id: ${DINGTALK_SYNC_ROOT_DEPT_ID:1}
+    employee-enabled: ${DINGTALK_SYNC_EMPLOYEE_ENABLED:true}
+    roster-enabled: ${DINGTALK_SYNC_ROSTER_ENABLED:true}
+    roster-overwrite-profile-enabled: ${DINGTALK_SYNC_ROSTER_OVERWRITE_PROFILE_ENABLED:false}
+    roster-backfill-profile-empty-only: ${DINGTALK_SYNC_ROSTER_BACKFILL_PROFILE_EMPTY_ONLY:true}
+    employee-auto-create-enabled: ${DINGTALK_SYNC_EMPLOYEE_AUTO_CREATE_ENABLED:true}
+    employee-auto-create-dept-id: ${DINGTALK_SYNC_EMPLOYEE_AUTO_CREATE_DEPT_ID:1}
+    employee-fallback-dept-name: ${DINGTALK_SYNC_EMPLOYEE_FALLBACK_DEPT_NAME:蚌埠快易修}
+    attendance-enabled: ${DINGTALK_SYNC_ATTENDANCE_ENABLED:true}
+    leave-enabled: ${DINGTALK_SYNC_LEAVE_ENABLED:true}
+    leave-lookback-days: ${DINGTALK_SYNC_LEAVE_LOOKBACK_DAYS:1}
+    leave-forward-days: ${DINGTALK_SYNC_LEAVE_FORWARD_DAYS:0}
+    user-detail-enabled: ${DINGTALK_SYNC_USER_DETAIL_ENABLED:true}
+    user-detail-interval-ms: ${DINGTALK_SYNC_USER_DETAIL_INTERVAL_MS:120}
+    attendance-batch-interval-ms: ${DINGTALK_SYNC_ATTENDANCE_BATCH_INTERVAL_MS:300}
+    leave-batch-interval-ms: ${DINGTALK_SYNC_LEAVE_BATCH_INTERVAL_MS:120}
+    roster-batch-interval-ms: ${DINGTALK_SYNC_ROSTER_BATCH_INTERVAL_MS:200}
+  notify:
+    enabled: ${DINGTALK_NOTIFY_ENABLED:false}
+    message-type: ${DINGTALK_NOTIFY_MESSAGE_TYPE:text}
+  stream:
+    enabled: ${DINGTALK_STREAM_ENABLED:false}
+    consume-threads: ${DINGTALK_STREAM_CONSUME_THREADS:1}
+    attendance-sync-min-interval-seconds: ${DINGTALK_STREAM_ATTENDANCE_SYNC_MIN_INTERVAL_SECONDS:120}
+    attendance-sync-lookback-minutes: ${DINGTALK_STREAM_ATTENDANCE_SYNC_LOOKBACK_MINUTES:10}
+    employee-sync-min-interval-seconds: ${DINGTALK_STREAM_EMPLOYEE_SYNC_MIN_INTERVAL_SECONDS:60}
+    leave-sync-lookback-days: ${DINGTALK_STREAM_LEAVE_SYNC_LOOKBACK_DAYS:3}
+    leave-sync-forward-days: ${DINGTALK_STREAM_LEAVE_SYNC_FORWARD_DAYS:0}
+
+flowable:
+  database-schema-update: true
+  async-history-executor-activate: false
+  db-history-used: true
+  check-process-definitions: false
+  history-level: audit
+
+kyx:
+  tencent-im:
+    sdk-app-id: ${TENCENT_IM_SDK_APP_ID:0}
+    secret-key: ${TENCENT_IM_SECRET_KEY:}
+    expire-seconds: ${TENCENT_IM_EXPIRE_SECONDS:604800}
+    fixed-prefix: ${TENCENT_IM_FIXED_PREFIX:}
+    default-ordersys-user-prefix: ${TENCENT_IM_DEFAULT_ORDERSYS_USER_PREFIX:EMPLOYEE}
+    auto-create-mapping: ${TENCENT_IM_AUTO_CREATE_MAPPING:false}

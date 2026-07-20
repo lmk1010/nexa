@@ -1,0 +1,6 @@
+{
+  "name": "nexa-gateway",
+  "http": { "addr": ":48080" },
+  "log": { "level": "info" },
+  "mysql": { "dsn": "" }
+}

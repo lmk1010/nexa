@@ -1,0 +1,8 @@
+# Prefer config.example.json for the skeleton binary (stdlib JSON).
+name: nexa-op
+http:
+  addr: ":48088"
+log:
+  level: info
+mysql:
+  dsn: ""

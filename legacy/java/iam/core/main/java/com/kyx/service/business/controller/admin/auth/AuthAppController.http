@@ -1,0 +1,45 @@
+### 移动端登录接口测试
+
+### 1. 用户名登录
+POST {{baseUrl}}/system/auth/app-login
+Content-Type: application/json
+
+{
+  "loginType": "USERNAME",
+  "username": "foundationyuanma",
+  "password": "buzhidao",
+  "deviceType": "MOBILE_ANDROID",
+  "deviceId": "android_device_123456"
+}
+
+### 2. 手机号登录
+POST {{baseUrl}}/system/auth/app-login
+Content-Type: application/json
+
+{
+  "loginType": "MOBILE",
+  "mobile": "13800138000",
+  "password": "buzhidao",
+  "deviceType": "MOBILE_IOS",
+  "deviceId": "ios_device_789012"
+}
+
+### 3. 邮箱登录
+POST {{baseUrl}}/system/auth/app-login
+Content-Type: application/json
+
+{
+  "loginType": "EMAIL",
+  "email": "user@example.com",
+  "password": "buzhidao"
+}
+
+### 4. 移动端专用登录接口
+POST {{baseUrl}}/app/auth/login
+Content-Type: application/json
+
+{
+  "loginType": "USERNAME",
+  "username": "foundationyuanma",
+  "password": "buzhidao"
+} 

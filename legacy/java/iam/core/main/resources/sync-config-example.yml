@@ -1,0 +1,27 @@
+# 外部系统同步配置示例
+# 将此配置添加到你的 application.yml 或 application-{profile}.yml 中
+
+sync:
+  external:
+    # 是否启用外部同步功能
+    enabled: true
+    
+    # 岗位同步配置
+    post:
+      api-url: "https://order.liantucn.com/api/system/post/list?pageNum=1&pageSize=100"
+      auth-token: "Bearer eyJhbGciOiJIUzUxMiJ9.eyJsb2dpbl90eXBlX2tleSI6IkVNUExPWUVFIiwibG9naW5fdXNlcl9rZXkiOiI2NzdlNDQ2Yy1mYzBkLTQ2MjItOTdhOS1mMWUxZGVhNWI1ZGIifQ.YpympSeml-W0fVwPd3m4J4Hq4PO8XhK9tHjWS51Z8jenSDNG1koeTM-8p3XAIrXWfdhaQjVX33XtfjwIUZ4sLw"
+      cookie: "Admin-Token=eyJhbGciOiJIUzUxMiJ9.eyJsb2dpbl90eXBlX2tleSI6IkVNUExPWUVFIiwibG9naW5fdXNlcl9rZXkiOiI2NzdlNDQ2Yy1mYzBkLTQ2MjItOTdhOS1mMWUxZGVhNWI1ZGIifQ.YpympSeml-W0fVwPd3m4J4Hq4PO8XhK9tHjWS51Z8jenSDNG1koeTM-8p3XAIrXWfdhaQjVX33XtfjwIUZ4sLw; sidebarStatus=0"
+      uuid: "f460f095-382f-4337-b94b-9436de7014d6"
+    
+    # 定时任务配置
+    full-sync:
+      # 完整同步，每天凌晨2点执行
+      cron: "0 0 2 * * ?"
+    
+    post-sync:
+      # 岗位同步，每4小时执行一次
+      cron: "0 0 */4 * * ?"
+    
+    cleanup:
+      # 清理任务，每天凌晨1点执行
+      cron: "0 0 1 * * ?"

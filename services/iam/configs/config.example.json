@@ -1,0 +1,6 @@
+{
+  "name": "nexa-iam",
+  "http": { "addr": ":48081" },
+  "log": { "level": "info" },
+  "mysql": { "dsn": "" }
+}

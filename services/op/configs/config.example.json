@@ -1,0 +1,6 @@
+{
+  "name": "nexa-op",
+  "http": { "addr": ":48088" },
+  "log": { "level": "info" },
+  "mysql": { "dsn": "" }
+}

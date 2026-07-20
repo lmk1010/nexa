@@ -1,0 +1,145 @@
+spring:
+  application:
+    name: business-server
+
+  profiles:
+    active: @spring.profiles.active@
+
+  main:
+    allow-circular-references: true
+    allow-bean-definition-overriding: true
+
+  config:
+    import:
+      - optional:classpath:application-modules.yaml
+      - optional:classpath:modules/op/application-${spring.profiles.active}.yaml
+      - optional:classpath:modules/bpm/application-${spring.profiles.active}.yaml
+      - optional:classpath:modules/hr/application-${spring.profiles.active}.yaml
+      - optional:classpath:modules/erp/application-${spring.profiles.active}.yaml
+      - optional:classpath:modules/finance/application-${spring.profiles.active}.yaml
+      - optional:classpath:modules/im/application-${spring.profiles.active}.yaml
+      - optional:classpath:modules/ai/application-${spring.profiles.active}.yaml
+      - optional:classpath:application-${spring.profiles.active}.yaml
+      - optional:nacos:${spring.application.name}-${spring.profiles.active}.yaml
+
+  cloud:
+    nacos:
+      config:
+        import-check:
+          enabled: false
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: true
+      write-date-timestamps-as-nanoseconds: false
+      write-durations-as-timestamps: true
+      fail-on-empty-beans: false
+
+  cache:
+    type: REDIS
+    redis:
+      time-to-live: 1h
+
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+  kafka:
+    producer:
+      acks: 1
+      retries: 3
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      auto-offset-reset: earliest
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+    listener:
+      missing-topics-fatal: false
+
+server:
+  port: 48086
+
+logging:
+  file:
+    name: ${LOG_PATH:./logs}/${spring.application.name}.log # 支持环境变量LOG_PATH，默认使用相对路径
+
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+  default-flat-param-object: true
+
+knife4j:
+  enable: false
+  setting:
+    language: zh_cn
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: NONE
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+    banner: false
+  type-aliases-package: ${foundation.info.base-package}.dal.dataobject
+  encryptor:
+    password: XDV71a+xqStEA3WH
+
+mybatis-plus-join:
+  banner: false
+
+easy-trans:
+  is-enable-global: true
+
+
+
+rocketmq:
+  producer:
+    group: ${spring.application.name}_PRODUCER
+
+
+
+foundation:
+  info:
+    version: 1.0.0
+    # 单体扫描所有已合并领域，避免只扫到 business 自己的 Mapper/组件。
+    base-package: com.kyx.service
+  web:
+    admin-ui:
+      url: http://dashboard.foundation.iocoder.cn
+  xss:
+    enable: false
+    exclude-urls:
+      - ${management.endpoints.web.base-path}/**
+  swagger:
+    title: KYX Business Monolith
+    description: KYX modular monolith business APIs
+    version: ${foundation.info.version}
+  tenant:
+    enable: true
+    ignore-urls:
+      - /admin-api/system/tenant/get-user-tenant-list
+      - /admin-api/system/tenant/page
+    ignore-visit-urls:
+      - /admin-api/system/user/profile/**
+      - /admin-api/system/auth/**
+    ignore-tables:
+      # system_tenant 是租户主表，没有 tenant_id 列；JOIN 时拦截器不能再拼 st.tenant_id
+      - system_tenant
+    ignore-caches:
+      - user_role_ids
+      - permission_menu_ids
+      - oauth_client

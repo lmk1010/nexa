@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyx.service.im.dal.mysql.invitecode.InviteCodeMapper">
+
+    <!-- 根据邀请码查询邀请码信息（不使用租户过滤） -->
+    <select id="selectByCodeWithoutTenant" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeDO">
+        SELECT 
+            ic.*
+        FROM im_invite_code ic
+        WHERE ic.code = #{code}
+        AND ic.deleted = 0
+    </select>
+
+    <!-- 根据邀请码查询邀请码信息（包含租户名称和状态） -->
+    <select id="selectByCodeWithTenant" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeDO">
+        SELECT 
+            ic.*,
+            t.name as tenantName,
+            t.status as tenantStatus
+        FROM im_invite_code ic
+        LEFT JOIN system_tenant t ON ic.tenant_id = t.id
+        WHERE ic.code = #{code}
+        AND ic.deleted = 0
+    </select>
+
+    <!-- 查询所有租户的邀请码统计信息 -->
+    <select id="selectTenantInviteCodeStats" resultType="com.kyx.service.im.dal.mysql.invitecode.TenantInviteCodeStatsVO">
+        SELECT 
+            t.id as tenantId,
+            t.name as tenantName,
+            COUNT(ic.id) as totalCount,
+            SUM(CASE WHEN ic.status = 0 THEN 1 ELSE 0 END) as enabledCount,
+            SUM(CASE WHEN ic.status = 1 THEN 1 ELSE 0 END) as disabledCount,
+            SUM(CASE WHEN ic.status = 2 THEN 1 ELSE 0 END) as expiredCount,
+            SUM(CASE WHEN ic.status = 3 THEN 1 ELSE 0 END) as usedUpCount,
+            SUM(CASE WHEN ic.type = 1 THEN 1 ELSE 0 END) as registerCount,
+            SUM(CASE WHEN ic.type = 2 THEN 1 ELSE 0 END) as groupCount,
+            SUM(CASE WHEN ic.type = 3 THEN 1 ELSE 0 END) as channelCount
+        FROM system_tenant t
+        LEFT JOIN im_invite_code ic ON t.id = ic.tenant_id AND ic.deleted = 0
+        WHERE t.deleted = 0
+        GROUP BY t.id, t.name
+        ORDER BY t.id
+    </select>
+
+    <!-- 根据租户ID查询邀请码列表 -->
+    <select id="selectListByTenantId" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeDO">
+        SELECT 
+            ic.*,
+            t.name as tenantName,
+            t.status as tenantStatus
+        FROM im_invite_code ic
+        LEFT JOIN system_tenant t ON ic.tenant_id = t.id
+        WHERE ic.tenant_id = #{tenantId} 
+        AND ic.deleted = 0
+        ORDER BY ic.create_time DESC
+    </select>
+
+    <!-- 根据租户ID和类型查询邀请码列表 -->
+    <select id="selectListByTenantIdAndType" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeDO">
+        SELECT 
+            ic.*,
+            t.name as tenantName,
+            t.status as tenantStatus
+        FROM im_invite_code ic
+        LEFT JOIN system_tenant t ON ic.tenant_id = t.id
+        WHERE ic.tenant_id = #{tenantId} 
+        AND ic.type = #{type}
+        AND ic.deleted = 0
+        ORDER BY ic.create_time DESC
+    </select>
+
+    <!-- 查询有效的邀请码 -->
+    <select id="selectValidInviteCodes" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeDO">
+        SELECT 
+            ic.*,
+            t.name as tenantName,
+            t.status as tenantStatus
+        FROM im_invite_code ic
+        LEFT JOIN system_tenant t ON ic.tenant_id = t.id
+        WHERE ic.status = 0
+        AND ic.deleted = 0
+        AND (ic.valid_start_time IS NULL OR ic.valid_start_time &lt;= NOW())
+        AND (ic.valid_end_time IS NULL OR ic.valid_end_time &gt;= NOW())
+        AND (ic.usage_limit IS NULL OR ic.used_count &lt; ic.usage_limit)
+        ORDER BY ic.create_time DESC
+    </select>
+
+    <!-- 查询过期的邀请码 -->
+    <select id="selectExpiredInviteCodes" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeDO">
+        SELECT 
+            ic.*,
+            t.name as tenantName,
+            t.status as tenantStatus
+        FROM im_invite_code ic
+        LEFT JOIN system_tenant t ON ic.tenant_id = t.id
+        WHERE ic.deleted = 0
+        AND ic.valid_end_time IS NOT NULL 
+        AND ic.valid_end_time &lt; NOW()
+        ORDER BY ic.valid_end_time ASC
+    </select>
+
+    <!-- 查询已用完的邀请码 -->
+    <select id="selectUsedUpInviteCodes" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeDO">
+        SELECT 
+            ic.*,
+            t.name as tenantName,
+            t.status as tenantStatus
+        FROM im_invite_code ic
+        LEFT JOIN system_tenant t ON ic.tenant_id = t.id
+        WHERE ic.deleted = 0
+        AND ic.usage_limit IS NOT NULL 
+        AND ic.used_count >= ic.usage_limit
+        ORDER BY ic.update_time DESC
+    </select>
+
+    <!-- 分页查询邀请码列表（使用XML方式） -->
+    <select id="selectPageByXml" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeDO">
+        SELECT 
+            ic.*, 
+            t.name as tenantName,
+            t.status as tenantStatus
+        FROM im_invite_code ic
+        LEFT JOIN system_tenant t ON ic.tenant_id = t.id
+        WHERE ic.deleted = 0
+        <if test="ew.code != null and ew.code != ''">
+            AND ic.code LIKE CONCAT('%', #{ew.code}, '%')
+        </if>
+        <if test="ew.type != null">
+            AND ic.type = #{ew.type}
+        </if>
+        <if test="ew.status != null">
+            AND ic.status = #{ew.status}
+        </if>
+        <if test="ew.creatorName != null and ew.creatorName != ''">
+            AND ic.creator_name LIKE CONCAT('%', #{ew.creatorName}, '%')
+        </if>
+        <if test="ew.tenantName != null and ew.tenantName != ''">
+            AND t.name LIKE CONCAT('%', #{ew.tenantName}, '%')
+        </if>
+        <if test="ew.createTime != null and ew.createTime.length == 2">
+            AND ic.create_time BETWEEN #{ew.createTime[0]} AND #{ew.createTime[1]}
+        </if>
+        <if test="ew.tenantId != null">
+            AND ic.tenant_id = #{ew.tenantId}
+        </if>
+        ORDER BY ic.id DESC
+    </select>
+
+    <!-- 更新邀请码使用次数 -->
+    <update id="updateUsedCount">
+        UPDATE im_invite_code 
+        SET used_count = used_count + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+        AND deleted = 0
+    </update>
+
+    <!-- 批量更新过期邀请码状态 -->
+    <update id="updateExpiredStatus">
+        UPDATE im_invite_code 
+        SET status = 2,
+            update_time = NOW()
+        WHERE deleted = 0
+        AND valid_end_time IS NOT NULL 
+        AND valid_end_time &lt; NOW()
+        AND status != 2
+    </update>
+
+    <!-- 批量更新已用完邀请码状态 -->
+    <update id="updateUsedUpStatus">
+        UPDATE im_invite_code 
+        SET status = 3,
+            update_time = NOW()
+        WHERE deleted = 0
+        AND usage_limit IS NOT NULL 
+        AND used_count >= usage_limit
+        AND status != 3
+    </update>
+
+</mapper> 

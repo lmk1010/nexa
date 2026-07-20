@@ -1,0 +1,120 @@
+--- #################### 娉ㄥ唽涓績 + 閰嶇疆涓績鐩稿叧閰嶇疆 ####################
+
+spring:
+  cloud:
+    nacos:
+      server-addr: 192.168.10.253:8848 # Nacos 鏈嶅姟鍣ㄥ湴鍧€
+      username: nacos # Nacos 璐﹀彿
+      password: nacos # Nacos 瀵嗙爜
+      discovery: # 銆愭湇鍔℃敞鍐屻€戦厤缃」
+        namespace: mk-dev # 鍛藉悕绌洪棿銆傝繖閲屼娇鐢?prod 鐢熶骇鐜
+        group: DEFAULT_GROUP # 浣跨敤鐨?Nacos 閰嶇疆鍒嗙粍锛岄粯璁や负 DEFAULT_GROUP
+        metadata:
+          version: 1.0.0 # 鏈嶅姟瀹炰緥鐨勭増鏈彿锛屽彲鐢ㄤ簬鐏板害鍙戝竷
+      config: # 銆愰厤缃腑蹇冦€戦厤缃」
+        namespace: mk-dev # 鍛藉悕绌洪棿銆傝繖閲屼娇鐢?prod 鐢熶骇鐜
+        group: DEFAULT_GROUP # 浣跨敤鐨?Nacos 閰嶇疆鍒嗙粍锛岄粯璁や负 DEFAULT_GROUP
+
+--- #################### 鏁版嵁搴撶浉鍏抽厤缃?####################
+spring:
+  # 鏁版嵁婧愰厤缃」
+  autoconfigure:
+    exclude:
+      - com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceAutoConfigure # 鎺掗櫎 Druid 鐨勮嚜鍔ㄩ厤缃紝浣跨敤 dynamic-datasource-spring-boot-starter 閰嶇疆澶氭暟鎹簮
+  datasource:
+    druid: # Druid 銆愮洃鎺с€戠浉鍏崇殑鍏ㄥ眬閰嶇疆
+      web-stat-filter:
+        enabled: true
+      stat-view-servlet:
+        enabled: false # 鐢熶骇鐜鍏抽棴 Druid 鐩戞帶椤甸潰
+      filter:
+        stat:
+          enabled: true
+          log-slow-sql: true # 鎱?SQL 璁板綍
+          slow-sql-millis: 2000 # 鐢熶骇鐜鎱QL闃堝€艰皟楂?
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true
+    dynamic: # 澶氭暟鎹簮閰嶇疆
+      druid: # Druid 銆愯繛鎺ユ睜銆戠浉鍏崇殑鍏ㄥ眬閰嶇疆
+        initial-size: 10 # 鍒濆杩炴帴鏁?
+        min-idle: 20 # 鏈€灏忚繛鎺ユ睜鏁伴噺
+        max-active: 50 # 鏈€澶ц繛鎺ユ睜鏁伴噺
+        max-wait: 600000 # 閰嶇疆鑾峰彇杩炴帴绛夊緟瓒呮椂鐨勬椂闂达紝鍗曚綅锛氭绉?
+        time-between-eviction-runs-millis: 60000 # 閰嶇疆闂撮殧澶氫箙鎵嶈繘琛屼竴娆℃娴嬶紝妫€娴嬮渶瑕佸叧闂殑绌洪棽杩炴帴锛屽崟浣嶏細姣
+        min-evictable-idle-time-millis: 300000 # 閰嶇疆涓€涓繛鎺ュ湪姹犱腑鏈€灏忕敓瀛樼殑鏃堕棿锛屽崟浣嶏細姣
+        max-evictable-idle-time-millis: 900000 # 閰嶇疆涓€涓繛鎺ュ湪姹犱腑鏈€澶х敓瀛樼殑鏃堕棿锛屽崟浣嶏細姣
+        validation-query: SELECT 1 FROM DUAL # 閰嶇疆妫€娴嬭繛鎺ユ槸鍚︽湁鏁?
+        test-while-idle: true
+        test-on-borrow: false
+        test-on-return: false
+      primary: master
+      datasource:
+        master:
+          url: jdbc:mysql://192.168.10.253:3306/kyx_oa?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true # MySQL 鐢熶骇鐜杩炴帴
+          username: kyx_user
+          password: kyx123456
+        slave: # 浠庡簱閰嶇疆
+          lazy: true # 寮€鍚噿鍔犺浇锛屼繚璇佸惎鍔ㄩ€熷害
+          url: jdbc:mysql://192.168.10.253:3307/kyx_oa?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true # MySQL 浠庡簱杩炴帴
+          username: kyx_user
+          password: kyx123456
+
+  # Redis 閰嶇疆銆俁edisson 榛樿鐨勯厤缃冻澶熶娇鐢紝涓€鑸笉闇€瑕佽繘琛岃皟浼?
+  redis:
+    host: 192.168.10.253 # Redis 鍦板潃
+    port: 6379 # 绔彛
+    database: 1 # 鏁版嵁搴撶储寮?
+    password: kyx_redis_2024 # Redis 瀵嗙爜
+    timeout: 6000ms # 杩炴帴瓒呮椂鏃堕棿
+    lettuce:
+      pool:
+        max-active: 20 # 杩炴帴姹犳渶澶ц繛鎺ユ暟
+        max-wait: -1ms # 杩炴帴姹犳渶澶ч樆濉炵瓑寰呮椂闂?
+        max-idle: 8 # 杩炴帴姹犳渶澶х┖闂茶繛鎺ユ暟
+        min-idle: 2 # 杩炴帴姹犳渶灏忕┖闂茶繛鎺ユ暟
+
+--- #################### MQ 娑堟伅闃熷垪鐩稿叧閰嶇疆 ####################
+
+# rocketmq 閰嶇疆椤癸紝瀵瑰簲 RocketMQProperties 閰嶇疆绫?
+rocketmq:
+  name-server: 192.168.10.253:9092 # RocketMQ Namesrv (浣跨敤Kafka鏇夸唬)
+
+spring:
+  # Kafka 閰嶇疆椤癸紝瀵瑰簲 KafkaProperties 閰嶇疆绫?
+  kafka:
+    bootstrap-servers: 192.168.10.253:9092 # 鎸囧畾 Kafka Broker 鍦板潃
+
+--- #################### 瀹氭椂浠诲姟鐩稿叧閰嶇疆 ####################
+# 浣跨敤Spring鑷甫鐨凘Scheduled娉ㄨВ杩涜瀹氭椂浠诲姟
+
+--- #################### 鐩戞帶鐩稿叧閰嶇疆 ####################
+
+# Actuator 鐩戞帶绔偣鐨勯厤缃」
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: 'health,info,metrics' # 鐢熶骇鐜鍙紑鏀惧繀瑕佺殑绔偣
+
+# 鏃ュ織鏂囦欢閰嶇疆
+logging:
+  level:
+    root: INFO # 鐢熶骇鐜鏃ュ織绾у埆
+    com.kyx: INFO
+  file:
+    name: ${LOG_PATH:/app/logs}/${spring.application.name}.log # 鏀寔鐜鍙橀噺锛孌ocker榛樿浣跨敤/app/logs
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+--- #################### 鑺嬮亾鐩稿叧閰嶇疆 ####################
+
+foundation:
+  demo: false # 鐢熶骇鐜鍏抽棴婕旂ず妯″紡
+  file:
+    config:
+      host: http://192.168.10.253:9000 # MinIO 鍦板潃
+

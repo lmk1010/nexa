@@ -1,0 +1,725 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyx.service.hr.dal.mysql.employee.EmployeeMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.kyx.service.hr.dal.dataobject.employee.EmployeeDO">
+        <id column="id" property="id"/>
+        <result column="employee_no" property="employeeNo"/>
+        <result column="profile_id" property="profileId"/>
+        <result column="name" property="name"/>
+        <result column="user_id" property="userId"/>
+        <result column="id_number" property="idNumber"/>
+        <result column="gender" property="gender"/>
+        <result column="birth_date" property="birthDate"/>
+        <result column="age" property="age"/>
+        <result column="mobile" property="mobile"/>
+        <result column="email" property="email"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="job_title" property="jobTitle"/>
+        <result column="job_level_id" property="jobLevelId"/>
+        <result column="entry_date" property="entryDate"/>
+        <result column="work_status" property="workStatus"/>
+        <result column="employment_type" property="employmentType"/>
+        <result column="work_location_id" property="workLocationId"/>
+        <result column="direct_supervisor_id" property="directSupervisorId"/>
+        <result column="status" property="status"/>
+        <result column="nationality" property="nationality"/>
+        <result column="ethnicity" property="ethnicity"/>
+        <result column="political_status" property="politicalStatus"/>
+        <result column="marital_status" property="maritalStatus"/>
+        <result column="address" property="address"/>
+        <result column="emergency_contact" property="emergencyContact"/>
+        <result column="emergency_phone" property="emergencyPhone"/>
+        <result column="emergency_relation" property="emergencyRelation"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="creator" property="creator"/>
+        <result column="updater" property="updater"/>
+        <result column="deleted" property="deleted"/>
+        <result column="tenant_id" property="tenantId"/>
+    </resultMap>
+
+    <!-- 员工花名册分页查询结果映射 -->
+    <resultMap id="EmployeePageResultMap" type="com.kyx.service.hr.controller.admin.employee.vo.EmployeeRespVO">
+        <!-- 基本信息 -->
+        <id column="id" property="id"/>
+        <result column="employee_no" property="employeeNo"/>
+        <result column="profile_no" property="profileNo"/>
+        <result column="entry_id" property="entryId"/>
+        <result column="name" property="name"/>
+        <result column="mobile" property="mobile"/>
+        <result column="email" property="email"/>
+        <result column="gender" property="gender"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <!-- 工作信息 -->
+        <result column="dept_name" property="deptName"/>
+        <result column="job_title" property="jobTitle"/>
+        <result column="extension" property="extension"/>
+        <result column="office_location" property="officeLocation"/>
+        <result column="job_level_name" property="jobLevelName"/>
+        <result column="work_location_name" property="workLocation"/>
+        <result column="direct_supervisor_name" property="directSupervisor"/>
+        <result column="work_status" property="workStatus"/>
+        <result column="employment_type" property="employmentType"/>
+        <!-- 入职时间和司龄 -->
+        <result column="onboard_date" property="onboardDate"/>
+        <result column="leave_date" property="leaveDate"/>
+        <result column="job_level" property="jobLevel"/>
+        <result column="company_years" property="companyYears"/>
+        <result column="company_age" property="companyAge"/>
+        <!-- 租户信息 -->
+        <result column="tenant_id" property="tenantId"/>
+        <result column="tenant_name" property="tenantName"/>
+    </resultMap>
+
+    <!-- 员工详情查询结果映射 -->
+    <resultMap id="EmployeeDetailResultMap" type="com.kyx.service.hr.controller.admin.employee.vo.EmployeeRespVO">
+        <!-- 基本信息 -->
+        <id column="id" property="id"/>
+        <result column="employee_no" property="employeeNo"/>
+        <result column="profile_no" property="profileNo"/>
+        <result column="entry_id" property="entryId"/>
+        <result column="name" property="name"/>
+        <result column="mobile" property="mobile"/>
+        <result column="email" property="email"/>
+        <result column="gender" property="gender"/>
+        <result column="status" property="status"/>
+        <result column="id_number" property="idNumber"/>
+        <result column="birth_date" property="birthDate"/>
+        <result column="age" property="age"/>
+        <result column="nationality" property="nationality"/>
+        <result column="ethnicity" property="ethnicity"/>
+        <result column="political_status" property="politicalStatus"/>
+        <result column="marital_status" property="maritalStatus"/>
+        <result column="hometown" property="nativePlace"/>
+        <result column="address" property="address"/>
+        <result column="emergency_contact" property="emergencyContact"/>
+        <result column="emergency_phone" property="emergencyPhone"/>
+        <result column="emergency_relation" property="emergencyRelation"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <!-- 工作信息 -->
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="job_title" property="jobTitle"/>
+        <result column="extension" property="extension"/>
+        <result column="office_location" property="officeLocation"/>
+        <result column="job_level_name" property="jobLevelName"/>
+        <result column="work_location_name" property="workLocation"/>
+        <result column="direct_supervisor_id" property="directSupervisorId"/>
+        <result column="direct_supervisor_name" property="directSupervisor"/>
+        <result column="work_status" property="workStatus"/>
+        <result column="employment_type" property="employmentType"/>
+        <result column="probation_months" property="probationMonths"/>
+        <result column="contract_type" property="contractType"/>
+        <result column="leave_date" property="leaveDate"/>
+        <result column="leave_reason" property="leaveReason"/>
+        <!-- 学历信息 -->
+        <result column="education" property="education"/>
+        <result column="school_name" property="school"/>
+        <result column="major" property="major"/>
+        <result column="graduation_date" property="graduationDate"/>
+        <!-- 银行信息 -->
+        <result column="bank_name" property="bankName"/>
+        <result column="bank_account" property="bankAccount"/>
+        <result column="bank_branch" property="bankBranch"/>
+        <result column="account_name" property="accountName"/>
+        <!-- 其他 -->
+        <result column="remark" property="remark"/>
+        <!-- 入职时间和司龄 -->
+        <result column="onboard_date" property="onboardDate"/>
+        <result column="confirmation_date" property="confirmationDate"/>
+        <result column="job_level" property="jobLevel"/>
+        <result column="company_years" property="companyYears"/>
+        <result column="company_age" property="companyAge"/>
+        <!-- 家庭信息 -->
+        <result column="father_birthday" property="fatherBirthday"/>
+        <result column="mother_birthday" property="motherBirthday"/>
+        <!-- 合同信息 -->
+        <result column="contract_start_date" property="contractStartDate"/>
+        <result column="contract_end_date" property="contractEndDate"/>
+        <!-- 租户信息 -->
+        <result column="tenant_id" property="tenantId"/>
+        <result column="tenant_name" property="tenantName"/>
+    </resultMap>
+
+    <!-- 分页查询员工花名册 -->
+    <select id="selectPage" resultMap="EmployeePageResultMap">
+        SELECT
+            p.id,
+            p.profile_no,
+            e.id as entry_id,
+            COALESCE(NULLIF(e.employee_no, ''), p.profile_no) AS employee_no,
+            p.name,
+            p.mobile,
+            p.email,
+            p.gender,
+            p.status,
+            p.create_time,
+            p.onboard_date,
+            e.leave_date,
+            p.job_level,
+            p.company_years,
+            CASE
+                WHEN p.onboard_date IS NULL THEN NULL
+                ELSE CONCAT(
+                    FLOOR(TIMESTAMPDIFF(MONTH, p.onboard_date, CURDATE()) / 12), '年',
+                    MOD(TIMESTAMPDIFF(MONTH, p.onboard_date, CURDATE()), 12), '月'
+                )
+            END AS company_age,
+            d.name as dept_name,
+            CASE
+                WHEN e.job_title IS NULL OR e.job_title = '' THEN post_rel.post_names
+                ELSE e.job_title
+            END AS job_title,
+            e.extension,
+            e.office_location,
+            jl.level_name as job_level_name,
+            wl.location_name as work_location_name,
+            supervisor.name as direct_supervisor_name,
+            e.work_status,
+            e.employment_type,
+            p.tenant_id,
+            st.name as tenant_name
+        FROM hr_employee_profile p
+        LEFT JOIN hr_employee_entry e
+            ON e.id = (
+                SELECT e2.id
+                FROM hr_employee_entry e2
+                WHERE e2.profile_id = p.id
+                  AND e2.deleted = 0
+                ORDER BY
+                    CASE WHEN e2.work_status = 4 THEN 1 ELSE 0 END,
+                    e2.entry_date DESC,
+                    e2.id DESC
+                LIMIT 1
+            )
+        LEFT JOIN system_users u_bind
+            ON u_bind.id = COALESCE(e.user_id, p.user_id)
+            AND u_bind.deleted = 0
+            <if test="tenantId != null">
+                AND u_bind.tenant_id = #{tenantId}
+            </if>
+        LEFT JOIN (
+            SELECT
+                su.tenant_id,
+                su.mobile,
+                MAX(su.id) AS id,
+                MAX(su.dept_id) AS dept_id
+            FROM system_users su
+            WHERE su.deleted = 0
+                <if test="tenantId != null">
+                    AND su.tenant_id = #{tenantId}
+                </if>
+                AND su.mobile IS NOT NULL
+                AND su.mobile != ''
+            GROUP BY su.tenant_id, su.mobile
+        ) u_mobile
+            ON u_bind.id IS NULL
+            AND p.mobile = u_mobile.mobile
+            AND p.tenant_id = u_mobile.tenant_id
+        LEFT JOIN system_dept d
+            ON d.id = COALESCE(u_bind.dept_id, u_mobile.dept_id, e.dept_id)
+        LEFT JOIN hr_job_level jl ON e.job_level_id = jl.id
+        LEFT JOIN hr_location wl ON e.work_location_id = wl.id
+        LEFT JOIN hr_employee_profile supervisor ON e.direct_supervisor_id = supervisor.id
+        LEFT JOIN system_tenant st ON p.tenant_id = st.id
+        LEFT JOIN (
+            SELECT
+                up.user_id,
+                GROUP_CONCAT(sp.name ORDER BY sp.sort SEPARATOR '/') AS post_names
+            FROM system_user_post up
+            JOIN system_post sp ON up.post_id = sp.id AND sp.tenant_id = up.tenant_id
+            WHERE up.deleted = 0 AND sp.deleted = 0
+            GROUP BY up.user_id
+        ) post_rel ON post_rel.user_id = COALESCE(u_bind.id, u_mobile.id, e.user_id, p.user_id)
+        <where>
+            p.deleted = 0
+            <if test="tenantId != null">
+                AND p.tenant_id = #{tenantId}
+            </if>
+            <if test="ew != null">
+                <!-- 员工编号搜索：工号/档案号都可命中 -->
+                <if test="ew.employeeNo != null and ew.employeeNo != ''">
+                    AND (
+                        p.profile_no LIKE CONCAT('%', #{ew.employeeNo}, '%')
+                        OR e.employee_no LIKE CONCAT('%', #{ew.employeeNo}, '%')
+                    )
+                </if>
+                <!-- 员工姓名搜索 -->
+                <if test="ew.name != null and ew.name != ''">
+                    AND p.name LIKE CONCAT('%', #{ew.name}, '%')
+                </if>
+                <!-- 手机号搜索 -->
+                <if test="ew.mobile != null and ew.mobile != ''">
+                    AND p.mobile LIKE CONCAT('%', #{ew.mobile}, '%')
+                </if>
+                <!-- 邮箱搜索 -->
+                <if test="ew.email != null and ew.email != ''">
+                    AND p.email LIKE CONCAT('%', #{ew.email}, '%')
+                </if>
+                <!-- 性别搜索 -->
+                <if test="ew.gender != null">
+                    AND p.gender = #{ew.gender}
+                </if>
+                <!-- 部门搜索 -->
+                <choose>
+                    <when test="ew.deptIds != null and ew.deptIds.size > 0">
+                        AND COALESCE(u_bind.dept_id, u_mobile.dept_id, e.dept_id) IN
+                        <foreach collection="ew.deptIds" item="deptId" open="(" separator="," close=")">
+                            #{deptId}
+                        </foreach>
+                    </when>
+                    <when test="ew.deptId != null">
+                        AND COALESCE(u_bind.dept_id, u_mobile.dept_id, e.dept_id) = #{ew.deptId}
+                    </when>
+                </choose>
+                <!-- 职位搜索 -->
+                <if test="ew.jobTitle != null and ew.jobTitle != ''">
+                    AND e.job_title LIKE CONCAT('%', #{ew.jobTitle}, '%')
+                </if>
+                <!-- 状态搜索 -->
+                <if test="ew.status != null">
+                    AND p.status = #{ew.status}
+                </if>
+                <!-- 入职日期范围搜索 -->
+                <if test="ew.onboardDateStart != null">
+                    AND p.onboard_date >= #{ew.onboardDateStart}
+                </if>
+                <if test="ew.onboardDateEnd != null">
+                    AND p.onboard_date &lt;= #{ew.onboardDateEnd}
+                </if>
+                <!-- 工作状态搜索 -->
+                <if test="ew.workStatus != null">
+                    AND e.work_status = #{ew.workStatus}
+                </if>
+                <!-- 排除指定工作状态（通讯录默认排除离职） -->
+                <if test="ew.excludeWorkStatus != null">
+                    AND (e.work_status IS NULL OR e.work_status &lt;&gt; #{ew.excludeWorkStatus})
+                </if>
+                <!-- 用工类型搜索 -->
+                <if test="ew.employmentType != null">
+                    AND e.employment_type = #{ew.employmentType}
+                </if>
+            </if>
+        </where>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <!-- 根据ID查询员工详情 -->
+    <select id="selectEmployeeById" resultMap="EmployeeDetailResultMap">
+        SELECT
+            p.id,
+            p.profile_no,
+            e.id as entry_id,
+            COALESCE(NULLIF(e.employee_no, ''), p.profile_no) AS employee_no,
+            p.name,
+            p.mobile,
+            p.email,
+            p.gender,
+            p.status,
+            p.id_number,
+            p.birth_date,
+            p.age,
+            p.nationality,
+            p.ethnicity,
+            p.political_status,
+            p.marital_status,
+            p.hometown,
+            p.address,
+            p.emergency_contact,
+            p.emergency_phone,
+            p.emergency_relation,
+            p.create_time,
+            p.update_time,
+            p.onboard_date,
+            p.confirmation_date,
+            p.job_level,
+            p.company_years,
+            p.father_birthday,
+            p.mother_birthday,
+            CASE
+                WHEN p.onboard_date IS NULL THEN NULL
+                ELSE CONCAT(
+                    FLOOR(TIMESTAMPDIFF(MONTH, p.onboard_date, CURDATE()) / 12), '年',
+                    MOD(TIMESTAMPDIFF(MONTH, p.onboard_date, CURDATE()), 12), '月'
+                )
+            END AS company_age,
+            COALESCE(u_bind.dept_id, u_mobile.dept_id, e.dept_id) as dept_id,
+            d.name as dept_name,
+            CASE
+                WHEN e.job_title IS NULL OR e.job_title = '' THEN post_rel.post_names
+                ELSE e.job_title
+            END AS job_title,
+            e.extension,
+            e.office_location,
+            jl.level_name as job_level_name,
+            wl.location_name as work_location_name,
+            e.direct_supervisor_id,
+            supervisor.name as direct_supervisor_name,
+            e.work_status,
+            e.employment_type,
+            e.probation_months,
+            e.contract_type,
+            e.contract_start_date,
+            e.contract_end_date,
+            e.leave_date,
+            e.leave_reason,
+            e.bank_name,
+            e.bank_account,
+            e.bank_branch,
+            e.account_name,
+            e.remark,
+            edu.education,
+            edu.school_name,
+            edu.major,
+            edu.graduation_date
+        FROM hr_employee_profile p
+        LEFT JOIN hr_employee_entry e
+            ON e.id = (
+                SELECT e2.id
+                FROM hr_employee_entry e2
+                WHERE e2.profile_id = p.id
+                  AND e2.deleted = 0
+                ORDER BY
+                    CASE WHEN e2.work_status = 4 THEN 1 ELSE 0 END,
+                    e2.entry_date DESC,
+                    e2.id DESC
+                LIMIT 1
+            )
+        LEFT JOIN system_users u_bind
+            ON u_bind.id = COALESCE(e.user_id, p.user_id)
+            AND u_bind.deleted = 0
+            <if test="tenantId != null">
+                AND u_bind.tenant_id = #{tenantId}
+            </if>
+        LEFT JOIN (
+            SELECT
+                su.tenant_id,
+                su.mobile,
+                MAX(su.id) AS id,
+                MAX(su.dept_id) AS dept_id
+            FROM system_users su
+            WHERE su.deleted = 0
+                <if test="tenantId != null">
+                    AND su.tenant_id = #{tenantId}
+                </if>
+                AND su.mobile IS NOT NULL
+                AND su.mobile != ''
+            GROUP BY su.tenant_id, su.mobile
+        ) u_mobile
+            ON u_bind.id IS NULL
+            AND p.mobile = u_mobile.mobile
+            AND p.tenant_id = u_mobile.tenant_id
+        LEFT JOIN system_dept d
+            ON d.id = COALESCE(u_bind.dept_id, u_mobile.dept_id, e.dept_id)
+        LEFT JOIN hr_job_level jl ON e.job_level_id = jl.id
+        LEFT JOIN hr_location wl ON e.work_location_id = wl.id
+        LEFT JOIN hr_employee_profile supervisor ON e.direct_supervisor_id = supervisor.id
+        LEFT JOIN (
+            SELECT
+                up.user_id,
+                GROUP_CONCAT(sp.name ORDER BY sp.sort SEPARATOR '/') AS post_names
+            FROM system_user_post up
+            JOIN system_post sp ON up.post_id = sp.id AND sp.tenant_id = up.tenant_id
+            WHERE up.deleted = 0 AND sp.deleted = 0
+            GROUP BY up.user_id
+        ) post_rel ON post_rel.user_id = COALESCE(u_bind.id, u_mobile.id, e.user_id, p.user_id)
+        LEFT JOIN (
+            SELECT profile_id, education, school_name, major, graduation_date
+            FROM hr_employee_education
+            WHERE is_highest = 1
+            AND deleted = 0
+        ) edu ON p.id = edu.profile_id
+        WHERE p.id = #{id}
+        <if test="tenantId != null">
+            AND p.tenant_id = #{tenantId}
+        </if>
+    </select>
+
+    <!-- 查询员工统计数据 -->
+    <select id="selectEmployeeStatistics" resultType="com.kyx.service.hr.controller.admin.employee.vo.EmployeeStatisticsRespVO">
+        SELECT
+            COUNT(DISTINCT p.id) as total,
+            COUNT(DISTINCT CASE WHEN e.work_status IN (2, 3) THEN p.id END) as active,
+            COUNT(DISTINCT CASE WHEN e.employment_type = 1 AND e.work_status IN (2, 3) THEN p.id END) as fullTime,
+            COUNT(DISTINCT CASE WHEN e.employment_type = 2 AND e.work_status IN (2, 3) THEN p.id END) as partTime,
+            COUNT(DISTINCT CASE WHEN e.employment_type = 4 AND e.work_status IN (2, 3) THEN p.id END) as intern,
+            COUNT(DISTINCT CASE
+                WHEN e.work_status = 2 THEN p.id
+                WHEN e.work_status = 3
+                    AND e.entry_date IS NOT NULL
+                    AND COALESCE(e.probation_months, 0) &gt; 0
+                    AND DATE_ADD(e.entry_date, INTERVAL e.probation_months MONTH) &gt;= CURDATE()
+                THEN p.id
+            END) as probation,
+            COUNT(DISTINCT CASE
+                WHEN e.work_status = 3
+                    AND NOT (
+                        e.entry_date IS NOT NULL
+                        AND COALESCE(e.probation_months, 0) &gt; 0
+                        AND DATE_ADD(e.entry_date, INTERVAL e.probation_months MONTH) &gt;= CURDATE()
+                    )
+                THEN p.id
+            END) as formal,
+            COUNT(DISTINCT CASE WHEN e.work_status = 4 THEN p.id END) as leaving,
+            COUNT(DISTINCT CASE WHEN e.employment_type = 3 AND e.work_status IN (2, 3) THEN p.id END) as labor,
+            COUNT(DISTINCT CASE WHEN e.work_status = 1 THEN p.id END) as onboarding
+        FROM hr_employee_profile p
+        LEFT JOIN hr_employee_entry e
+            ON p.id = e.profile_id
+            AND e.deleted = 0
+            AND e.tenant_id = p.tenant_id
+        WHERE p.deleted = 0
+        <if test="tenantId != null">
+            AND p.tenant_id = #{tenantId}
+        </if>
+    </select>
+
+    <!-- 查询某日期员工统计数据 -->
+    <select id="selectEmployeeStatisticsByDate" resultType="com.kyx.service.hr.controller.admin.employee.vo.EmployeeStatisticsRespVO">
+        SELECT
+            COUNT(DISTINCT p.id) as total,
+            COUNT(DISTINCT CASE WHEN e.work_status IN (2, 3) THEN p.id END) as active,
+            COUNT(DISTINCT CASE WHEN e.employment_type = 1 AND e.work_status IN (2, 3) THEN p.id END) as fullTime,
+            COUNT(DISTINCT CASE WHEN e.employment_type = 2 AND e.work_status IN (2, 3) THEN p.id END) as partTime,
+            COUNT(DISTINCT CASE WHEN e.employment_type = 4 AND e.work_status IN (2, 3) THEN p.id END) as intern,
+            COUNT(DISTINCT CASE
+                WHEN e.work_status = 2 THEN p.id
+                WHEN e.work_status = 3
+                    AND e.entry_date IS NOT NULL
+                    AND COALESCE(e.probation_months, 0) &gt; 0
+                    AND DATE_ADD(e.entry_date, INTERVAL e.probation_months MONTH) &gt;= #{referenceDate}
+                THEN p.id
+            END) as probation,
+            COUNT(DISTINCT CASE
+                WHEN e.work_status = 3
+                    AND NOT (
+                        e.entry_date IS NOT NULL
+                        AND COALESCE(e.probation_months, 0) &gt; 0
+                        AND DATE_ADD(e.entry_date, INTERVAL e.probation_months MONTH) &gt;= #{referenceDate}
+                    )
+                THEN p.id
+            END) as formal,
+            COUNT(DISTINCT CASE WHEN e.work_status = 4 THEN p.id END) as leaving,
+            COUNT(DISTINCT CASE WHEN e.employment_type = 3 AND e.work_status IN (2, 3) THEN p.id END) as labor,
+            COUNT(DISTINCT CASE WHEN e.work_status = 1 THEN p.id END) as onboarding
+        FROM hr_employee_profile p
+        LEFT JOIN hr_employee_entry e
+            ON p.id = e.profile_id
+            AND e.deleted = 0
+            AND e.tenant_id = p.tenant_id
+        WHERE p.deleted = 0
+          AND (p.onboard_date IS NULL OR p.onboard_date &lt;= #{referenceDate})
+          AND (e.entry_date IS NULL OR e.entry_date &lt;= #{referenceDate})
+        <if test="tenantId != null">
+            AND p.tenant_id = #{tenantId}
+        </if>
+    </select>
+
+    <!-- 查询员工总览人员规模 -->
+    <select id="selectEmployeeOverviewScale" resultType="com.kyx.service.hr.controller.admin.employee.vo.EmployeeOverviewRespVO$Scale">
+        SELECT
+            COUNT(1) as total,
+            IFNULL(SUM(flag_admin), 0) as admin,
+            IFNULL(SUM(flag_admin_front), 0) as adminFront,
+            IFNULL(SUM(flag_admin_logistics), 0) as adminLogistics,
+            IFNULL(SUM(flag_hr), 0) as hr,
+            IFNULL(SUM(flag_hr_recruit), 0) as hrRecruit,
+            IFNULL(SUM(flag_hr_salary), 0) as hrSalary
+        FROM (
+            SELECT
+                p.id,
+                MAX(CASE WHEN sp.name LIKE '%行政%' THEN 1 ELSE 0 END) AS flag_admin,
+                MAX(CASE WHEN sp.name LIKE '%前台%' THEN 1 ELSE 0 END) AS flag_admin_front,
+                MAX(CASE WHEN sp.name LIKE '%后勤%' THEN 1 ELSE 0 END) AS flag_admin_logistics,
+                MAX(
+                    CASE
+                        WHEN sp.name LIKE '%人事%'
+                          OR sp.name LIKE '%人力%'
+                          OR sp.name LIKE '%HR%'
+                          OR LOWER(sp.code) LIKE '%hr%'
+                        THEN 1 ELSE 0
+                    END
+                ) AS flag_hr,
+                MAX(CASE WHEN sp.name LIKE '%招聘%' OR sp.name LIKE '%招募%' THEN 1 ELSE 0 END) AS flag_hr_recruit,
+                MAX(CASE WHEN sp.name LIKE '%薪酬%' OR sp.name LIKE '%薪资%' OR sp.name LIKE '%薪金%' THEN 1 ELSE 0 END) AS flag_hr_salary
+            FROM hr_employee_profile p
+            LEFT JOIN system_user_post sup
+                ON sup.user_id = p.user_id
+                AND sup.deleted = 0
+                AND sup.tenant_id = p.tenant_id
+            LEFT JOIN system_post sp
+                ON sp.id = sup.post_id
+                AND sp.deleted = 0
+                AND sp.tenant_id = p.tenant_id
+            WHERE p.deleted = 0
+            <if test="tenantId != null">
+                AND p.tenant_id = #{tenantId}
+            </if>
+            GROUP BY p.id
+        ) t
+    </select>
+
+    <!-- 查询员工总览年龄司龄 -->
+    <select id="selectEmployeeOverviewAge" resultType="com.kyx.service.hr.controller.admin.employee.vo.EmployeeOverviewRespVO$Age">
+        SELECT
+            ROUND(AVG(COALESCE(p.age, TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE()))), 1) as avgAge,
+            CASE
+                WHEN COUNT(1) = 0 THEN 0
+                ELSE ROUND(
+                    SUM(
+                        CASE
+                            WHEN COALESCE(p.age, TIMESTAMPDIFF(YEAR, p.birth_date, CURDATE())) &lt; 30 THEN 1
+                            ELSE 0
+                        END
+                    ) / COUNT(1) * 100
+                )
+            END as under30,
+            SUM(
+                CASE
+                    WHEN p.onboard_date IS NOT NULL AND TIMESTAMPDIFF(MONTH, p.onboard_date, CURDATE()) &gt;= 36 THEN 1
+                    WHEN p.onboard_date IS NULL AND p.company_years &gt;= 3 THEN 1
+                    ELSE 0
+                END
+            ) as over3Years,
+            CASE
+                WHEN COUNT(1) = 0 THEN 0
+                ELSE ROUND(
+                    SUM(
+                        CASE
+                            WHEN p.onboard_date IS NOT NULL AND TIMESTAMPDIFF(MONTH, p.onboard_date, CURDATE()) &gt;= 36 THEN 1
+                            WHEN p.onboard_date IS NULL AND p.company_years &gt;= 3 THEN 1
+                            ELSE 0
+                        END
+                    ) / COUNT(1) * 100
+                )
+            END as stability
+        FROM hr_employee_profile p
+        WHERE p.deleted = 0
+        <if test="tenantId != null">
+            AND p.tenant_id = #{tenantId}
+        </if>
+    </select>
+
+    <!-- 查询某日期员工总览年龄司龄 -->
+    <select id="selectEmployeeOverviewAgeByDate" resultType="com.kyx.service.hr.controller.admin.employee.vo.EmployeeOverviewRespVO$Age">
+        SELECT
+            ROUND(AVG(COALESCE(p.age, TIMESTAMPDIFF(YEAR, p.birth_date, #{referenceDate}))), 1) as avgAge,
+            CASE
+                WHEN COUNT(1) = 0 THEN 0
+                ELSE ROUND(
+                    SUM(
+                        CASE
+                            WHEN COALESCE(p.age, TIMESTAMPDIFF(YEAR, p.birth_date, #{referenceDate})) &lt; 30 THEN 1
+                            ELSE 0
+                        END
+                    ) / COUNT(1) * 100
+                )
+            END as under30,
+            SUM(
+                CASE
+                    WHEN p.onboard_date IS NOT NULL AND TIMESTAMPDIFF(MONTH, p.onboard_date, #{referenceDate}) &gt;= 36 THEN 1
+                    WHEN p.onboard_date IS NULL AND p.company_years &gt;= 3 THEN 1
+                    ELSE 0
+                END
+            ) as over3Years,
+            CASE
+                WHEN COUNT(1) = 0 THEN 0
+                ELSE ROUND(
+                    SUM(
+                        CASE
+                            WHEN p.onboard_date IS NOT NULL AND TIMESTAMPDIFF(MONTH, p.onboard_date, #{referenceDate}) &gt;= 36 THEN 1
+                            WHEN p.onboard_date IS NULL AND p.company_years &gt;= 3 THEN 1
+                            ELSE 0
+                        END
+                    ) / COUNT(1) * 100
+                )
+            END as stability
+        FROM hr_employee_profile p
+        WHERE p.deleted = 0
+          AND (p.onboard_date IS NULL OR p.onboard_date &lt;= #{referenceDate})
+        <if test="tenantId != null">
+            AND p.tenant_id = #{tenantId}
+        </if>
+    </select>
+
+    <!-- 查询员工总览学历统计 -->
+    <select id="selectEmployeeOverviewEducation" resultType="com.kyx.service.hr.controller.admin.employee.vo.EmployeeOverviewRespVO$Education">
+        SELECT
+            SUM(
+                CASE
+                    WHEN edu.education IS NOT NULL
+                     AND (
+                        edu.education LIKE '%硕士%'
+                        OR edu.education LIKE '%博士%'
+                        OR edu.education LIKE '%研究生%'
+                        OR LOWER(edu.education) IN ('master', 'doctor', 'phd', 'postgraduate')
+                     ) THEN 1
+                    ELSE 0
+                END
+            ) as master,
+            SUM(
+                CASE
+                    WHEN edu.education IS NOT NULL
+                     AND (
+                        edu.education LIKE '%本科%'
+                        OR LOWER(edu.education) IN ('bachelor', 'undergraduate')
+                     ) THEN 1
+                    ELSE 0
+                END
+            ) as bachelor,
+            SUM(CASE WHEN edu_any.profile_id IS NOT NULL THEN 1 ELSE 0 END) as related
+        FROM hr_employee_profile p
+        LEFT JOIN (
+            SELECT
+                profile_id,
+                COALESCE(MAX(CASE WHEN is_highest = 1 THEN education END), MAX(education)) AS education
+            FROM hr_employee_education
+            WHERE deleted = 0
+            <if test="tenantId != null">
+                AND tenant_id = #{tenantId}
+            </if>
+            GROUP BY profile_id
+        ) edu ON p.id = edu.profile_id
+        LEFT JOIN (
+            SELECT DISTINCT profile_id
+            FROM hr_employee_education
+            WHERE deleted = 0
+            <if test="tenantId != null">
+                AND tenant_id = #{tenantId}
+            </if>
+        ) edu_any ON p.id = edu_any.profile_id
+        WHERE p.deleted = 0
+        <if test="tenantId != null">
+            AND p.tenant_id = #{tenantId}
+        </if>
+    </select>
+
+    <!-- 查询员工总览岗位分布 -->
+    <select id="selectEmployeeOverviewPostStats" resultType="com.kyx.service.hr.controller.admin.employee.vo.EmployeeOverviewRespVO$PostStat">
+        SELECT
+            sp.id AS post_id,
+            sp.name AS post_name,
+            COUNT(DISTINCT p.id) AS total
+        FROM hr_employee_profile p
+        LEFT JOIN hr_employee_entry e ON p.id = e.profile_id
+        JOIN system_user_post sup
+            ON sup.user_id = COALESCE(e.user_id, p.user_id)
+            AND sup.deleted = 0
+            AND sup.tenant_id = p.tenant_id
+        JOIN system_post sp
+            ON sp.id = sup.post_id
+            AND sp.deleted = 0
+            AND sp.tenant_id = p.tenant_id
+        WHERE p.deleted = 0
+        <if test="tenantId != null">
+            AND p.tenant_id = #{tenantId}
+        </if>
+        GROUP BY sp.id, sp.name, sp.sort
+        ORDER BY total DESC, sp.sort ASC, sp.id ASC
+    </select>
+
+</mapper> 

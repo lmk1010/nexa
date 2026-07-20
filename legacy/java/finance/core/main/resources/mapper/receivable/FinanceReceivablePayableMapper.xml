@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyx.service.finance.dal.mysql.receivable.FinanceReceivablePayableMapper">
+
+    <select id="selectByIdForUpdate" resultType="com.kyx.service.finance.dal.dataobject.receivable.FinanceReceivablePayableDO">
+        SELECT *
+        FROM finance_receivable_payable
+        WHERE id = #{id}
+          AND deleted = 0
+        FOR UPDATE
+    </select>
+
+    <update id="writeOffAtomically">
+        UPDATE finance_receivable_payable
+        SET status = CASE
+                         WHEN balance - #{amount} = 0 THEN #{paidStatus}
+                         ELSE #{partialStatus}
+            END,
+            balance = balance - #{amount},
+            paid_amount = paid_amount + #{amount}
+        WHERE id = #{id}
+          AND deleted = 0
+          AND status != #{cancelledStatus}
+          AND balance >= #{amount}
+    </update>
+
+    <select id="selectDashboardArpBalanceSummary" resultType="com.kyx.service.finance.service.dashboard.dto.FinanceDashboardArpBalanceSummaryDTO">
+        SELECT COALESCE(SUM(CASE WHEN arp.type = #{receivableType} THEN arp.balance ELSE 0 END), 0) AS receivableBalance,
+               COALESCE(SUM(CASE WHEN arp.type = #{payableType} THEN arp.balance ELSE 0 END), 0) AS payableBalance
+        FROM finance_receivable_payable arp
+        WHERE arp.deleted = 0
+          AND arp.company_id = #{companyId}
+          AND arp.status != #{cancelledStatus}
+    </select>
+
+    <select id="selectDashboardArpBalanceSummaryByBillDateRange" resultType="com.kyx.service.finance.service.dashboard.dto.FinanceDashboardArpBalanceSummaryDTO">
+        SELECT COALESCE(SUM(CASE WHEN arp.type = #{receivableType} THEN arp.balance ELSE 0 END), 0) AS receivableBalance,
+               COALESCE(SUM(CASE WHEN arp.type = #{payableType} THEN arp.balance ELSE 0 END), 0) AS payableBalance
+        FROM finance_receivable_payable arp
+        WHERE arp.deleted = 0
+          AND arp.company_id = #{companyId}
+          AND arp.status != #{cancelledStatus}
+          AND arp.bill_date <![CDATA[>=]]> #{startTime}
+          AND arp.bill_date <![CDATA[<]]> #{endTime}
+    </select>
+
+    <select id="selectDashboardArpContactSummaryByBillDateRange" resultType="com.kyx.service.finance.service.dashboard.dto.FinanceDashboardArpContactSummaryDTO">
+        SELECT arp.contact_id                                                  AS contactId,
+               COALESCE(contact.contact_name, CONCAT('ID:', arp.contact_id)) AS contactName,
+               COALESCE(SUM(arp.balance), 0)                                  AS amount
+        FROM finance_receivable_payable arp
+                 LEFT JOIN finance_contact contact
+                           ON contact.id = arp.contact_id
+                               AND contact.deleted = 0
+        WHERE arp.deleted = 0
+          AND arp.company_id = #{companyId}
+          AND arp.status != #{cancelledStatus}
+          AND arp.type = #{type}
+          AND arp.bill_date <![CDATA[>=]]> #{startTime}
+          AND arp.bill_date <![CDATA[<]]> #{endTime}
+        GROUP BY arp.contact_id, contact.contact_name
+        HAVING COALESCE(SUM(arp.balance), 0) > 0
+        ORDER BY amount DESC
+            LIMIT #{limit}
+    </select>
+
+    <select id="selectDashboardAdvanceReceiptByBillDateRange" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(arp.balance), 0)
+        FROM finance_receivable_payable arp
+        WHERE arp.deleted = 0
+          AND arp.company_id = #{companyId}
+          AND arp.status != #{cancelledStatus}
+          AND arp.bill_date <![CDATA[>=]]> #{startTime}
+          AND arp.bill_date <![CDATA[<]]> #{endTime}
+          AND arp.type = #{type}
+    </select>
+
+</mapper>

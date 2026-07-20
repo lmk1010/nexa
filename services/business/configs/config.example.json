@@ -1,0 +1,6 @@
+{
+  "name": "nexa-business",
+  "http": { "addr": ":48084" },
+  "log": { "level": "info" },
+  "mysql": { "dsn": "" }
+}

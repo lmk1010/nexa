@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyx.service.erp.dal.mysql.purchase.ErpPurchaseRequestMapper">
+
+    <!-- 更新采购申请的流程实例ID和状态 -->
+    <update id="updateProcessInstanceAndStatus">
+        UPDATE erp_purchase_request 
+        SET process_instance_id = #{processInstanceId},
+            status = #{status},
+            bmp_status = #{bmpStatus},
+            update_time = NOW()
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
+</mapper> 

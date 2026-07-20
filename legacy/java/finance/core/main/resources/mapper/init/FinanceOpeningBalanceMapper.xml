@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyx.service.finance.dal.mysql.init.FinanceOpeningBalanceMapper">
+
+    <insert id="upsertBatch">
+        INSERT INTO finance_opening_balance (
+            company_id, period, subject_code, subject_name, opening_amount, locked, status, remark
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.companyId}, #{item.period}, #{item.subjectCode}, #{item.subjectName},
+                #{item.openingAmount}, #{item.locked}, #{item.status}, #{item.remark}
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            subject_name    = VALUES(subject_name),
+            opening_amount  = VALUES(opening_amount),
+            status          = VALUES(status),
+            remark          = VALUES(remark),
+            update_time     = CURRENT_TIMESTAMP
+    </insert>
+
+    <update id="updateLockedByCompanyAndPeriod">
+        UPDATE finance_opening_balance
+        SET locked      = #{locked},
+            update_time = CURRENT_TIMESTAMP
+        WHERE company_id = #{companyId}
+          AND period     = #{period}
+          AND deleted    = 0
+    </update>
+
+</mapper>

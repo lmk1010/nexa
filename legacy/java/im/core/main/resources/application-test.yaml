@@ -1,0 +1,4 @@
+kyx:
+  tencent-im:
+    sdk-app-id: ${TENCENT_IM_SDK_APP_ID:1400669977}
+    secret-key: ${TENCENT_IM_SECRET_KEY:${TENCENT_IM_TEST_SECRET_KEY:}}

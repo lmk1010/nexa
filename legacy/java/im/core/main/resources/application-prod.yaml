@@ -1,0 +1,198 @@
+--- #################### 注册中心 + 配置中心相关配置 ####################
+
+spring:
+  cloud:
+    nacos:
+      server-addr: 172.16.0.15:8848 # Nacos 服务器地址
+      username: nacos # Nacos 账号
+      password: nacos # Nacos 密码
+      discovery: # 【服务注册】配置项
+        namespace: prod # 命名空间。这里使用 prod 生产环境
+        group: DEFAULT_GROUP # 使用的 Nacos 配置分组，默认为 DEFAULT_GROUP
+        metadata:
+          version: 1.0.0 # 服务实例的版本号，可用于灰度发布
+      config: # 【配置中心】配置项
+        namespace: prod # 命名空间。这里使用 prod 生产环境
+        group: DEFAULT_GROUP # 使用的 Nacos 配置分组，默认为 DEFAULT_GROUP
+
+--- #################### 数据库相关配置 ####################
+spring:
+  # 数据源配置项
+  autoconfigure:
+    exclude:
+      - com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceAutoConfigure # 排除 Druid 的自动配置，使用 dynamic-datasource-spring-boot-starter 配置多数据源
+  datasource:
+    druid: # Druid 【监控】相关的全局配置
+      web-stat-filter:
+        enabled: true
+      stat-view-servlet:
+        enabled: false # 生产环境关闭 Druid 监控页面
+      filter:
+        stat:
+          enabled: true
+          log-slow-sql: true # 慢 SQL 记录
+          slow-sql-millis: 2000 # 生产环境慢SQL阈值调高
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true
+    dynamic: # 多数据源配置
+      druid: # Druid 【连接池】相关的全局配置
+        initial-size: 10 # 初始连接数
+        min-idle: 20 # 最小连接池数量
+        max-active: 50 # 最大连接池数量
+        max-wait: 600000 # 配置获取连接等待超时的时间，单位：毫秒
+        time-between-eviction-runs-millis: 60000 # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位：毫秒
+        min-evictable-idle-time-millis: 300000 # 配置一个连接在池中最小生存的时间，单位：毫秒
+        max-evictable-idle-time-millis: 900000 # 配置一个连接在池中最大生存的时间，单位：毫秒
+        validation-query: SELECT 1 FROM DUAL # 配置检测连接是否有效
+        test-while-idle: true
+        test-on-borrow: false
+        test-on-return: false
+      primary: master
+      datasource:
+        master:
+          url: jdbc:mysql://172.16.0.15:3306/kyx_oa?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true # MySQL 生产环境连接
+          username: kyx_user
+          password: kyx123456
+
+  # Redis 配置。Redisson 默认的配置足够使用，一般不需要进行调优
+  redis:
+    host: 172.16.0.15 # Redis 地址
+    port: 6379 # 端口
+    database: 1 # 数据库索引
+    password: kyx_redis_2024 # Redis 密码
+    timeout: 6000ms # 连接超时时间
+    lettuce:
+      pool:
+        max-active: 20 # 连接池最大连接数
+        max-wait: -1ms # 连接池最大阻塞等待时间
+        max-idle: 8 # 连接池最大空闲连接数
+        min-idle: 2 # 连接池最小空闲连接数
+
+--- #################### MQ 消息队列相关配置 ####################
+
+# rocketmq 配置项，对应 RocketMQProperties 配置类
+rocketmq:
+  name-server: 172.16.0.15:9092 # RocketMQ Namesrv (使用Kafka替代)
+
+spring:
+  # Kafka 配置项，对应 KafkaProperties 配置类
+  kafka:
+    bootstrap-servers: 172.16.0.15:9092 # 指定 Kafka Broker 地址
+
+--- #################### 定时任务相关配置 ####################
+# 使用Spring自带的@Scheduled注解进行定时任务
+
+--- #################### 监控相关配置 ####################
+
+# Actuator 监控端点的配置项
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: 'health,info,metrics' # 生产环境只开放必要的端点
+
+# 日志文件配置
+logging:
+  level:
+    root: INFO # 生产环境日志级别
+    com.kyx: INFO
+  file:
+    name: /app/logs/${spring.application.name}.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+--- #################### 芋道相关配置 ####################
+
+kyx:
+  tencent-im:
+    sdk-app-id: ${TENCENT_IM_SDK_APP_ID:1400619971}
+    secret-key: ${TENCENT_IM_SECRET_KEY:${TENCENT_IM_PROD_SECRET_KEY:}}
+
+foundation:
+  demo: false # 生产环境关闭演示模式
+  file:
+    config:
+      host: http://172.16.0.15:9000 # MinIO 地址
+
+--- #################### 2 核小机型低占用覆盖 ####################
+
+server:
+  tomcat:
+    threads:
+      max: ${SERVER_TOMCAT_THREADS_MAX:48}
+      min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:4}
+    accept-count: ${SERVER_TOMCAT_ACCEPT_COUNT:50}
+    max-connections: ${SERVER_TOMCAT_MAX_CONNECTIONS:512}
+
+spring:
+  jmx:
+    enabled: ${SPRING_JMX_ENABLED:false}
+  task:
+    execution:
+      pool:
+        core-size: ${SPRING_TASK_EXECUTION_CORE_SIZE:2}
+        max-size: ${SPRING_TASK_EXECUTION_MAX_SIZE:8}
+        queue-capacity: ${SPRING_TASK_EXECUTION_QUEUE_CAPACITY:200}
+    scheduling:
+      pool:
+        size: ${SPRING_TASK_SCHEDULING_POOL_SIZE:1}
+  datasource:
+    druid:
+      web-stat-filter:
+        enabled: ${DRUID_WEB_STAT_FILTER_ENABLED:false}
+      filter:
+        stat:
+          enabled: ${DRUID_STAT_FILTER_ENABLED:false}
+    dynamic:
+      druid:
+        initial-size: ${DRUID_INITIAL_SIZE:1}
+        min-idle: ${DRUID_MIN_IDLE:1}
+        max-active: ${DRUID_MAX_ACTIVE:8}
+        max-wait: ${DRUID_MAX_WAIT:30000}
+  redis:
+    lettuce:
+      pool:
+        max-active: ${REDIS_POOL_MAX_ACTIVE:8}
+        max-idle: ${REDIS_POOL_MAX_IDLE:4}
+        min-idle: ${REDIS_POOL_MIN_IDLE:0}
+    redisson:
+      config: |
+        singleServerConfig:
+          address: "redis://${REDIS_HOST:172.16.0.15}:${REDIS_PORT:6379}"
+          password: "${REDIS_PASSWORD:kyx_redis_2024}"
+          database: ${REDIS_DATABASE:1}
+          connectionMinimumIdleSize: ${REDISSON_CONNECTION_MIN_IDLE_SIZE:1}
+          connectionPoolSize: ${REDISSON_CONNECTION_POOL_SIZE:8}
+          subscriptionConnectionMinimumIdleSize: ${REDISSON_SUBSCRIPTION_MIN_IDLE_SIZE:1}
+          subscriptionConnectionPoolSize: ${REDISSON_SUBSCRIPTION_POOL_SIZE:4}
+          idleConnectionTimeout: 10000
+          connectTimeout: 3000
+          timeout: 3000
+        threads: ${REDISSON_THREADS:2}
+        nettyThreads: ${REDISSON_NETTY_THREADS:2}
+  kafka:
+    listener:
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:1}
+    consumer:
+      max-poll-records: ${KAFKA_CONSUMER_MAX_POLL_RECORDS:10}
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:false}
+
+knife4j:
+  enable: ${KNIFE4J_ENABLE:false}
+  gateway:
+    enabled: ${KNIFE4J_GATEWAY_ENABLED:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info}

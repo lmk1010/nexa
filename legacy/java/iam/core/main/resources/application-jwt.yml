@@ -1,0 +1,10 @@
+kyx:
+  jwt:
+    # 是否启用JWT格式token（true: JWT格式, false: UUID格式）
+    enabled: true
+    # JWT密钥，需要与auth.go中的secret保持一致
+    secret: "your-secret-key-change-this-in-production"
+    # JWT token过期时间（秒），默认7天
+    expire-seconds: 604800
+    # JWT签发者
+    issuer: "kyx-system" 

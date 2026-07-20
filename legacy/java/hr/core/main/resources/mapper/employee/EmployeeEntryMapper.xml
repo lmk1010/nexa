@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyx.service.hr.dal.mysql.employee.EmployeeEntryMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.kyx.service.hr.dal.dataobject.employee.EmployeeEntryDO">
+        <id column="id" property="id"/>
+        <result column="entry_no" property="entryNo"/>
+        <result column="profile_id" property="profileId"/>
+        <result column="user_id" property="userId"/>
+        <result column="employee_no" property="employeeNo"/>
+        <result column="entry_type" property="entryType"/>
+        <result column="process_type" property="processType"/>
+        <result column="entry_date" property="entryDate"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="post_ids" property="postIds"/>
+        <result column="job_title" property="jobTitle"/>
+        <result column="extension" property="extension"/>
+        <result column="office_location" property="officeLocation"/>
+        <result column="job_level_id" property="jobLevelId"/>
+        <result column="job_sequence_id" property="jobSequenceId"/>
+        <result column="work_location_id" property="workLocationId"/>
+        <result column="direct_supervisor_id" property="directSupervisorId"/>
+        <result column="employment_type" property="employmentType"/>
+        <result column="probation_months" property="probationMonths"/>
+        <result column="contract_type" property="contractType"/>
+        <result column="contract_start_date" property="contractStartDate"/>
+        <result column="contract_end_date" property="contractEndDate"/>
+        <result column="work_status" property="workStatus"/>
+        <result column="onboarding_status" property="onboardingStatus"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="leave_date" property="leaveDate"/>
+        <result column="leave_reason" property="leaveReason"/>
+        <result column="cancel_reason" property="cancelReason"/>
+        <result column="bank_name" property="bankName"/>
+        <result column="bank_branch" property="bankBranch"/>
+        <result column="bank_account" property="bankAccount"/>
+        <result column="account_name" property="accountName"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="creator" property="creator"/>
+        <result column="updater" property="updater"/>
+        <result column="deleted" property="deleted"/>
+        <result column="tenant_id" property="tenantId"/>
+    </resultMap>
+
+    <!-- 关联员工档案信息的结果映射 -->
+    <resultMap id="WithProfileResultMap" type="com.kyx.service.hr.controller.admin.employee.vo.EmployeeEntryRespVO">
+        <id column="id" property="id"/>
+        <result column="entry_no" property="entryNo"/>
+        <result column="profile_id" property="profileId"/>
+        <result column="user_id" property="userId"/>
+        <result column="employee_no" property="employeeNo"/>
+        <result column="entry_type" property="entryType"/>
+        <result column="process_type" property="processType"/>
+        <result column="entry_date" property="entryDate"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="post_ids" property="postIds"/>
+        <result column="job_title" property="jobTitle"/>
+        <result column="extension" property="extension"/>
+        <result column="office_location" property="officeLocation"/>
+        <result column="work_location_id" property="workLocationId"/>
+        <result column="direct_supervisor_id" property="directSupervisorId"/>
+        <result column="direct_supervisor_name" property="directSupervisorName"/>
+        <result column="employment_type" property="employmentType"/>
+        <result column="probation_months" property="probationMonths"/>
+        <result column="contract_type" property="contractType"/>
+        <result column="contract_start_date" property="contractStartDate"/>
+        <result column="contract_end_date" property="contractEndDate"/>
+        <result column="work_status" property="workStatus"/>
+        <result column="onboarding_status" property="onboardingStatus"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="leave_date" property="leaveDate"/>
+        <result column="leave_reason" property="leaveReason"/>
+        <result column="cancel_reason" property="cancelReason"/>
+        <result column="bank_name" property="bankName"/>
+        <result column="bank_branch" property="bankBranch"/>
+        <result column="bank_account" property="bankAccount"/>
+        <result column="account_name" property="accountName"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <!-- 员工档案信息 -->
+        <result column="employee_name" property="employeeName"/>
+        <result column="mobile" property="mobile"/>
+        <result column="email" property="email"/>
+        <result column="gender" property="gender"/>
+        <result column="id_number" property="idNumber"/>
+        <result column="birth_date" property="birthDate"/>
+        <result column="age" property="age"/>
+        <result column="nationality" property="nationality"/>
+        <result column="ethnicity" property="ethnicity"/>
+        <result column="political_status" property="politicalStatus"/>
+        <result column="marital_status" property="maritalStatus"/>
+        <result column="hometown" property="hometown"/>
+        <result column="address" property="address"/>
+        <result column="emergency_contact" property="emergencyContact"/>
+        <result column="emergency_phone" property="emergencyPhone"/>
+    </resultMap>
+
+    <!-- 分页查询员工入职记录（关联员工档案信息） -->
+    <select id="selectPageWithProfile" resultMap="WithProfileResultMap">
+        SELECT 
+            e.id,
+            e.entry_no,
+            e.profile_id,
+            e.user_id,
+            e.employee_no,
+            e.entry_type,
+            e.process_type,
+            e.entry_date,
+            e.dept_id,
+            d.name as dept_name,
+            e.post_ids,
+            e.job_title,
+            e.extension,
+            e.office_location,
+            e.work_location_id,
+            e.direct_supervisor_id,
+            supervisor.name as direct_supervisor_name,
+            e.employment_type,
+            e.probation_months,
+            e.contract_type,
+            e.contract_start_date,
+            e.contract_end_date,
+            e.work_status,
+            e.onboarding_status,
+            e.process_instance_id,
+            e.leave_date,
+            e.leave_reason,
+            e.cancel_reason,
+            e.bank_name,
+            e.bank_branch,
+            e.bank_account,
+            e.account_name,
+            e.remark,
+            e.create_time,
+            e.update_time,
+            <!-- 员工档案信息 -->
+            p.name as employee_name,
+            p.mobile,
+            p.email,
+            p.gender,
+            p.id_number,
+            p.birth_date,
+            p.age,
+            p.nationality,
+            p.ethnicity,
+            p.political_status,
+            p.marital_status,
+            p.hometown,
+            p.address,
+            p.emergency_contact,
+            p.emergency_phone
+        FROM hr_employee_entry e
+        LEFT JOIN hr_employee_profile p ON e.profile_id = p.id
+        LEFT JOIN system_dept d ON e.dept_id = d.id
+        LEFT JOIN hr_employee_profile supervisor ON e.direct_supervisor_id = supervisor.id
+        <where>
+            e.deleted = 0
+            <if test="ew.entryNo != null and ew.entryNo != ''">
+                AND e.entry_no LIKE CONCAT('%', #{ew.entryNo}, '%')
+            </if>
+            <if test="ew.employeeNo != null and ew.employeeNo != ''">
+                AND e.employee_no LIKE CONCAT('%', #{ew.employeeNo}, '%')
+            </if>
+            <if test="ew.profileId != null">
+                AND e.profile_id = #{ew.profileId}
+            </if>
+            <if test="ew.employeeName != null and ew.employeeName != ''">
+                AND p.name LIKE CONCAT('%', #{ew.employeeName}, '%')
+            </if>
+            <if test="ew.mobile != null and ew.mobile != ''">
+                AND p.mobile LIKE CONCAT('%', #{ew.mobile}, '%')
+            </if>
+            <if test="ew.entryType != null">
+                AND e.entry_type = #{ew.entryType}
+            </if>
+            <if test="ew.processType != null">
+                AND e.process_type = #{ew.processType}
+            </if>
+            <if test="ew.entryDate != null">
+                AND e.entry_date = #{ew.entryDate}
+            </if>
+            <if test="ew.deptId != null">
+                AND e.dept_id = #{ew.deptId}
+            </if>
+            <if test="ew.jobTitle != null and ew.jobTitle != ''">
+                AND e.job_title LIKE CONCAT('%', #{ew.jobTitle}, '%')
+            </if>
+            <if test="ew.employmentType != null">
+                AND e.employment_type = #{ew.employmentType}
+            </if>
+            <if test="ew.contractType != null">
+                AND e.contract_type = #{ew.contractType}
+            </if>
+            <if test="ew.workStatus != null">
+                AND e.work_status = #{ew.workStatus}
+            </if>
+            <if test="ew.onboardingStatus != null">
+                AND e.onboarding_status = #{ew.onboardingStatus}
+            </if>
+            <if test="ew.bankName != null and ew.bankName != ''">
+                AND e.bank_name LIKE CONCAT('%', #{ew.bankName}, '%')
+            </if>
+            <if test="ew.accountName != null and ew.accountName != ''">
+                AND e.account_name LIKE CONCAT('%', #{ew.accountName}, '%')
+            </if>
+            <if test="ew.remark != null and ew.remark != ''">
+                AND e.remark LIKE CONCAT('%', #{ew.remark}, '%')
+            </if>
+            <if test="ew.createTime != null and ew.createTime.length == 2">
+                AND e.create_time BETWEEN #{ew.createTime[0]} AND #{ew.createTime[1]}
+            </if>
+        </where>
+        ORDER BY e.id DESC
+    </select>
+
+    <!-- 根据ID查询员工入职记录（关联员工档案信息） -->
+    <select id="selectByIdWithProfile" resultMap="WithProfileResultMap">
+        SELECT 
+            e.id,
+            e.entry_no,
+            e.profile_id,
+            e.user_id,
+            e.employee_no,
+            e.entry_type,
+            e.process_type,
+            e.entry_date,
+            e.dept_id,
+            d.name as dept_name,
+            e.post_ids,
+            e.job_title,
+            e.extension,
+            e.office_location,
+            e.work_location_id,
+            e.direct_supervisor_id,
+            supervisor.name as direct_supervisor_name,
+            e.employment_type,
+            e.probation_months,
+            e.contract_type,
+            e.contract_start_date,
+            e.contract_end_date,
+            e.work_status,
+            e.onboarding_status,
+            e.process_instance_id,
+            e.leave_date,
+            e.leave_reason,
+            e.cancel_reason,
+            e.bank_name,
+            e.bank_branch,
+            e.bank_account,
+            e.account_name,
+            e.remark,
+            e.create_time,
+            e.update_time,
+            <!-- 员工档案信息 -->
+            p.name as employee_name,
+            p.mobile,
+            p.email,
+            p.gender,
+            p.id_number,
+            p.birth_date,
+            p.age,
+            p.nationality,
+            p.ethnicity,
+            p.political_status,
+            p.marital_status,
+            p.hometown,
+            p.address,
+            p.emergency_contact,
+            p.emergency_phone
+        FROM hr_employee_entry e
+        LEFT JOIN hr_employee_profile p ON e.profile_id = p.id
+        LEFT JOIN system_dept d ON e.dept_id = d.id
+        LEFT JOIN hr_employee_profile supervisor ON e.direct_supervisor_id = supervisor.id
+        WHERE e.id = #{id} AND e.deleted = 0
+    </select>
+
+    <!-- 根据入职编号查询员工入职记录（关联员工档案信息） -->
+    <select id="selectByEntryNoWithProfile" resultMap="WithProfileResultMap">
+        SELECT 
+            e.id,
+            e.entry_no,
+            e.profile_id,
+            e.user_id,
+            e.employee_no,
+            e.entry_type,
+            e.process_type,
+            e.entry_date,
+            e.dept_id,
+            d.name as dept_name,
+            e.post_ids,
+            e.job_title,
+            e.extension,
+            e.office_location,
+            e.work_location_id,
+            e.direct_supervisor_id,
+            supervisor.name as direct_supervisor_name,
+            e.employment_type,
+            e.probation_months,
+            e.contract_type,
+            e.contract_start_date,
+            e.contract_end_date,
+            e.work_status,
+            e.onboarding_status,
+            e.process_instance_id,
+            e.leave_date,
+            e.leave_reason,
+            e.cancel_reason,
+            e.bank_name,
+            e.bank_branch,
+            e.bank_account,
+            e.account_name,
+            e.remark,
+            e.create_time,
+            e.update_time,
+            <!-- 员工档案信息 -->
+            p.name as employee_name,
+            p.mobile,
+            p.email,
+            p.gender,
+            p.id_number,
+            p.birth_date,
+            p.age,
+            p.nationality,
+            p.ethnicity,
+            p.political_status,
+            p.marital_status,
+            p.hometown,
+            p.address,
+            p.emergency_contact,
+            p.emergency_phone
+        FROM hr_employee_entry e
+        LEFT JOIN hr_employee_profile p ON e.profile_id = p.id
+        LEFT JOIN system_dept d ON e.dept_id = d.id
+        LEFT JOIN hr_employee_profile supervisor ON e.direct_supervisor_id = supervisor.id
+        WHERE e.entry_no = #{entryNo} AND e.deleted = 0
+    </select>
+
+    <!-- 根据员工编号查询员工入职记录（关联员工档案信息） -->
+    <select id="selectByEmployeeNoWithProfile" resultMap="WithProfileResultMap">
+        SELECT 
+            e.id,
+            e.entry_no,
+            e.profile_id,
+            e.user_id,
+            e.employee_no,
+            e.entry_type,
+            e.process_type,
+            e.entry_date,
+            e.dept_id,
+            d.name as dept_name,
+            e.post_ids,
+            e.job_title,
+            e.extension,
+            e.office_location,
+            e.work_location_id,
+            e.direct_supervisor_id,
+            supervisor.name as direct_supervisor_name,
+            e.employment_type,
+            e.probation_months,
+            e.contract_type,
+            e.contract_start_date,
+            e.contract_end_date,
+            e.work_status,
+            e.onboarding_status,
+            e.process_instance_id,
+            e.leave_date,
+            e.leave_reason,
+            e.cancel_reason,
+            e.bank_name,
+            e.bank_branch,
+            e.bank_account,
+            e.account_name,
+            e.remark,
+            e.create_time,
+            e.update_time,
+            <!-- 员工档案信息 -->
+            p.name as employee_name,
+            p.mobile,
+            p.email,
+            p.gender,
+            p.id_number,
+            p.birth_date,
+            p.age,
+            p.nationality,
+            p.ethnicity,
+            p.political_status,
+            p.marital_status,
+            p.hometown,
+            p.address,
+            p.emergency_contact,
+            p.emergency_phone
+        FROM hr_employee_entry e
+        LEFT JOIN hr_employee_profile p ON e.profile_id = p.id
+        LEFT JOIN system_dept d ON e.dept_id = d.id
+        LEFT JOIN hr_employee_profile supervisor ON e.direct_supervisor_id = supervisor.id
+        WHERE e.employee_no = #{employeeNo} AND e.deleted = 0
+    </select>
+
+    <!-- 根据ID查询员工入职记录详情（包含教育信息、家庭信息等） -->
+    <select id="selectDetailById" resultMap="WithProfileResultMap">
+        SELECT 
+            e.id,
+            e.entry_no,
+            e.profile_id,
+            e.user_id,
+            e.employee_no,
+            e.entry_type,
+            e.process_type,
+            e.entry_date,
+            e.dept_id,
+            d.name as dept_name,
+            e.post_ids,
+            e.job_title,
+            e.extension,
+            e.office_location,
+            e.work_location_id,
+            e.direct_supervisor_id,
+            supervisor.name as direct_supervisor_name,
+            e.employment_type,
+            e.probation_months,
+            e.contract_type,
+            e.contract_start_date,
+            e.contract_end_date,
+            e.work_status,
+            e.onboarding_status,
+            e.process_instance_id,
+            e.leave_date,
+            e.leave_reason,
+            e.cancel_reason,
+            e.bank_name,
+            e.bank_branch,
+            e.bank_account,
+            e.account_name,
+            e.remark,
+            e.create_time,
+            e.update_time,
+            <!-- 员工档案信息 -->
+            p.name as employee_name,
+            p.mobile,
+            p.email,
+            p.gender,
+            p.id_number,
+            p.birth_date,
+            p.age,
+            p.nationality,
+            p.ethnicity,
+            p.political_status,
+            p.marital_status,
+            p.hometown,
+            p.address,
+            p.emergency_contact,
+            p.emergency_phone
+        FROM hr_employee_entry e
+        LEFT JOIN hr_employee_profile p ON e.profile_id = p.id
+        LEFT JOIN system_dept d ON e.dept_id = d.id
+        LEFT JOIN hr_employee_profile supervisor ON e.direct_supervisor_id = supervisor.id
+        WHERE e.id = #{id} AND e.deleted = 0
+    </select>
+
+</mapper> 

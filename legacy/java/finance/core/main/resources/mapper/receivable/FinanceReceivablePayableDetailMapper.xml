@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyx.service.finance.dal.mysql.receivable.FinanceReceivablePayableDetailMapper">
+
+    <select id="selectWriteOffAmountSumByTransactionId" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0)
+        FROM finance_receivable_payable_detail
+        WHERE company_id = #{companyId}
+          AND transaction_id = #{transactionId}
+          AND deleted = 0
+    </select>
+
+</mapper>

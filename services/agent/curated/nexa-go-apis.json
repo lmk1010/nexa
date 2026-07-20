@@ -1,0 +1,15 @@
+{
+  "name": "nexa-go-apis",
+  "description": "Go-rewritten nexa domain APIs for enterprise assistant tools",
+  "base": "http://127.0.0.1:48080",
+  "endpoints": [
+    {"method": "GET", "path": "/v1/hr/employees", "summary": "List employees"},
+    {"method": "GET", "path": "/v1/hr/departments/tree", "summary": "Department tree"},
+    {"method": "GET", "path": "/v1/bpm/tasks/todo", "summary": "Approval todo list"},
+    {"method": "POST", "path": "/v1/bpm/tasks/approve", "summary": "Approve or reject task"},
+    {"method": "POST", "path": "/v1/iam/login", "summary": "Login"},
+    {"method": "GET", "path": "/v1/iam/me", "summary": "Current user"},
+    {"method": "GET", "path": "/v1/iam/permissions", "summary": "Current permissions"},
+    {"method": "GET", "path": "/v1/platform/services", "summary": "Gateway service map"}
+  ]
+}

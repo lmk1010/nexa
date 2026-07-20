@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyx.service.finance.dal.mysql.init.FinanceAccountMapper">
+
+    <select id="selectDashboardAccountBalanceByCompanyUsageScopeAndPeriod" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(
+            CASE
+                WHEN t.transaction_type = #{incomeType} THEN t.amount
+                WHEN t.transaction_type = #{expenseType} THEN -t.amount
+                ELSE 0
+            END
+        ), 0)
+        FROM finance_transaction t
+        WHERE t.deleted = 0
+          AND t.company_id = #{companyId}
+          AND t.status = #{successStatus}
+          AND t.transaction_period <![CDATA[<=]]> #{period}
+    </select>
+
+    <select id="selectDashboardChannelBalanceByCompanyUsageScopeAndPeriod"
+            resultType="com.kyx.service.finance.service.dashboard.dto.FinanceDashboardChannelBalanceSummaryDTO">
+        SELECT channel.accountType,
+               COALESCE(balanceSummary.balance, 0) AS balance
+        FROM (
+                 SELECT #{wechatType} AS accountType
+                 UNION ALL
+                 SELECT #{alipayType} AS accountType
+                 UNION ALL
+                 SELECT #{bankType} AS accountType
+             ) channel
+                 LEFT JOIN (
+            SELECT delta.accountType,
+                   COALESCE(SUM(delta.deltaAmount), 0) AS balance
+            FROM (
+                     SELECT a.account_type AS accountType,
+                            CASE
+                                WHEN t.transaction_type = #{incomeType} THEN t.amount
+                                WHEN t.transaction_type = #{expenseType} THEN -t.amount
+                                WHEN t.transaction_type = #{transferType} THEN -t.amount
+                                ELSE 0
+                                END AS deltaAmount
+                     FROM finance_transaction t
+                              JOIN finance_account a
+                                   ON a.id = t.account_id
+                                       AND a.deleted = 0
+                     WHERE t.deleted = 0
+                       AND t.company_id = #{companyId}
+                       AND t.status = #{successStatus}
+                       AND t.transaction_period <![CDATA[<=]]> #{period}
+                       AND t.account_id IS NOT NULL
+                       AND a.account_type IN (#{wechatType}, #{alipayType}, #{bankType})
+                     UNION ALL
+                     SELECT a.account_type AS accountType,
+                            -t.amount      AS deltaAmount
+                     FROM finance_transaction t
+                              JOIN finance_account a
+                                   ON a.id = t.opposite_account_id
+                                       AND a.deleted = 0
+                     WHERE t.deleted = 0
+                       AND t.company_id = #{companyId}
+                       AND t.status = #{successStatus}
+                       AND t.transaction_period <![CDATA[<=]]> #{period}
+                       AND t.transaction_type = #{transferType}
+                       AND t.opposite_account_id IS NOT NULL
+                       AND a.account_type IN (#{wechatType}, #{alipayType}, #{bankType})
+                 ) delta
+            GROUP BY delta.accountType
+        ) balanceSummary ON balanceSummary.accountType = channel.accountType
+        ORDER BY FIELD(channel.accountType, #{wechatType}, #{alipayType}, #{bankType})
+    </select>
+
+</mapper>

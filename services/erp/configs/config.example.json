@@ -1,0 +1,6 @@
+{
+  "name": "nexa-erp",
+  "http": { "addr": ":48085" },
+  "log": { "level": "info" },
+  "mysql": { "dsn": "" }
+}

@@ -1,0 +1,247 @@
+spring:
+  application:
+    name: hr-server
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  main:
+    allow-circular-references: true # 允许循环依赖，因为项目是三层架构，无法避免这个情况。
+    allow-bean-definition-overriding: true # 允许 Bean 覆盖，例如说 Feign 等会存在重复定义的服务
+    # lazy-initialization: true # 禁用懒加载，避免 Jackson ObjectMapper 配置未及时应用到 Feign
+
+  # 禁用JMX，减少内存占用
+  jmx:
+    enabled: false
+
+  config:
+    import:
+      - optional:classpath:application-${spring.profiles.active}.yaml # 加载【本地】配置
+      - optional:nacos:${spring.application.name}-${spring.profiles.active}.yaml # 加载【Nacos】的配置
+  
+  cloud:
+    nacos:
+      config:
+        import-check:
+          enabled: false # 禁用 Nacos 配置检查，解决启动时的 import 检查问题
+
+  # Servlet 配置
+  servlet:
+    # 文件上传相关配置项
+    multipart:
+      max-file-size: 16MB # 单个文件大小
+      max-request-size: 32MB # 设置总上传的文件大小
+
+  # Jackson 配置项
+  jackson:
+    serialization:
+      write-dates-as-timestamps: true # 设置 LocalDateTime 的格式，使用时间戳
+      write-date-timestamps-as-nanoseconds: false # 设置不使用 nanoseconds 的格式。例如说 1611460870.401，而是直接 1611460870401
+      write-durations-as-timestamps: true # 设置 Duration 的格式，使用时间戳
+      fail-on-empty-beans: false # 允许序列化无属性的 Bean
+
+  # Cache 配置项
+  cache:
+    type: REDIS
+    redis:
+      time-to-live: 1h # 设置过期时间为 1 小时
+
+server:
+  port: 48087
+
+logging:
+  file:
+    name: ${LOG_PATH:./logs}/${spring.application.name}.log # 日志文件名，支持环境变量LOG_PATH，默认使用相对路径
+  level:
+    root: WARN # 全局日志级别设为WARN，减少日志输出
+    com.kyx: INFO # 业务日志保持INFO
+    org.springframework: WARN # Spring框架日志设为WARN
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
+    org.apache.ibatis: WARN # MyBatis日志设为WARN
+    com.alibaba: WARN # Alibaba组件日志设为WARN
+
+--- #################### 接口文档配置 ####################
+
+springdoc:
+  api-docs:
+    enabled: true # 1. 是否开启 Swagger 接文档的元数据
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true # 2.1 是否开启 Swagger 文档的官方 UI 界面
+    path: /swagger-ui
+  default-flat-param-object: true # 参见 https://doc.xiaominfo.com/docs/faq/v4/knife4j-parameterobject-flat-param 文档
+
+knife4j:
+  enable: false # TODO ：需要关闭增强，具体原因见：https://github.com/xiaoymin/knife4j/issues/874
+  setting:
+    language: zh_cn
+
+# MyBatis Plus 的配置项
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true # 虽然默认为 true ，但是还是显示去指定下。
+    cache-enabled: false # 禁用二级缓存，减少内存占用
+    lazy-loading-enabled: false # 关闭懒加载
+    aggressive-lazy-loading: false # 关闭积极懒加载
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl # 使用SLF4J日志
+  global-config:
+    db-config:
+      id-type: NONE # "智能"模式，基于 IdTypeEnvironmentPostProcessor + 数据源的类型，自动适配成 AUTO、INPUT 模式。
+      #      id-type: AUTO # 自增 ID，适合 MySQL 等直接自增的数据库
+      #      id-type: INPUT # 用户输入 ID，适合 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库
+      #      id-type: ASSIGN_ID # 分配 ID，默认使用雪花算法。注意，Oracle、PostgreSQL、Kingbase、DB2、H2 数据库时，需要去除实体类上的 @KeySequence 注解
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+    banner: false # 关闭控制台的 Banner 打印
+  type-aliases-package: ${foundation.info.base-package}.dal.dataobject
+  encryptor:
+    password: XDV71a+xqStEA3WH # 加解密的秘钥，可使用 https://www.imaegoo.com/2020/aes-key-generator/ 网站生成
+
+mybatis-plus-join:
+  banner: false # 关闭控制台的 Banner 打印
+
+# Spring Data Redis 配置
+spring:
+  data:
+    redis:
+      repositories:
+        enabled: false # 项目未使用到 Spring Data Redis 的 Repository，所以直接禁用，保证启动速度
+
+# VO 转换（数据翻译）相关
+easy-trans:
+  is-enable-global: true # 启用全局翻译（拦截所有 SpringMVC ResponseBody 进行自动翻译 )。如果对于性能要求很高可关闭此配置，或通过 @IgnoreTrans 忽略某个接口
+
+--- #################### Web 相关配置 ####################
+
+foundation:
+  web:
+    admin-ui:
+      url: http://localhost:5173 # Admin 管理后台 UI 的地址
+
+--- #################### RPC 远程调用相关配置 ####################
+
+--- #################### 消息队列相关 ####################
+
+# rocketmq 配置项，对应 RocketMQProperties 配置类
+rocketmq:
+  # Producer 配置项
+  producer:
+    group: ${spring.application.name}_PRODUCER # 生产者分组
+
+spring:
+  # Kafka 配置项，对应 KafkaProperties 配置类
+  kafka:
+    # Kafka Producer 配置项
+    producer:
+      acks: 1 # 0-不应答。1-leader 应答。all-所有 leader 和 follower 应答。
+      retries: 3 # 发送失败时，重试发送的次数
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer # 消息的 value 的序列化
+    # Kafka Consumer 配置项
+    consumer:
+      auto-offset-reset: earliest # 设置消费者分组最初的消费进度为 earliest 。可参考博客 https://blog.csdn.net/lishuangzhe7047/article/details/74530417 理解
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+    # Kafka Consumer Listener 监听器配置
+    listener:
+      missing-topics-fatal: false # 消费监听接口监听的主题不存在时，默认会报错。所以通过设置为 false ，解决报错
+
+--- #################### 定时任务相关配置 ####################
+# 使用Spring自带的@Scheduled注解进行定时任务
+
+
+
+--- #################### 芋道相关配置 ####################
+
+foundation:
+  info:
+    version: 1.0.0
+    base-package: com.kyx.service.hr
+  web:
+    admin-ui:
+      url: http://dashboard.foundation.iocoder.cn # Admin 管理后台 UI 的地址
+  xss:
+    enable: false
+    exclude-urls: # 如下 url，仅仅是为了演示，去掉配置也没关系
+      - ${management.endpoints.web.base-path}/** # 不处理 Actuator 的请求
+  swagger:
+    title: HR模块
+    description: 提供HR管理的所有功能
+    version: ${foundation.info.version}
+  tenant: # 多租户相关配置项
+    enable: true
+    ignore-urls:
+      - /admin-api/system/tenant/get-user-tenant-list # 获取用户绑定的租户信息接口，不需要校验租户
+      - /admin-api/system/tenant/page
+      - /admin-api/hr/public/** # 公开问卷接口，租户从token中获取
+    ignore-visit-urls:
+      - /admin-api/system/user/profile/**
+      - /admin-api/system/auth/**
+    ignore-tables:
+      # system_tenant 是租户主表，没有 tenant_id 列；JOIN 时拦截器不能再拼 st.tenant_id
+      - system_tenant
+    ignore-caches:
+      - user_role_ids
+      - permission_menu_ids
+      - oauth_client
+      - notify_template
+      - mail_account
+      - mail_template
+      - sms_template
+  sms-code: # 短信验证码相关的配置项
+    expire-times: 10m
+    send-frequency: 1m
+    send-maximum-quantity-per-day: 10
+    begin-code: 9999 # 这里配置 9999 的原因是，测试方便。
+    end-code: 9999 # 这里配置 9999 的原因是，测试方便。
+
+debug: false
+
+dingtalk:
+  app:
+    corp-id: ${DINGTALK_CORP_ID:ding5eff0605b6e3b393}
+    app-id: ${DINGTALK_APP_ID:bb6e8fb0-b75a-4aa7-8d5e-ea3a43b082a0}
+    agent-id: ${DINGTALK_AGENT_ID:4434118778}
+    app-key: ${DINGTALK_APP_KEY:ding3xssc8tt3ropf7ed}
+    app-secret: ${DINGTALK_APP_SECRET:RUWm7_-bdhBBOkDW-IAfZEueeK3e5et78YC6P8GP_ywFmc5uBLBFwOJ-Y526tSUA}
+  access-token:
+    endpoint: ${DINGTALK_ACCESS_TOKEN_ENDPOINT:https://api.dingtalk.com/v1.0/oauth2/accessToken}
+    refresh-before-seconds: ${DINGTALK_ACCESS_TOKEN_REFRESH_BEFORE_SECONDS:300}
+  api:
+    max-qps: ${DINGTALK_API_MAX_QPS:3}
+  sync:
+    enabled: ${DINGTALK_SYNC_ENABLED:true}
+    fixed-delay-ms: ${DINGTALK_SYNC_FIXED_DELAY_MS:86400000}
+    employee-schedule-start-delay-ms: ${DINGTALK_SYNC_EMPLOYEE_SCHEDULE_START_DELAY_MS:0}
+    cron: ${DINGTALK_SYNC_CRON:0 0 2 * * ?}
+    zone-id: ${DINGTALK_SYNC_ZONE_ID:Asia/Shanghai}
+    attendance-lookback-minutes: ${DINGTALK_SYNC_ATTENDANCE_LOOKBACK_MINUTES:1440}
+    root-dept-id: ${DINGTALK_SYNC_ROOT_DEPT_ID:1}
+    employee-enabled: ${DINGTALK_SYNC_EMPLOYEE_ENABLED:true}
+    roster-enabled: ${DINGTALK_SYNC_ROSTER_ENABLED:true}
+    roster-overwrite-profile-enabled: ${DINGTALK_SYNC_ROSTER_OVERWRITE_PROFILE_ENABLED:false}
+    roster-backfill-profile-empty-only: ${DINGTALK_SYNC_ROSTER_BACKFILL_PROFILE_EMPTY_ONLY:true}
+    employee-auto-create-enabled: ${DINGTALK_SYNC_EMPLOYEE_AUTO_CREATE_ENABLED:true}
+    employee-auto-create-dept-id: ${DINGTALK_SYNC_EMPLOYEE_AUTO_CREATE_DEPT_ID:1}
+    employee-fallback-dept-name: ${DINGTALK_SYNC_EMPLOYEE_FALLBACK_DEPT_NAME:蚌埠快易修}
+    attendance-enabled: ${DINGTALK_SYNC_ATTENDANCE_ENABLED:true}
+    leave-enabled: ${DINGTALK_SYNC_LEAVE_ENABLED:true}
+    leave-lookback-days: ${DINGTALK_SYNC_LEAVE_LOOKBACK_DAYS:1}
+    leave-forward-days: ${DINGTALK_SYNC_LEAVE_FORWARD_DAYS:0}
+    user-detail-enabled: ${DINGTALK_SYNC_USER_DETAIL_ENABLED:true}
+    user-detail-interval-ms: ${DINGTALK_SYNC_USER_DETAIL_INTERVAL_MS:120}
+    attendance-batch-interval-ms: ${DINGTALK_SYNC_ATTENDANCE_BATCH_INTERVAL_MS:300}
+    leave-batch-interval-ms: ${DINGTALK_SYNC_LEAVE_BATCH_INTERVAL_MS:120}
+    roster-batch-interval-ms: ${DINGTALK_SYNC_ROSTER_BATCH_INTERVAL_MS:200}
+  notify:
+    enabled: ${DINGTALK_NOTIFY_ENABLED:false}
+    message-type: ${DINGTALK_NOTIFY_MESSAGE_TYPE:text}
+  stream:
+    enabled: ${DINGTALK_STREAM_ENABLED:false}
+    consume-threads: ${DINGTALK_STREAM_CONSUME_THREADS:1}
+    attendance-sync-min-interval-seconds: ${DINGTALK_STREAM_ATTENDANCE_SYNC_MIN_INTERVAL_SECONDS:120}
+    attendance-sync-lookback-minutes: ${DINGTALK_STREAM_ATTENDANCE_SYNC_LOOKBACK_MINUTES:10}
+    employee-sync-min-interval-seconds: ${DINGTALK_STREAM_EMPLOYEE_SYNC_MIN_INTERVAL_SECONDS:60}
+    leave-sync-lookback-days: ${DINGTALK_STREAM_LEAVE_SYNC_LOOKBACK_DAYS:3}
+    leave-sync-forward-days: ${DINGTALK_STREAM_LEAVE_SYNC_FORWARD_DAYS:0}

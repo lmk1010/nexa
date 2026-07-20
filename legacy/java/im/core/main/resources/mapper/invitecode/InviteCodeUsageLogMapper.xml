@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyx.service.im.dal.mysql.invitecode.InviteCodeUsageLogMapper">
+
+    <sql id="selectFields">
+        id, invite_code_id, invite_code, tenant_id, tenant_name, user_id, user_name, 
+        user_ip, user_agent, device_type, device_id, usage_time, usage_result, 
+        error_message, extra_data, creator, create_time, updater, update_time, deleted
+    </sql>
+
+    <select id="selectPageByXml" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeUsageLogDO">
+        SELECT <include refid="selectFields"/>
+        FROM im_invite_code_usage_log
+        <where>
+            deleted = 0
+            <if test="ew.inviteCodeId != null">
+                AND invite_code_id = #{ew.inviteCodeId}
+            </if>
+            <if test="ew.inviteCode != null and ew.inviteCode != ''">
+                AND invite_code LIKE CONCAT('%', #{ew.inviteCode}, '%')
+            </if>
+            <if test="ew.tenantId != null">
+                AND tenant_id = #{ew.tenantId}
+            </if>
+            <if test="ew.tenantName != null and ew.tenantName != ''">
+                AND tenant_name LIKE CONCAT('%', #{ew.tenantName}, '%')
+            </if>
+            <if test="ew.userId != null">
+                AND user_id = #{ew.userId}
+            </if>
+            <if test="ew.userName != null and ew.userName != ''">
+                AND user_name LIKE CONCAT('%', #{ew.userName}, '%')
+            </if>
+            <if test="ew.userIp != null and ew.userIp != ''">
+                AND user_ip LIKE CONCAT('%', #{ew.userIp}, '%')
+            </if>
+            <if test="ew.deviceType != null and ew.deviceType != ''">
+                AND device_type = #{ew.deviceType}
+            </if>
+            <if test="ew.usageResult != null">
+                AND usage_result = #{ew.usageResult}
+            </if>
+            <if test="ew.usageTime != null and ew.usageTime.length == 2">
+                AND usage_time BETWEEN #{ew.usageTime[0]} AND #{ew.usageTime[1]}
+            </if>
+        </where>
+        ORDER BY usage_time DESC
+    </select>
+
+    <!-- 根据邀请码ID查询使用记录列表（包含租户信息） -->
+    <select id="selectListByInviteCodeIdWithTenant" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeUsageLogDO">
+        SELECT 
+            log.*,
+            ic.tenant_id as tenantId,
+            ic.tenant_name as tenantName
+        FROM im_invite_code_usage_log log
+        LEFT JOIN im_invite_code ic ON log.invite_code_id = ic.id
+        WHERE log.invite_code_id = #{inviteCodeId}
+        AND log.deleted = 0
+        ORDER BY log.usage_time DESC
+    </select>
+
+    <!-- 根据邀请码查询使用记录列表（包含租户信息） -->
+    <select id="selectListByInviteCodeWithTenant" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeUsageLogDO">
+        SELECT 
+            log.*,
+            ic.tenant_id as tenantId,
+            ic.tenant_name as tenantName
+        FROM im_invite_code_usage_log log
+        LEFT JOIN im_invite_code ic ON log.invite_code_id = ic.id
+        WHERE log.invite_code = #{inviteCode}
+        AND log.deleted = 0
+        ORDER BY log.usage_time DESC
+    </select>
+
+    <!-- 根据租户ID查询使用记录列表（包含租户信息） -->
+    <select id="selectListByTenantIdWithTenant" resultType="com.kyx.service.im.dal.dataobject.invitecode.InviteCodeUsageLogDO">
+        SELECT 
+            log.*,
+            ic.tenant_id as tenantId,
+            ic.tenant_name as tenantName
+        FROM im_invite_code_usage_log log
+        LEFT JOIN im_invite_code ic ON log.invite_code_id = ic.id
+        WHERE log.tenant_id = #{tenantId}
+        AND log.deleted = 0
+        ORDER BY log.usage_time DESC
+    </select>
+
+</mapper> 
