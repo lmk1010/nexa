@@ -38,9 +38,10 @@ start_one() {
 
 # file-backed configs for core services
 mkdir -p "$ROOT/.run/data/iam" "$ROOT/.run/data/hr" "$ROOT/.run/data/bpm" "$ROOT/.run/configs"
-for svc_port in "iam:48081" "hr:48083" "bpm:48082"; do
+for svc_port in "iam:48081" "bpm:48082" "hr:48083" "business:48084" "erp:48085" "finance:48086" "im:48087" "op:48088" "ai:48089"; do
   svc="${svc_port%%:*}"
   port="${svc_port##*:}"
+  mkdir -p "$ROOT/.run/data/$svc"
   cat > "$ROOT/.run/configs/$svc.json" <<JSON
 {"name":"nexa-$svc","http":{"addr":":$port"},"dataDir":"$ROOT/.run/data/$svc"}
 JSON

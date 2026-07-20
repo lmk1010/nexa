@@ -79,8 +79,12 @@ func main() {
 		writeJSON(w, http.StatusOK, map[string]any{"status": "UP", "service": cfg.Name, "version": version})
 	})
 	mux.HandleFunc("/v1/bpm/tasks/todo", s.handleTodo)
+	mux.HandleFunc("/admin-api/bpm/tasks/todo", s.handleTodo)
+	mux.HandleFunc("/app-api/bpm/tasks/todo", s.handleTodo)
 	mux.HandleFunc("/v1/bpm/tasks/done", s.handleDone)
 	mux.HandleFunc("/v1/bpm/tasks/approve", s.handleApprove)
+	mux.HandleFunc("/admin-api/bpm/tasks/approve", s.handleApprove)
+	mux.HandleFunc("/app-api/bpm/tasks/approve", s.handleApprove)
 	mux.HandleFunc("/v1/bpm/tasks/start", s.handleStart)
 	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"service": cfg.Name, "version": version, "status": "file-backed", "apis": []string{

@@ -87,6 +87,8 @@ func main() {
 	mux.HandleFunc("/v1/iam/login", s.handleLogin)
 	mux.HandleFunc("/v1/iam/logout", s.handleLogout)
 	mux.HandleFunc("/v1/iam/me", s.handleMe)
+	mux.HandleFunc("/admin-api/system/user/profile/get", s.handleMe)
+	mux.HandleFunc("/app-api/system/user/profile/get", s.handleMe)
 	mux.HandleFunc("/v1/iam/permissions", s.handlePermissions)
 	mux.HandleFunc("/v1/iam/users", s.handleUsers)
 	mux.HandleFunc("/v1/iam/token/introspect", s.handleIntrospect)
