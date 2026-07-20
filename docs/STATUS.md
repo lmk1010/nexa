@@ -61,3 +61,5 @@ cd deploy && docker compose up -d --build
 - core tenant filter across domains
 - per-tenant connector config
 - IM create/list/send/read + contacts from employees; password change; users tenant-scoped
+- MySQL schema drafts under services/*/sql (runtime still file)
+- Mobile login links to /onboarding; HR bootstrap-tenant for new orgs

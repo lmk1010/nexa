@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pages/tenant_onboarding_page.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'config/app_config.dart';
@@ -71,6 +72,7 @@ class MyApp extends StatelessWidget {
               // 路由配置
               routes: {
                 '/debug': (context) => const DebugPage(),
+                '/onboarding': (context) => const TenantOnboardingPage(),
                 '/chat': (context) {
                   final args = ModalRoute.of(context)?.settings.arguments;
                   final data = args is Map ? args : const {};

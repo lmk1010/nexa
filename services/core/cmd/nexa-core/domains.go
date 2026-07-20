@@ -9,11 +9,52 @@ import (
 )
 
 func registerHR(mux *http.ServeMux, s *store) {
+
+	ensureTenantOrg := func(tid int64) {
+		if tid == 0 {
+			return
+		}
+		for _, d := range s.db.Departments {
+			if d.TenantID == tid {
+				return
+			}
+		}
+		base := tid * 1000
+		s.db.Departments = append(s.db.Departments,
+			department{ID: base + 1, TenantID: tid, Name: "HQ", ParentID: 0},
+			department{ID: base + 10, TenantID: tid, Name: "General", ParentID: base + 1},
+		)
+	}
+
+	jsonAlias(mux, []string{"/v1/hr/bootstrap-tenant"}, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, 405, map[string]any{"code": 405})
+			return
+		}
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		tid := tenantID(r)
+		if tid == 0 {
+			writeJSON(w, 400, map[string]any{"code": 400, "msg": "tenant required"})
+			return
+		}
+		ensureTenantOrg(tid)
+		_ = s.save()
+		depts := []department{}
+		for _, d := range s.db.Departments {
+			if d.TenantID == tid {
+				depts = append(depts, d)
+			}
+		}
+		writeJSON(w, 200, map[string]any{"code": 0, "data": map[string]any{"tenantId": tid, "departments": depts}})
+	})
+
 	hEmp := func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 		if r.Method == http.MethodGet {
 			tid := tenantID(r)
+			ensureTenantOrg(tid)
 			out := make([]employee, 0)
 			for _, e := range s.db.Employees {
 				if matchTenant(tid, e.TenantID) {
@@ -507,6 +548,11 @@ func registerIM(mux *http.ServeMux, s *store) {
 		for _, e := range s.db.Employees {
 			if matchTenant(tid, e.TenantID) {
 				out = append(out, map[string]any{"id": e.ID, "name": e.Name, "dept": e.DeptName, "jobNo": e.JobNo})
+			}
+		}
+		if len(out) == 0 {
+			if un := r.Header.Get("X-Username"); un != "" {
+				out = append(out, map[string]any{"id": 0, "name": un, "dept": "HQ", "jobNo": ""})
 			}
 		}
 		writeJSON(w, 200, map[string]any{"code": 0, "data": out, "total": len(out)})

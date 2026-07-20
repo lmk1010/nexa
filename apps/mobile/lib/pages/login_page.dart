@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'tenant_onboarding_page.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
@@ -280,7 +281,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           _buildBusinessWelcomeText(),
                           const SizedBox(height: 26),
                           _buildBusinessLoginForm(),
-                          const SizedBox(height: 34),
+                          const SizedBox(height: 12),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pushNamed('/onboarding'),
+                            child: const Text('还没有企业？开通 / 加入 Nexa'),
+                          ),
+                          const SizedBox(height: 22),
                           _buildBusinessFooter(),
                         ],
                       ),
