@@ -106,55 +106,7 @@ func registerBPM(mux *http.ServeMux, s *store) {
 		}
 		writeJSON(w, 200, map[string]any{"code": 0, "data": out, "total": len(out)})
 	}
-	approve := func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			writeJSON(w, 405, map[string]any{"code": 405})
-			return
-		}
-		var body struct {
-			TaskID, Action, Reason string
-		}
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		for i := range s.db.Tasks {
-			if s.db.Tasks[i].ID == body.TaskID {
-				if body.Action == "reject" {
-					s.db.Tasks[i].Status = "rejected"
-				} else {
-					s.db.Tasks[i].Status = "approved"
-				}
-				s.db.Tasks[i].Reason = body.Reason
-				s.db.Tasks[i].UpdatedAt = time.Now().Format(time.RFC3339)
-				_ = s.save()
-				writeJSON(w, 200, map[string]any{"code": 0, "data": s.db.Tasks[i]})
-				return
-			}
-		}
-		writeJSON(w, 404, map[string]any{"code": 404})
-	}
-	start := func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			writeJSON(w, 405, map[string]any{"code": 405})
-			return
-		}
-		var body struct{ Title, ProcessName, Starter, Assignee string }
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		now := time.Now().Format(time.RFC3339)
-		t := task{ID: "t" + time.Now().Format("150405"), TenantID: tenantID(r), Title: body.Title, ProcessName: body.ProcessName, Starter: body.Starter, Assignee: body.Assignee, Status: "pending", CreatedAt: now, UpdatedAt: now}
-		if t.Assignee == "" {
-			t.Assignee = "boss"
-		}
-		s.db.Tasks = append(s.db.Tasks, t)
-		_ = s.save()
-		writeJSON(w, 200, map[string]any{"code": 0, "data": t})
-	}
-	jsonAlias(mux, []string{"/v1/bpm/tasks/todo", "/app-api/bpm/tasks/todo", "/admin-api/bpm/tasks/todo"}, todo)
-	jsonAlias(mux, []string{"/v1/bpm/tasks/approve", "/app-api/bpm/tasks/approve", "/admin-api/bpm/tasks/approve"}, approve)
-	jsonAlias(mux, []string{"/v1/bpm/tasks/start"}, start)
-	jsonAlias(mux, []string{"/v1/bpm/tasks/done"}, func(w http.ResponseWriter, r *http.Request) {
+	done := func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 		tid := tenantID(r)
@@ -165,7 +117,145 @@ func registerBPM(mux *http.ServeMux, s *store) {
 			}
 		}
 		writeJSON(w, 200, map[string]any{"code": 0, "data": out, "total": len(out)})
-	})
+	}
+	getOne := func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			// path style /v1/bpm/tasks/get?id=
+			writeJSON(w, 400, map[string]any{"code": 400, "msg": "id required"})
+			return
+		}
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		tid := tenantID(r)
+		for _, tsk := range s.db.Tasks {
+			if tsk.ID == id && matchTenant(tid, tsk.TenantID) {
+				writeJSON(w, 200, map[string]any{"code": 0, "data": tsk})
+				return
+			}
+		}
+		writeJSON(w, 404, map[string]any{"code": 404, "msg": "task not found"})
+	}
+	start := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, 405, map[string]any{"code": 405})
+			return
+		}
+		var body struct {
+			Title       string `json:"title"`
+			ProcessName string `json:"processName"`
+			Starter     string `json:"starter"`
+			Assignee    string `json:"assignee"`
+		}
+		if json.NewDecoder(r.Body).Decode(&body) != nil || body.Title == "" {
+			writeJSON(w, 400, map[string]any{"code": 400, "msg": "title required"})
+			return
+		}
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		now := time.Now().Format(time.RFC3339)
+		actor := r.Header.Get("X-Username")
+		if body.Starter == "" {
+			body.Starter = actor
+		}
+		if body.Assignee == "" {
+			body.Assignee = "boss"
+		}
+		if body.ProcessName == "" {
+			body.ProcessName = "general"
+		}
+		t := task{
+			ID: "t" + time.Now().Format("150405.000"), TenantID: tenantID(r), Title: body.Title, ProcessName: body.ProcessName,
+			Starter: body.Starter, Assignee: body.Assignee, Status: "pending", CreatedAt: now, UpdatedAt: now,
+			History: []taskEvent{{At: now, Actor: body.Starter, Action: "start", To: "pending", Note: "created"}},
+		}
+		s.db.Tasks = append(s.db.Tasks, t)
+		_ = s.save()
+		writeJSON(w, 200, map[string]any{"code": 0, "data": t})
+	}
+	transition := func(w http.ResponseWriter, r *http.Request, action string) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, 405, map[string]any{"code": 405})
+			return
+		}
+		var body struct {
+			TaskID string `json:"taskId"`
+			Action string `json:"action"`
+			Reason string `json:"reason"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if body.TaskID == "" {
+			writeJSON(w, 400, map[string]any{"code": 400, "msg": "taskId required"})
+			return
+		}
+		if action == "" {
+			action = body.Action
+		}
+		// normalize
+		switch action {
+		case "approve", "reject", "cancel", "reopen":
+		default:
+			writeJSON(w, 400, map[string]any{"code": 400, "msg": "action must be approve|reject|cancel|reopen"})
+			return
+		}
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		tid := tenantID(r)
+		actor := r.Header.Get("X-Username")
+		for i := range s.db.Tasks {
+			if s.db.Tasks[i].ID != body.TaskID || !matchTenant(tid, s.db.Tasks[i].TenantID) {
+				continue
+			}
+			cur := s.db.Tasks[i].Status
+			next := cur
+			switch action {
+			case "approve":
+				if cur != "pending" {
+					writeJSON(w, 409, map[string]any{"code": 409, "msg": "only pending can be approved"})
+					return
+				}
+				next = "approved"
+			case "reject":
+				if cur != "pending" {
+					writeJSON(w, 409, map[string]any{"code": 409, "msg": "only pending can be rejected"})
+					return
+				}
+				next = "rejected"
+			case "cancel":
+				if cur != "pending" {
+					writeJSON(w, 409, map[string]any{"code": 409, "msg": "only pending can be cancelled"})
+					return
+				}
+				next = "cancelled"
+			case "reopen":
+				if cur != "rejected" && cur != "cancelled" {
+					writeJSON(w, 409, map[string]any{"code": 409, "msg": "only rejected/cancelled can be reopened"})
+					return
+				}
+				next = "pending"
+			}
+			now := time.Now().Format(time.RFC3339)
+			s.db.Tasks[i].Status = next
+			s.db.Tasks[i].Reason = body.Reason
+			s.db.Tasks[i].UpdatedAt = now
+			s.db.Tasks[i].History = append(s.db.Tasks[i].History, taskEvent{At: now, Actor: actor, Action: action, From: cur, To: next, Note: body.Reason})
+			_ = s.save()
+			writeJSON(w, 200, map[string]any{"code": 0, "data": s.db.Tasks[i]})
+			return
+		}
+		writeJSON(w, 404, map[string]any{"code": 404, "msg": "task not found"})
+	}
+	approve := func(w http.ResponseWriter, r *http.Request) { transition(w, r, "") }
+	cancel := func(w http.ResponseWriter, r *http.Request) { transition(w, r, "cancel") }
+	reopen := func(w http.ResponseWriter, r *http.Request) { transition(w, r, "reopen") }
+
+	jsonAlias(mux, []string{"/v1/bpm/tasks/todo", "/app-api/bpm/tasks/todo", "/admin-api/bpm/tasks/todo"}, todo)
+	jsonAlias(mux, []string{"/v1/bpm/tasks/done"}, done)
+	jsonAlias(mux, []string{"/v1/bpm/tasks/get"}, getOne)
+	jsonAlias(mux, []string{"/v1/bpm/tasks/start"}, start)
+	jsonAlias(mux, []string{"/v1/bpm/tasks/approve", "/app-api/bpm/tasks/approve", "/admin-api/bpm/tasks/approve"}, approve)
+	jsonAlias(mux, []string{"/v1/bpm/tasks/cancel"}, cancel)
+	jsonAlias(mux, []string{"/v1/bpm/tasks/reopen"}, reopen)
 }
 
 func registerBusiness(mux *http.ServeMux, s *store) {
@@ -200,6 +290,35 @@ func registerBusiness(mux *http.ServeMux, s *store) {
 			return
 		}
 		writeJSON(w, 405, map[string]any{"code": 405})
+	})
+	jsonAlias(mux, []string{"/v1/business/todos/complete"}, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, 405, map[string]any{"code": 405})
+			return
+		}
+		var body struct {
+			ID     string `json:"id"`
+			Status string `json:"status"` // done|open|cancelled
+		}
+		if json.NewDecoder(r.Body).Decode(&body) != nil || body.ID == "" {
+			writeJSON(w, 400, map[string]any{"code": 400, "msg": "id required"})
+			return
+		}
+		if body.Status == "" {
+			body.Status = "done"
+		}
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		tid := tenantID(r)
+		for i := range s.db.Todos {
+			if s.db.Todos[i].ID == body.ID && matchTenant(tid, s.db.Todos[i].TenantID) {
+				s.db.Todos[i].Status = body.Status
+				_ = s.save()
+				writeJSON(w, 200, map[string]any{"code": 0, "data": s.db.Todos[i]})
+				return
+			}
+		}
+		writeJSON(w, 404, map[string]any{"code": 404})
 	})
 	jsonAlias(mux, []string{"/v1/business/work-requirements"}, func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"code": 0, "data": []map[string]any{{"id": "wr1", "title": "Q3 campaign", "status": "active"}}, "total": 1})

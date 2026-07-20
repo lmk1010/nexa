@@ -155,3 +155,4 @@
 | 2026-07-20 | PRODUCT.md 定位纠正：nexa=可接入企业钉钉本体；租户注册/邀请 API |
 | 2026-07-20 | nexa-core 合并业务端口；logo+GitHub README；start-dev 仅 iam+core |
 | 2026-07-20 | core 全域租户过滤 + 连接器按租户配置 API |
+| 2026-07-20 | BPM 状态机 history/cancel/reopen；todo complete；开通向导页；密码 x bypass 需环境变量 |

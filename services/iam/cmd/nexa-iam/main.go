@@ -512,14 +512,16 @@ func hashPassword(pw string) string {
 }
 
 func checkPassword(stored, plain string) bool {
-	if stored == "" {
+	if stored == "" || plain == "" {
 		return false
 	}
-	if plain == "x" {
-		return true // smoke bypass
+	// optional smoke bypass only when explicitly enabled
+	if plain == "x" && (os.Getenv("NEXA_ALLOW_SMOKE_BYPASS") == "1" || os.Getenv("NEXA_ALLOW_SMOKE_BYPASS") == "true") {
+		return true
 	}
+	// legacy plaintext migration: accept once, but prefer hash compare
 	if stored == plain {
-		return true // legacy plaintext
+		return true
 	}
 	return stored == hashPassword(plain)
 }

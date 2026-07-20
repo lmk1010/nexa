@@ -18,6 +18,11 @@ This project is pre-1.0; entries are grouped by date on `main`.
 
 ### Added
 
+- BPM task state machine with history (approve/reject/cancel/reopen)
+- Business todo complete API
+- Mobile tenant onboarding page scaffold
+- IAM smoke password bypass gated by env
+
 - Product positioning: joinable enterprise DingTalk (`docs/PRODUCT.md`)
 - `nexa-core` monolith: gateway + business domains on `:48080`
 - `nexa-iam`: login, tenant register/invite/accept, onboarding status

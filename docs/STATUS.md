@@ -40,7 +40,7 @@
 ### 还差（优先级）
 
 1. core 内全域 `X-Tenant-Id` 过滤写实
-2. 审批/待办状态机与 IM 增强
+2. ~~审批状态机~~ ✅ history/cancel/reopen；todo complete（IM 仍可增强）
 3. 连接器按租户配置（不仅目录）
 4. MySQL 替换 JSON store
 5. Agent 真 LLM 联调

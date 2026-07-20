@@ -314,7 +314,7 @@ func (s *store) loadOrSeed() {
 			{ID: 1002, TenantID: 1, Name: "Li Si", Mobile: "13800000002", DeptID: 20, DeptName: "Ops", JobNo: "NEXA002", Status: "active", UpdatedAt: now.Format(time.RFC3339)},
 		},
 		Tasks: []task{
-			{ID: "t1", TenantID: 1, Title: "Leave request", ProcessName: "leave", Starter: "Zhang San", Assignee: "boss", Status: "pending", CreatedAt: now.Add(-2 * time.Hour).Format(time.RFC3339), UpdatedAt: now.Add(-2 * time.Hour).Format(time.RFC3339)},
+			{ID: "t1", TenantID: 1, Title: "Leave request", ProcessName: "leave", Starter: "Zhang San", Assignee: "boss", Status: "pending", CreatedAt: now.Add(-2 * time.Hour).Format(time.RFC3339), UpdatedAt: now.Add(-2 * time.Hour).Format(time.RFC3339), History: []taskEvent{{At: now.Add(-2 * time.Hour).Format(time.RFC3339), Actor: "Zhang San", Action: "start", To: "pending"}}},
 		},
 		Todos:         []todo{{ID: "td1", TenantID: 1, Title: "Review weekly report", Assignee: "boss", Status: "open", DueAt: now.Add(24 * time.Hour).Format(time.RFC3339), CreatedAt: now.Format(time.RFC3339)}},
 		Stock:         []stockItem{{TenantID: 1, SKU: "SKU-001", Name: "Widget A", Qty: 120, Warehouse: "WH-East"}, {TenantID: 1, SKU: "SKU-002", Name: "Widget B", Qty: 45, Warehouse: "WH-East"}},
@@ -364,17 +364,27 @@ type department struct {
 	Name     string `json:"name"`
 	ParentID int64  `json:"parentId"`
 }
+type taskEvent struct {
+	At     string `json:"at"`
+	Actor  string `json:"actor,omitempty"`
+	Action string `json:"action"`
+	Note   string `json:"note,omitempty"`
+	From   string `json:"from,omitempty"`
+	To     string `json:"to,omitempty"`
+}
+
 type task struct {
-	ID          string `json:"id"`
-	TenantID    int64  `json:"tenantId,omitempty"`
-	Title       string `json:"title"`
-	ProcessName string `json:"processName"`
-	Starter     string `json:"starter"`
-	Assignee    string `json:"assignee"`
-	Status      string `json:"status"`
-	Reason      string `json:"reason,omitempty"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID          string      `json:"id"`
+	TenantID    int64       `json:"tenantId,omitempty"`
+	Title       string      `json:"title"`
+	ProcessName string      `json:"processName"`
+	Starter     string      `json:"starter"`
+	Assignee    string      `json:"assignee"`
+	Status      string      `json:"status"` // pending|approved|rejected|cancelled
+	Reason      string      `json:"reason,omitempty"`
+	CreatedAt   string      `json:"createdAt"`
+	UpdatedAt   string      `json:"updatedAt"`
+	History     []taskEvent `json:"history,omitempty"`
 }
 type todo struct {
 	ID        string `json:"id"`
