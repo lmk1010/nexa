@@ -1,0 +1,42 @@
+# kyx-data-center 配置示例
+# 生产: /etc/kyx-data-center/config.yaml, docker bind-mount 挂载
+
+http:
+  addr: ":48092"
+
+# 只读 warehouse 连接（agent_ro 已存在, 直接复用）
+warehouse:
+  host: kyx-warehouse
+  port: 3306
+  user: agent_ro
+  password: agent_ro_123
+  database: ordersys_dw
+  max_open_conns: 8    # 同时最多 8 个查询, 覆盖 3 worker + 状态查询
+  max_idle_conns: 2
+  conn_max_lifetime: 5m
+
+# 内存 + 落盘持久化, 队列大小
+queue:
+  max_size: 100         # 超过报 429
+  worker_pool_size: 3   # 并发导出上限
+
+# 输出文件
+storage:
+  dir: /data/exports    # docker bind /opt/kyx/data-center/exports
+  ttl_hours: 24         # 24 小时后清理
+
+# 模板目录
+templates:
+  dir: /etc/kyx-data-center/templates
+
+# 每个用户同时最多多少任务
+quota:
+  per_user_active: 1
+  per_user_daily: 20    # 每天最多多少次导出
+
+# 单模板行数上限（模板 JSON 可覆盖）
+limits:
+  max_rows_default: 200000
+
+log:
+  level: info

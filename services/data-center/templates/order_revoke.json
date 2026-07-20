@@ -1,0 +1,191 @@
+{
+  "id": "order_revoke",
+  "label": "撤单明细",
+  "category": "售后",
+  "description": "订单撤单/换店明细 · 含撤单原因、原派单人 / 新派单人",
+  "icon": "cancel",
+  "color": "#F97316",
+  "max_rows": 30000,
+  "visibility": {
+    "allow_all_logged": true
+  },
+  "filters": {
+    "date": {
+      "type": "range",
+      "col": "r.create_time",
+      "required": true,
+      "label": "撤单时间"
+    },
+    "reason_type": {
+      "type": "in",
+      "col": "r.revoke_reason_type",
+      "enum": "RevokeReasonType",
+      "label": "撤单类型"
+    },
+    "order_state": {
+      "type": "in",
+      "col": "t.state",
+      "enum": "OrderState",
+      "label": "订单状态"
+    },
+    "province": {
+      "type": "in",
+      "col": "SUBSTRING_INDEX(t.region_path_str, ',', 1)",
+      "enum": "Province",
+      "label": "省份"
+    },
+    "order_date": {
+      "type": "range",
+      "col": "t.create_time",
+      "label": "下单时间"
+    },
+    "seller": {
+      "type": "lookup",
+      "col": "t.s_uid",
+      "lookup": "sellers",
+      "label": "卖家（可搜索）"
+    },
+    "shop": {
+      "type": "lookup",
+      "col": "t.shop_id",
+      "lookup": "shops",
+      "label": "门店/网点（可搜索）"
+    }
+  },
+  "sort": [
+    "r.create_time DESC"
+  ],
+  "sql": "SELECT r.order_no AS order_no, r.create_time AS revoke_time, r.revoke_reason_type AS reason_type, IFNULL(r.revoke_reason,'') AS reason, IFNULL(u_r.name,'') AS revoke_user, IFNULL(u_pd_old.name,'') AS old_pd_name, IFNULL(u_pd_new.name,'') AS new_pd_name, IFNULL(t.state,'') AS order_state, IFNULL(t.info,'') AS info, IFNULL(s.name,'') AS seller_name, IFNULL(o.name,'') AS shop_name, IFNULL(t.total,0) AS total, IFNULL(t.install_price,0) AS install_price, IFNULL(t.region_path_str,'') AS region_path FROM t_order_revoke r LEFT JOIN t_order t ON t.id = r.order_id LEFT JOIN sys_user u_r ON u_r.user_id = r.revoke_uid LEFT JOIN sys_user u_pd_old ON u_pd_old.user_id = r.revoke_pd_uid LEFT JOIN sys_user u_pd_new ON u_pd_new.user_id = r.new_pd_uid LEFT JOIN sys_seller s ON s.user_id = t.s_uid LEFT JOIN outlets_shop o ON o.id = t.shop_id WHERE {WHERE}",
+  "columns": [
+    {
+      "header": "订单编号",
+      "field": "order_no",
+      "width": 22
+    },
+    {
+      "header": "撤单时间",
+      "field": "revoke_time",
+      "width": 20,
+      "type": "datetime"
+    },
+    {
+      "header": "撤单类型",
+      "field": "reason_type",
+      "width": 12,
+      "enum": "RevokeReasonType"
+    },
+    {
+      "header": "撤单原因",
+      "field": "reason",
+      "width": 40
+    },
+    {
+      "header": "撤单发起人",
+      "field": "revoke_user",
+      "width": 14
+    },
+    {
+      "header": "原派单人",
+      "field": "old_pd_name",
+      "width": 14
+    },
+    {
+      "header": "新派单人",
+      "field": "new_pd_name",
+      "width": 14
+    },
+    {
+      "header": "订单当前状态",
+      "field": "order_state",
+      "width": 10,
+      "enum": "OrderState"
+    },
+    {
+      "header": "订单信息",
+      "field": "info",
+      "width": 28
+    },
+    {
+      "header": "卖家名称",
+      "field": "seller_name",
+      "width": 20
+    },
+    {
+      "header": "网点名称",
+      "field": "shop_name",
+      "width": 22
+    },
+    {
+      "header": "订单总价",
+      "field": "total",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "安装价格",
+      "field": "install_price",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "区域",
+      "field": "region_path",
+      "width": 22
+    }
+  ],
+  "enums": {
+    "RevokeReasonType": {
+      "1": "拒单",
+      "2": "换店"
+    },
+    "OrderState": {
+      "-11": "退回给卖家",
+      "-2": "网点拒单",
+      "-1": "派单已撤单",
+      "0": "未派单",
+      "1": "已派单",
+      "2": "已接单",
+      "3": "已安装",
+      "4": "回访完成",
+      "5": "已完结",
+      "6": "申请撤单",
+      "7": "已撤单",
+      "22": "补发",
+      "401": "待打款",
+      "2222": "有售后"
+    },
+    "Province": {
+      "上海市": "上海市",
+      "云南省": "云南省",
+      "内蒙古自治区": "内蒙古",
+      "北京市": "北京市",
+      "吉林省": "吉林省",
+      "四川省": "四川省",
+      "天津市": "天津市",
+      "宁夏回族自治区": "宁夏",
+      "安徽省": "安徽省",
+      "山东省": "山东省",
+      "山西省": "山西省",
+      "广东省": "广东省",
+      "广西壮族自治区": "广西",
+      "新疆维吾尔自治区": "新疆",
+      "江苏省": "江苏省",
+      "江西省": "江西省",
+      "河北省": "河北省",
+      "河南省": "河南省",
+      "浙江省": "浙江省",
+      "海南省": "海南省",
+      "湖北省": "湖北省",
+      "湖南省": "湖南省",
+      "甘肃省": "甘肃省",
+      "福建省": "福建省",
+      "西藏自治区": "西藏",
+      "贵州省": "贵州省",
+      "辽宁省": "辽宁省",
+      "重庆市": "重庆市",
+      "陕西省": "陕西省",
+      "青海省": "青海省",
+      "黑龙江省": "黑龙江"
+    }
+  }
+}

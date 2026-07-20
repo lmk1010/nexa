@@ -1,0 +1,35 @@
+-- ----------------------------
+-- Table structure for hr_dingtalk_sync_history
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `hr_dingtalk_sync_history` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+  `sync_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'EMPLOYEE_SYNC / ATTENDANCE_SYNC / FULL_SYNC / ...',
+  `sync_scope` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ALL' COMMENT 'USER_PROFILE / ATTENDANCE / ALL',
+  `trigger_mode` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'MANUAL' COMMENT 'MANUAL / SCHEDULE / STREAM',
+  `target_tenant_id` bigint DEFAULT NULL COMMENT 'Target tenant id',
+  `operator_user_id` bigint DEFAULT NULL COMMENT 'Operator user id',
+  `lookback_minutes` bigint DEFAULT NULL COMMENT 'Attendance lookback minutes',
+  `auto_create_enabled` bit(1) DEFAULT NULL COMMENT 'Auto create employee/profile flag',
+  `auto_create_dept_id` bigint DEFAULT NULL COMMENT 'Auto create dept id',
+  `total_count` int NOT NULL DEFAULT '0' COMMENT 'Total records from source',
+  `pulled_count` int NOT NULL DEFAULT '0' COMMENT 'Pulled records count',
+  `synced_count` int NOT NULL DEFAULT '0' COMMENT 'Synced records count',
+  `created_count` int NOT NULL DEFAULT '0' COMMENT 'Created records count',
+  `updated_count` int NOT NULL DEFAULT '0' COMMENT 'Updated records count',
+  `failed_count` int NOT NULL DEFAULT '0' COMMENT 'Failed records count',
+  `skipped_count` int NOT NULL DEFAULT '0' COMMENT 'Skipped records count',
+  `sync_start_time` datetime DEFAULT NULL COMMENT 'Sync start time',
+  `sync_end_time` datetime DEFAULT NULL COMMENT 'Sync end time',
+  `duration_ms` bigint DEFAULT NULL COMMENT 'Duration in milliseconds',
+  `summary` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Summary text',
+  `detail_json` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Detail json payload',
+  `creator` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT 'Creator',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Create time',
+  `updater` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT 'Updater',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
+  `deleted` bit(1) NOT NULL DEFAULT b'0' COMMENT 'Deleted flag',
+  `tenant_id` bigint NOT NULL DEFAULT '0' COMMENT 'Tenant id',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_hr_dingtalk_sync_type` (`tenant_id`,`sync_type`,`create_time`) USING BTREE,
+  KEY `idx_hr_dingtalk_sync_time` (`tenant_id`,`sync_end_time`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='DingTalk sync history';

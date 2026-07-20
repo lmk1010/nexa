@@ -1,0 +1,159 @@
+{
+  "id": "employee_list",
+  "label": "员工/离职名单",
+  "category": "员工",
+  "description": "员工账号 · 含在职状态、部门、创建时间；用于导出员工列表 / 离职清单",
+  "icon": "badge",
+  "color": "#0369A1",
+  "max_rows": 20000,
+  "visibility": {
+    "allow_all_logged": true
+  },
+  "filters": {
+    "date": {
+      "type": "range",
+      "col": "u.create_time",
+      "required": false,
+      "label": "入职时间"
+    },
+    "name": {
+      "type": "like",
+      "col": "u.name",
+      "label": "姓名"
+    },
+    "user_name": {
+      "type": "like",
+      "col": "u.user_name",
+      "label": "登录账号"
+    },
+    "status": {
+      "type": "in",
+      "col": "u.status",
+      "enum": "UserStatus",
+      "label": "在职状态"
+    },
+    "dept_id": {
+      "type": "in",
+      "col": "u.dept_id",
+      "label": "部门 ID",
+      "enum": "Dept"
+    },
+    "dept_name": {
+      "type": "like",
+      "col": "d.dept_name",
+      "label": "部门名称（模糊）"
+    }
+  },
+  "sort": [
+    "u.status ASC",
+    "u.dept_id ASC",
+    "u.user_id DESC"
+  ],
+  "sql": "SELECT u.user_id AS user_id, IFNULL(u.name,'') AS name, IFNULL(u.user_name,'') AS user_name, IFNULL(u.link_name,'') AS link_name, IFNULL(u.mobile,'') AS mobile, IFNULL(u.email,'') AS email, u.sex AS sex, u.status AS status, IFNULL(d.dept_name,'') AS dept_name, IFNULL(u_heir.name,'') AS heir_name, u.worked AS worked, u.create_time AS create_time FROM sys_user u LEFT JOIN sys_dept d ON d.dept_id = u.dept_id LEFT JOIN sys_user u_heir ON u_heir.user_id = u.heir_uid WHERE u.deleted = 0 AND {WHERE}",
+  "columns": [
+    {
+      "header": "员工ID",
+      "field": "user_id",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "姓名",
+      "field": "name",
+      "width": 14
+    },
+    {
+      "header": "登录账号",
+      "field": "user_name",
+      "width": 18
+    },
+    {
+      "header": "英文名",
+      "field": "link_name",
+      "width": 14
+    },
+    {
+      "header": "手机号",
+      "field": "mobile",
+      "width": 14
+    },
+    {
+      "header": "邮箱",
+      "field": "email",
+      "width": 24
+    },
+    {
+      "header": "性别",
+      "field": "sex",
+      "width": 6,
+      "enum": "Sex"
+    },
+    {
+      "header": "在职状态",
+      "field": "status",
+      "width": 10,
+      "enum": "UserStatus"
+    },
+    {
+      "header": "部门",
+      "field": "dept_name",
+      "width": 16
+    },
+    {
+      "header": "继承人",
+      "field": "heir_name",
+      "width": 14
+    },
+    {
+      "header": "工龄(月)",
+      "field": "worked",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "创建时间",
+      "field": "create_time",
+      "width": 20,
+      "type": "datetime"
+    }
+  ],
+  "enums": {
+    "UserStatus": {
+      "0": "在职",
+      "1": "离职"
+    },
+    "Sex": {
+      "0": "男",
+      "1": "女",
+      "2": "未知"
+    },
+    "Dept": {
+      "100": "安徽快易修网络科技有限公司",
+      "101": "快易修",
+      "102": "技术部",
+      "103": "甲由队",
+      "104": "啊对对对队",
+      "105": "二丫队",
+      "106": "拉拉队",
+      "107": "妞妞队",
+      "200": "派单部",
+      "201": "嗨丫队",
+      "202": "战神队",
+      "203": "酒鬼队",
+      "204": "财务部",
+      "205": "派单",
+      "206": "普普通通队",
+      "207": "人事部",
+      "208": "拓展队",
+      "209": "特工队",
+      "210": "工单部",
+      "211": "武装队",
+      "212": "地址库",
+      "213": "哎丫队",
+      "214": "丫丫队",
+      "215": "供应链",
+      "216": "二丫酒鬼",
+      "217": "如意队"
+    }
+  }
+}

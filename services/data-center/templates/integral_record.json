@@ -1,0 +1,128 @@
+{
+  "id": "integral_record",
+  "label": "积分记录",
+  "category": "财务",
+  "description": "卖家积分明细 · 充值 / 提现 / 赠送 / 扣除等交易记录",
+  "icon": "account_balance_wallet",
+  "color": "#8B5CF6",
+  "max_rows": 100000,
+  "visibility": {
+    "allow_all_logged": true
+  },
+  "filters": {
+    "date": {
+      "type": "range",
+      "col": "r.create_time",
+      "required": true,
+      "label": "提交时间"
+    },
+    "type": {
+      "type": "in",
+      "col": "r.type",
+      "enum": "TxnType",
+      "label": "类型"
+    },
+    "ck_state": {
+      "type": "in",
+      "col": "r.ck_state",
+      "enum": "CkState",
+      "label": "审核状态"
+    },
+    "seller": {
+      "type": "lookup",
+      "col": "r.s_uid",
+      "lookup": "sellers",
+      "label": "卖家（可搜索）"
+    }
+  },
+  "sort": [
+    "r.create_time DESC"
+  ],
+  "sql": "SELECT IFNULL(s.platform,'') AS platform, r.type AS type, IFNULL(u_create.name, r.create_by) AS create_name, r.create_time AS create_time, r.ck_time AS ck_time, IFNULL(r.amount,0) AS amount, IFNULL(r.after_amount,0) AS after_amount, IFNULL(r.remark,'') AS remark, IFNULL(s.name,'') AS seller_name, IFNULL(r.payment_method,'') AS payment_method, r.ck_state AS ck_state, IFNULL(d.dept_name,'') AS dept_name FROM t_transaction_record r LEFT JOIN sys_seller s ON s.user_id = r.s_uid LEFT JOIN sys_user u_create ON u_create.user_id = CAST(r.create_by AS UNSIGNED) LEFT JOIN sys_dept d ON d.dept_id = s.dept_id WHERE 1=1 AND {WHERE}",
+  "columns": [
+    {
+      "header": "平台",
+      "field": "platform",
+      "width": 8
+    },
+    {
+      "header": "类型",
+      "field": "type",
+      "width": 10,
+      "enum": "TxnType"
+    },
+    {
+      "header": "创建者",
+      "field": "create_name",
+      "width": 22
+    },
+    {
+      "header": "提交时间",
+      "field": "create_time",
+      "width": 20,
+      "type": "datetime"
+    },
+    {
+      "header": "审核时间",
+      "field": "ck_time",
+      "width": 20,
+      "type": "datetime"
+    },
+    {
+      "header": "充值/提现积分",
+      "field": "amount",
+      "width": 14,
+      "type": "number"
+    },
+    {
+      "header": "审核积分",
+      "field": "after_amount",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "审核备注",
+      "field": "remark",
+      "width": 30
+    },
+    {
+      "header": "卖家",
+      "field": "seller_name",
+      "width": 24
+    },
+    {
+      "header": "付款方式",
+      "field": "payment_method",
+      "width": 10
+    },
+    {
+      "header": "审核状态",
+      "field": "ck_state",
+      "width": 10,
+      "enum": "CkState"
+    },
+    {
+      "header": "对接组",
+      "field": "dept_name",
+      "width": 14
+    }
+  ],
+  "enums": {
+    "TxnType": {
+      "RECHARGE": "充值",
+      "WITHDRAW": "提现",
+      "GIFT": "赠送",
+      "DEDUCT": "扣除",
+      "CONSUME": "消费",
+      "ORDER_REVOKE": "订单撤回",
+      "BACK_MONEY": "补款",
+      "ORDER_EDIT": "订单修改",
+      "ORDER_RETURN": "订单退回"
+    },
+    "CkState": {
+      "0": "待审核",
+      "1": "已通过",
+      "-1": "已拒绝"
+    }
+  }
+}

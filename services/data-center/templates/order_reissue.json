@@ -1,0 +1,192 @@
+{
+  "id": "order_reissue",
+  "label": "补发明细",
+  "category": "售后",
+  "description": "补发申请明细 · 含补发类型（产品/施工）、审核状态、创建人",
+  "icon": "restart_alt",
+  "color": "#B25E09",
+  "max_rows": 30000,
+  "visibility": {
+    "allow_all_logged": true
+  },
+  "filters": {
+    "date": {
+      "type": "range",
+      "col": "r.create_time",
+      "required": true,
+      "label": "申请时间"
+    },
+    "type": {
+      "type": "in",
+      "col": "r.type",
+      "enum": "ReissueType",
+      "label": "补发类型"
+    },
+    "state": {
+      "type": "in",
+      "col": "r.state",
+      "enum": "ReissueState",
+      "label": "审核状态"
+    },
+    "province": {
+      "type": "in",
+      "col": "SUBSTRING_INDEX(t.region_path_str, ',', 1)",
+      "enum": "Province",
+      "label": "省份"
+    },
+    "order_date": {
+      "type": "range",
+      "col": "t.create_time",
+      "label": "下单时间"
+    },
+    "seller": {
+      "type": "lookup",
+      "col": "r.s_uid",
+      "lookup": "sellers",
+      "label": "卖家（可搜索）"
+    },
+    "shop": {
+      "type": "lookup",
+      "col": "r.outlets_id",
+      "lookup": "shops",
+      "label": "门店/网点（可搜索）"
+    }
+  },
+  "sort": [
+    "r.create_time DESC"
+  ],
+  "sql": "SELECT r.order_no AS order_no, r.type AS type, IFNULL(r.remark,'') AS reason, IFNULL(r.reissue_position,'') AS reissue_position, r.state AS state, IFNULL(r.ck_remark,'') AS ck_remark, IFNULL(r.operator,'') AS operator, r.create_time AS create_time, IFNULL(t.state,'') AS order_state, IFNULL(t.info,'') AS info, IFNULL(s.name,'') AS seller_name, IFNULL(o.name,'') AS shop_name, IFNULL(t.total,0) AS total FROM t_order_reissue r LEFT JOIN t_order t ON t.id = r.order_id LEFT JOIN sys_seller s ON s.user_id = r.s_uid LEFT JOIN outlets_shop o ON o.id = r.outlets_id WHERE r.deleted = 0 AND {WHERE}",
+  "columns": [
+    {
+      "header": "订单编号",
+      "field": "order_no",
+      "width": 22
+    },
+    {
+      "header": "补发类型",
+      "field": "type",
+      "width": 10,
+      "enum": "ReissueType"
+    },
+    {
+      "header": "补发原因",
+      "field": "reason",
+      "width": 40
+    },
+    {
+      "header": "补发位置",
+      "field": "reissue_position",
+      "width": 20
+    },
+    {
+      "header": "审核状态",
+      "field": "state",
+      "width": 10,
+      "enum": "ReissueState"
+    },
+    {
+      "header": "审核备注",
+      "field": "ck_remark",
+      "width": 30
+    },
+    {
+      "header": "创建人",
+      "field": "operator",
+      "width": 14
+    },
+    {
+      "header": "申请时间",
+      "field": "create_time",
+      "width": 20,
+      "type": "datetime"
+    },
+    {
+      "header": "订单当前状态",
+      "field": "order_state",
+      "width": 10,
+      "enum": "OrderState"
+    },
+    {
+      "header": "订单信息",
+      "field": "info",
+      "width": 28
+    },
+    {
+      "header": "卖家名称",
+      "field": "seller_name",
+      "width": 20
+    },
+    {
+      "header": "网点名称",
+      "field": "shop_name",
+      "width": 22
+    },
+    {
+      "header": "订单总价",
+      "field": "total",
+      "width": 10,
+      "type": "number"
+    }
+  ],
+  "enums": {
+    "ReissueType": {
+      "0": "未知",
+      "1": "产品",
+      "2": "施工"
+    },
+    "ReissueState": {
+      "0": "待审",
+      "1": "通过",
+      "-1": "失败"
+    },
+    "OrderState": {
+      "-11": "退回给卖家",
+      "-2": "网点拒单",
+      "-1": "派单已撤单",
+      "0": "未派单",
+      "1": "已派单",
+      "2": "已接单",
+      "3": "已安装",
+      "4": "回访完成",
+      "5": "已完结",
+      "6": "申请撤单",
+      "7": "已撤单",
+      "22": "补发",
+      "401": "待打款",
+      "2222": "有售后"
+    },
+    "Province": {
+      "上海市": "上海市",
+      "云南省": "云南省",
+      "内蒙古自治区": "内蒙古",
+      "北京市": "北京市",
+      "吉林省": "吉林省",
+      "四川省": "四川省",
+      "天津市": "天津市",
+      "宁夏回族自治区": "宁夏",
+      "安徽省": "安徽省",
+      "山东省": "山东省",
+      "山西省": "山西省",
+      "广东省": "广东省",
+      "广西壮族自治区": "广西",
+      "新疆维吾尔自治区": "新疆",
+      "江苏省": "江苏省",
+      "江西省": "江西省",
+      "河北省": "河北省",
+      "河南省": "河南省",
+      "浙江省": "浙江省",
+      "海南省": "海南省",
+      "湖北省": "湖北省",
+      "湖南省": "湖南省",
+      "甘肃省": "甘肃省",
+      "福建省": "福建省",
+      "西藏自治区": "西藏",
+      "贵州省": "贵州省",
+      "辽宁省": "辽宁省",
+      "重庆市": "重庆市",
+      "陕西省": "陕西省",
+      "青海省": "青海省",
+      "黑龙江省": "黑龙江"
+    }
+  }
+}

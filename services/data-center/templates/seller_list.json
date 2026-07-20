@@ -1,0 +1,209 @@
+{
+  "id": "seller_list",
+  "label": "卖家列表",
+  "category": "卖家",
+  "description": "全部卖家账号 · 含平台、类型、积分、部门",
+  "icon": "shopping_bag",
+  "color": "#F59E0B",
+  "max_rows": 20000,
+  "visibility": {
+    "allow_all_logged": true
+  },
+  "filters": {
+    "name": {
+      "type": "like",
+      "col": "s.name",
+      "label": "卖家名称"
+    },
+    "user_name": {
+      "type": "like",
+      "col": "s.user_name",
+      "label": "登录账号"
+    },
+    "platform": {
+      "type": "in",
+      "col": "s.platform",
+      "enum": "SellerPlatform",
+      "label": "所属平台"
+    },
+    "type": {
+      "type": "in",
+      "col": "s.type",
+      "enum": "SellerType",
+      "label": "卖家类型"
+    },
+    "dept_id": {
+      "type": "in",
+      "col": "s.dept_id",
+      "label": "对接部门",
+      "enum": "Dept"
+    },
+    "region": {
+      "type": "like",
+      "col": "s.region_path_str",
+      "label": "区域关键字（模糊，如 合肥/瑶海区）"
+    },
+    "province": {
+      "type": "in",
+      "col": "SUBSTRING_INDEX(s.region_path_str, ',', 1)",
+      "enum": "Province",
+      "label": "省份"
+    }
+  },
+  "sort": [
+    "s.integral DESC",
+    "s.user_id DESC"
+  ],
+  "sql": "SELECT s.user_id AS user_id, IFNULL(s.name,'') AS name, IFNULL(s.user_name,'') AS user_name, IFNULL(s.link_name,'') AS link_name, IFNULL(s.mobile,'') AS mobile, IFNULL(s.platform,'') AS platform, IFNULL(s.type,'') AS type, IFNULL(s.integral,0) AS integral, IFNULL(s.gif_integral,0) AS gif_integral, IFNULL(s.pf_integral,0) AS pf_integral, IFNULL(s.credit_integral,0) AS credit_integral, IFNULL(d.dept_name,'') AS dept_name, IFNULL(s.region_path_str,'') AS region_path, IFNULL(s.address,'') AS address FROM sys_seller s LEFT JOIN sys_dept d ON d.dept_id = s.dept_id WHERE {WHERE}",
+  "columns": [
+    {
+      "header": "卖家ID",
+      "field": "user_id",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "卖家名称",
+      "field": "name",
+      "width": 26
+    },
+    {
+      "header": "登录账号",
+      "field": "user_name",
+      "width": 18
+    },
+    {
+      "header": "联系人",
+      "field": "link_name",
+      "width": 14
+    },
+    {
+      "header": "手机号",
+      "field": "mobile",
+      "width": 14
+    },
+    {
+      "header": "所属平台",
+      "field": "platform",
+      "width": 10,
+      "enum": "SellerPlatform"
+    },
+    {
+      "header": "卖家类型",
+      "field": "type",
+      "width": 14,
+      "enum": "SellerType"
+    },
+    {
+      "header": "可用积分",
+      "field": "integral",
+      "width": 12,
+      "type": "number"
+    },
+    {
+      "header": "赠送积分",
+      "field": "gif_integral",
+      "width": 12,
+      "type": "number"
+    },
+    {
+      "header": "赔付积分",
+      "field": "pf_integral",
+      "width": 12,
+      "type": "number"
+    },
+    {
+      "header": "信用积分",
+      "field": "credit_integral",
+      "width": 12,
+      "type": "number"
+    },
+    {
+      "header": "对接部门",
+      "field": "dept_name",
+      "width": 14
+    },
+    {
+      "header": "区域",
+      "field": "region_path",
+      "width": 22
+    },
+    {
+      "header": "详细地址",
+      "field": "address",
+      "width": 40
+    }
+  ],
+  "enums": {
+    "SellerPlatform": {
+      "CYY": "车易严",
+      "KYX": "快易修",
+      "XCM": "行车萌"
+    },
+    "SellerType": {
+      "POINT_SELLER": "积分卖家",
+      "ORDER_SELLER": "订单卖家"
+    },
+    "Dept": {
+      "100": "安徽快易修网络科技有限公司",
+      "101": "快易修",
+      "102": "技术部",
+      "103": "甲由队",
+      "104": "啊对对对队",
+      "105": "二丫队",
+      "106": "拉拉队",
+      "107": "妞妞队",
+      "200": "派单部",
+      "201": "嗨丫队",
+      "202": "战神队",
+      "203": "酒鬼队",
+      "204": "财务部",
+      "205": "派单",
+      "206": "普普通通队",
+      "207": "人事部",
+      "208": "拓展队",
+      "209": "特工队",
+      "210": "工单部",
+      "211": "武装队",
+      "212": "地址库",
+      "213": "哎丫队",
+      "214": "丫丫队",
+      "215": "供应链",
+      "216": "二丫酒鬼",
+      "217": "如意队"
+    },
+    "Province": {
+      "上海市": "上海市",
+      "云南省": "云南省",
+      "内蒙古自治区": "内蒙古",
+      "北京市": "北京市",
+      "吉林省": "吉林省",
+      "四川省": "四川省",
+      "天津市": "天津市",
+      "宁夏回族自治区": "宁夏",
+      "安徽省": "安徽省",
+      "山东省": "山东省",
+      "山西省": "山西省",
+      "广东省": "广东省",
+      "广西壮族自治区": "广西",
+      "新疆维吾尔自治区": "新疆",
+      "江苏省": "江苏省",
+      "江西省": "江西省",
+      "河北省": "河北省",
+      "河南省": "河南省",
+      "浙江省": "浙江省",
+      "海南省": "海南省",
+      "湖北省": "湖北省",
+      "湖南省": "湖南省",
+      "甘肃省": "甘肃省",
+      "福建省": "福建省",
+      "西藏自治区": "西藏",
+      "贵州省": "贵州省",
+      "辽宁省": "辽宁省",
+      "重庆市": "重庆市",
+      "陕西省": "陕西省",
+      "青海省": "青海省",
+      "黑龙江省": "黑龙江"
+    }
+  }
+}

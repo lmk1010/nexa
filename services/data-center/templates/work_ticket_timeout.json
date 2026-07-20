@@ -1,0 +1,31 @@
+{
+  "id": "work_ticket_timeout",
+  "label": "工单超时明细",
+  "category": "工单",
+  "description": "工单超时记录 · 按超时时间过滤，SLA/时效分析用",
+  "icon": "timer_off",
+  "color": "#DC2626",
+  "max_rows": 30000,
+  "visibility": {"allow_all_logged": true},
+  "filters": {
+    "date": {"type": "range", "col": "t.create_time", "required": true, "label": "超时记录时间"},
+    "type": {"type": "like", "col": "t.type", "label": "工单类型"},
+    "timeout_type": {"type": "like", "col": "t.timeout_type", "label": "超时类型"},
+    "handler_name": {"type": "like", "col": "t.name", "label": "处理人"}
+  },
+  "sort": ["t.create_time DESC"],
+  "sql": "SELECT t.id AS id, t.work_id AS work_id, IFNULL(t.order_no,'') AS order_no, IFNULL(t.type,'') AS type, IFNULL(t.timeout_type,'') AS timeout_type, IFNULL(t.name,'') AS handler_name, IFNULL(t.username,'') AS handler_account, IFNULL(t.remark,'') AS remark, t.create_time AS create_time, t.before_time AS before_time, TIMESTAMPDIFF(MINUTE, t.before_time, t.create_time) AS overdue_min FROM t_work_order_timeout t WHERE t.deleted = 0 AND {WHERE}",
+  "columns": [
+    {"header": "超时ID", "field": "id", "width": 10, "type": "number"},
+    {"header": "工单号", "field": "work_id", "width": 12, "type": "number"},
+    {"header": "订单编号", "field": "order_no", "width": 22},
+    {"header": "工单类型", "field": "type", "width": 16},
+    {"header": "超时类型", "field": "timeout_type", "width": 16},
+    {"header": "处理人", "field": "handler_name", "width": 14},
+    {"header": "处理人账号", "field": "handler_account", "width": 16},
+    {"header": "备注", "field": "remark", "width": 40},
+    {"header": "超时记录时间", "field": "create_time", "width": 20, "type": "datetime"},
+    {"header": "应处理时间", "field": "before_time", "width": 20, "type": "datetime"},
+    {"header": "超时时长(分)", "field": "overdue_min", "width": 12, "type": "number"}
+  ]
+}

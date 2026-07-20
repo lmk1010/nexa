@@ -1,0 +1,167 @@
+{
+  "id": "pf_record",
+  "label": "赔付",
+  "category": "售后",
+  "description": "赔付明细 · 分部门 / 分卖家 承担金额 + 项目",
+  "icon": "payments",
+  "color": "#EF4444",
+  "max_rows": 30000,
+  "visibility": {
+    "allow_all_logged": true
+  },
+  "filters": {
+    "date": {
+      "type": "range",
+      "col": "p.create_time",
+      "required": true,
+      "label": "申请时间"
+    },
+    "dk_state": {
+      "type": "in",
+      "col": "p.dk_state",
+      "enum": "DkState",
+      "label": "打款状态"
+    },
+    "dept_id": {
+      "type": "in",
+      "col": "d.dept_id",
+      "label": "对接组",
+      "enum": "Dept"
+    },
+    "seller": {
+      "type": "lookup",
+      "col": "p.seller_id",
+      "lookup": "sellers",
+      "label": "卖家（可搜索）"
+    }
+  },
+  "sort": [
+    "p.create_time DESC"
+  ],
+  "sql": "SELECT IFNULL(d.dept_name,'') AS dept_name, p.order_no AS order_no, IFNULL(s.name,'') AS seller_name, IFNULL(p.total_money,0) AS total_money, IFNULL(p.outlets_money,0) AS outlets_money, IFNULL(p.seller_money,0) AS seller_money, IFNULL(p.my_money,0) AS my_money, IFNULL(p.remark,'') AS remark, IFNULL(u_c.name, p.create_by) AS create_name, IFNULL(p.ck_name,'') AS ck_name, IFNULL(p.ck_type,'') AS ck_type, p.dk_time AS dk_time, p.create_time AS create_time, IFNULL(o.source_id,'') AS source_id FROM t_order_pf p LEFT JOIN sys_seller s ON s.user_id = p.seller_id LEFT JOIN sys_dept d ON d.dept_id = p.dept_id LEFT JOIN sys_user u_c ON u_c.user_id = CAST(p.create_by AS UNSIGNED) LEFT JOIN t_order o ON o.order_no = p.order_no WHERE p.deleted = 0 AND {WHERE}",
+  "columns": [
+    {
+      "header": "对接组",
+      "field": "dept_name",
+      "width": 14
+    },
+    {
+      "header": "订单编号",
+      "field": "order_no",
+      "width": 24
+    },
+    {
+      "header": "卖家名称",
+      "field": "seller_name",
+      "width": 22
+    },
+    {
+      "header": "总金额",
+      "field": "total_money",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "门店赔付",
+      "field": "outlets_money",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "卖家赔付",
+      "field": "seller_money",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "我们赔付",
+      "field": "my_money",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "发起备注",
+      "field": "remark",
+      "width": 40
+    },
+    {
+      "header": "发起人",
+      "field": "create_name",
+      "width": 18
+    },
+    {
+      "header": "审核人",
+      "field": "ck_name",
+      "width": 18
+    },
+    {
+      "header": "审核类型",
+      "field": "ck_type",
+      "width": 10
+    },
+    {
+      "header": "打款时间",
+      "field": "dk_time",
+      "width": 20,
+      "type": "datetime"
+    },
+    {
+      "header": "申请时间",
+      "field": "create_time",
+      "width": 20,
+      "type": "datetime"
+    },
+    {
+      "header": "订单来源",
+      "field": "source_id",
+      "width": 10,
+      "enum": "OrderSource"
+    }
+  ],
+  "enums": {
+    "DkState": {
+      "0": "未打款",
+      "1": "已打款",
+      "2": "打款失败"
+    },
+    "OrderSource": {
+      "1": "淘宝",
+      "2": "京东",
+      "3": "天猫工单",
+      "4": "天猫",
+      "5": "合作平台",
+      "6": "京东非自营有价格",
+      "7": "拼多多",
+      "8": "抖音",
+      "9": "京东自营"
+    },
+    "Dept": {
+      "100": "安徽快易修网络科技有限公司",
+      "101": "快易修",
+      "102": "技术部",
+      "103": "甲由队",
+      "104": "啊对对对队",
+      "105": "二丫队",
+      "106": "拉拉队",
+      "107": "妞妞队",
+      "200": "派单部",
+      "201": "嗨丫队",
+      "202": "战神队",
+      "203": "酒鬼队",
+      "204": "财务部",
+      "205": "派单",
+      "206": "普普通通队",
+      "207": "人事部",
+      "208": "拓展队",
+      "209": "特工队",
+      "210": "工单部",
+      "211": "武装队",
+      "212": "地址库",
+      "213": "哎丫队",
+      "214": "丫丫队",
+      "215": "供应链",
+      "216": "二丫酒鬼",
+      "217": "如意队"
+    }
+  }
+}

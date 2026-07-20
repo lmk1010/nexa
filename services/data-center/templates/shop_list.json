@@ -1,0 +1,211 @@
+{
+  "id": "shop_list",
+  "label": "门店/网点信息",
+  "category": "门店",
+  "description": "网点基础信息 · 含区域、保证金、评分、单量、装机数",
+  "icon": "storefront",
+  "color": "#0EA5E9",
+  "max_rows": 100000,
+  "visibility": {
+    "allow_all_logged": true
+  },
+  "filters": {
+    "date": {
+      "type": "range",
+      "col": "o.create_time",
+      "required": false,
+      "label": "创建时间"
+    },
+    "name": {
+      "type": "like",
+      "col": "o.name",
+      "label": "网点名称（模糊）"
+    },
+    "region": {
+      "type": "like",
+      "col": "o.region_path_str",
+      "label": "区域关键字（模糊，如 合肥/瑶海区）"
+    },
+    "level": {
+      "type": "in",
+      "col": "o.level",
+      "enum": "ShopLevel",
+      "label": "网点等级"
+    },
+    "state": {
+      "type": "in",
+      "col": "o.state",
+      "label": "状态"
+    },
+    "province": {
+      "type": "in",
+      "col": "SUBSTRING_INDEX(o.region_path_str, ',', 1)",
+      "enum": "Province",
+      "label": "省份"
+    }
+  },
+  "sort": [
+    "o.order_total_num DESC",
+    "o.id DESC"
+  ],
+  "sql": "SELECT o.id AS id, IFNULL(o.name,'') AS name, IFNULL(o.region_path_str,'') AS region_path, IFNULL(o.address,'') AS address, IFNULL(o.door_no,'') AS door_no, o.level AS level, IFNULL(o.score,0) AS score, IFNULL(o.bond,0) AS bond, IFNULL(o.entrepot_bond,0) AS entrepot_bond, IFNULL(o.insurance,0) AS insurance, IFNULL(o.order_total_num,0) AS order_total_num, IFNULL(o.order_total_price,0) AS order_total_price, IFNULL(o.order_install_price,0) AS order_install_price, IFNULL(o.accept_num,0) AS accept_num, IFNULL(o.refuse_num,0) AS refuse_num, IFNULL(o.change_shop_num,0) AS change_shop_num, IFNULL(o.rework_num,0) AS rework_num, IFNULL(o.after_num,0) AS after_num, IFNULL(o.state,'') AS state, o.create_time AS create_time FROM outlets_shop o WHERE o.deleted = 0 AND {WHERE}",
+  "columns": [
+    {
+      "header": "网点ID",
+      "field": "id",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "网点名称",
+      "field": "name",
+      "width": 26
+    },
+    {
+      "header": "区域",
+      "field": "region_path",
+      "width": 22
+    },
+    {
+      "header": "详细地址",
+      "field": "address",
+      "width": 40
+    },
+    {
+      "header": "门牌号",
+      "field": "door_no",
+      "width": 12
+    },
+    {
+      "header": "网点等级",
+      "field": "level",
+      "width": 10,
+      "enum": "ShopLevel"
+    },
+    {
+      "header": "评分",
+      "field": "score",
+      "width": 8,
+      "type": "number"
+    },
+    {
+      "header": "保证金",
+      "field": "bond",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "仓储保证金",
+      "field": "entrepot_bond",
+      "width": 12,
+      "type": "number"
+    },
+    {
+      "header": "保险金额",
+      "field": "insurance",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "累计订单数",
+      "field": "order_total_num",
+      "width": 12,
+      "type": "number"
+    },
+    {
+      "header": "累计订单金额",
+      "field": "order_total_price",
+      "width": 14,
+      "type": "number"
+    },
+    {
+      "header": "累计安装金额",
+      "field": "order_install_price",
+      "width": 14,
+      "type": "number"
+    },
+    {
+      "header": "接单数",
+      "field": "accept_num",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "拒单数",
+      "field": "refuse_num",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "换店数",
+      "field": "change_shop_num",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "返工数",
+      "field": "rework_num",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "售后数",
+      "field": "after_num",
+      "width": 10,
+      "type": "number"
+    },
+    {
+      "header": "状态",
+      "field": "state",
+      "width": 10
+    },
+    {
+      "header": "创建时间",
+      "field": "create_time",
+      "width": 20,
+      "type": "datetime"
+    }
+  ],
+  "enums": {
+    "ShopLevel": {
+      "-1": "禁用",
+      "0": "普通",
+      "1": "铜",
+      "2": "银",
+      "3": "金"
+    },
+    "Province": {
+      "上海市": "上海市",
+      "云南省": "云南省",
+      "内蒙古自治区": "内蒙古",
+      "北京市": "北京市",
+      "吉林省": "吉林省",
+      "四川省": "四川省",
+      "天津市": "天津市",
+      "宁夏回族自治区": "宁夏",
+      "安徽省": "安徽省",
+      "山东省": "山东省",
+      "山西省": "山西省",
+      "广东省": "广东省",
+      "广西壮族自治区": "广西",
+      "新疆维吾尔自治区": "新疆",
+      "江苏省": "江苏省",
+      "江西省": "江西省",
+      "河北省": "河北省",
+      "河南省": "河南省",
+      "浙江省": "浙江省",
+      "海南省": "海南省",
+      "湖北省": "湖北省",
+      "湖南省": "湖南省",
+      "甘肃省": "甘肃省",
+      "福建省": "福建省",
+      "西藏自治区": "西藏",
+      "贵州省": "贵州省",
+      "辽宁省": "辽宁省",
+      "重庆市": "重庆市",
+      "陕西省": "陕西省",
+      "青海省": "青海省",
+      "黑龙江省": "黑龙江"
+    }
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "id": "work_ticket",
+  "label": "工单明细",
+  "category": "工单",
+  "description": "工单主表 · 按创建时间过滤，含类型/状态/处理人/回复时间",
+  "icon": "task_alt",
+  "color": "#7C3AED",
+  "max_rows": 50000,
+  "visibility": {
+    "allow_all_logged": true
+  },
+  "filters": {
+    "date": {
+      "type": "range",
+      "col": "w.create_time",
+      "required": true,
+      "label": "创建时间"
+    },
+    "state": {
+      "type": "in",
+      "col": "w.state",
+      "enum": "WorkState",
+      "label": "工单状态"
+    },
+    "type": {
+      "type": "like",
+      "col": "w.type",
+      "label": "工单类型"
+    },
+    "level": {
+      "type": "in",
+      "col": "w.level",
+      "enum": "WorkLevel",
+      "label": "紧急程度"
+    },
+    "end_date": {
+      "type": "range",
+      "col": "w.end_time",
+      "label": "结束时间"
+    },
+    "handler": {
+      "type": "lookup",
+      "col": "w.order_uid",
+      "lookup": "employees",
+      "label": "处理人（可搜索）"
+    },
+    "creator": {
+      "type": "lookup",
+      "col": "w.create_uid",
+      "lookup": "employees",
+      "label": "创建人（可搜索）"
+    }
+  },
+  "sort": [
+    "w.create_time DESC"
+  ],
+  "sql": "SELECT w.id AS work_id, w.type AS type, w.state AS state, w.level AS level, IFNULL(w.create_name,'') AS create_name, w.create_type AS create_type, w.create_time AS create_time, IFNULL(w.order_name,'') AS handler_name, w.order_type AS handler_type, w.order_time AS assign_time, w.reply_time AS reply_time, w.end_time AS end_time, TIMESTAMPDIFF(MINUTE, w.create_time, w.end_time) AS duration_min, IFNULL(w.remark,'') AS remark, IFNULL(w.ck_state,'') AS ck_state, IFNULL(w.urge_count,0) AS urge_count FROM t_work w WHERE w.deleted = 0 AND {WHERE}",
+  "columns": [
+    {
+      "header": "工单号",
+      "field": "work_id",
+      "width": 12
+    },
+    {
+      "header": "工单类型",
+      "field": "type",
+      "width": 16
+    },
+    {
+      "header": "工单状态",
+      "field": "state",
+      "width": 12,
+      "enum": "WorkState"
+    },
+    {
+      "header": "紧急程度",
+      "field": "level",
+      "width": 10,
+      "enum": "WorkLevel"
+    },
+    {
+      "header": "创建人",
+      "field": "create_name",
+      "width": 14
+    },
+    {
+      "header": "创建人类型",
+      "field": "create_type",
+      "width": 12,
+      "enum": "UserType"
+    },
+    {
+      "header": "创建时间",
+      "field": "create_time",
+      "width": 20,
+      "type": "datetime"
+    },
+    {
+      "header": "处理人",
+      "field": "handler_name",
+      "width": 14
+    },
+    {
+      "header": "处理人类型",
+      "field": "handler_type",
+      "width": 12,
+      "enum": "UserType"
+    },
+    {
+      "header": "指派时间",
+      "field": "assign_time",
+      "width": 20,
+      "type": "datetime"
+    },
+    {
+      "header": "回复时间",
+      "field": "reply_time",
+      "width": 20,
+      "type": "datetime"
+    },
+    {
+      "header": "结束时间",
+      "field": "end_time",
+      "width": 20,
+      "type": "datetime"
+    },
+    {
+      "header": "处理时长(分)",
+      "field": "duration_min",
+      "width": 12,
+      "type": "number"
+    },
+    {
+      "header": "备注",
+      "field": "remark",
+      "width": 40
+    },
+    {
+      "header": "催单次数",
+      "field": "urge_count",
+      "width": 10,
+      "type": "number"
+    }
+  ],
+  "enums": {
+    "WorkState": {
+      "1": "待处理",
+      "2": "处理中",
+      "3": "已完结",
+      "4": "已作废",
+      "5": "已回复"
+    },
+    "WorkLevel": {
+      "1": "普通",
+      "2": "紧急",
+      "3": "特急"
+    },
+    "UserType": {
+      "SELLER": "卖家",
+      "EMPLOYEE": "员工",
+      "OUTLETS": "网点",
+      "SYSTEM": "系统"
+    }
+  }
+}
