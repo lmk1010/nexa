@@ -519,7 +519,23 @@
       "examples": [
         "开通到哪一步了"
       ]
+    },
+    {
+      "id": "ai.connectors",
+      "domain": "ai",
+      "title": "连接器目录",
+      "description": "列出 nexa 可选连接器",
+      "method": "GET",
+      "path": "/v1/ai/connectors",
+      "auth": false,
+      "keywords": [
+        "连接器",
+        "connector"
+      ],
+      "examples": [
+        "有哪些连接器"
+      ]
     }
   ],
-  "total": 30
+  "total": 31
 }

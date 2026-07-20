@@ -1,3 +1,25 @@
+# API 速查（nexa 企业钉钉）
+
+统一入口：`http://127.0.0.1:48080`
+
+产品定位见 `docs/PRODUCT.md`。
+
+## 租户接入
+
+| Method | Path | 说明 |
+|--------|------|------|
+| POST | `/v1/iam/tenants/register` | 注册企业 |
+| POST | `/v1/iam/login` | 登录 |
+| POST | `/v1/iam/invites` | 邀请 |
+| POST | `/v1/iam/invites/accept` | 加入 |
+| GET | `/v1/iam/onboarding/status` | 开通进度 |
+
+## 连接器
+
+| Method | Path |
+|--------|------|
+| GET | `/v1/ai/connectors` |
+
 # API 速查（Go 企业助手）
 
 统一入口：`http://127.0.0.1:48080`（gateway）

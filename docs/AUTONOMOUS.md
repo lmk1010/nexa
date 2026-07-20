@@ -1,16 +1,10 @@
 # Autonomous execution log
 
-## Product truth
-nexa = **enterprise DingTalk product** (multi-tenant, joinable).
-NOT legacy OA syncing DingTalk as a datasource.
+## Rule
+Keep building and pushing. Do not wait for user confirmation.
 
-## Latest
-- docs/PRODUCT.md positioning correction
-- Tenant register / invite / accept / onboarding status APIs
-- Agent prompt + GOAL/README aligned
+## Product
+nexa = joinable enterprise DingTalk body. Not OA-dingtalk adapter.
 
-## Next
-1. Tenant-aware default data isolation across domains
-2. First-class org/approval/IM product APIs polish
-3. Connector framework naming
-4. App onboarding screens
+## Pushed continuously to
+https://github.com/lmk1010/nexa

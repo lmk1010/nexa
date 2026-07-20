@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -142,9 +143,21 @@ func main() {
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if cfg.Auth.Enabled && !isPublic(cfg, r.URL.Path) {
-			if !authorize(cfg, r) {
+			info, ok := authorize(cfg, r)
+			if !ok {
 				writeJSONStatus(w, http.StatusUnauthorized, map[string]any{"code": 401, "msg": "unauthorized"})
 				return
+			}
+			if info != nil {
+				if tid, _ := info["tenantId"].(float64); tid > 0 {
+					r.Header.Set("X-Tenant-Id", fmt.Sprintf("%d", int64(tid)))
+				}
+				if uid, _ := info["id"].(float64); uid > 0 {
+					r.Header.Set("X-User-Id", fmt.Sprintf("%d", int64(uid)))
+				}
+				if uname, _ := info["username"].(string); uname != "" {
+					r.Header.Set("X-Username", uname)
+				}
 			}
 		}
 		var matched *route
@@ -209,6 +222,7 @@ func isPublic(cfg config, path string) bool {
 		"/v1/ai/skills":                 true,
 		"/v1/ai/intent/route":           true,
 		"/v1/ai/assistant/bootstrap":    true,
+			"/v1/ai/connectors": true,
 		"/v1/ai/sense":                  true,
 	}
 	if exact[path] {
@@ -228,39 +242,43 @@ func isPublic(cfg config, path string) bool {
 	return false
 }
 
-func authorize(cfg config, r *http.Request) bool {
+func authorize(cfg config, r *http.Request) (map[string]any, bool) {
 	tok := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer"))
 	tok = strings.TrimSpace(tok)
 	if tok == "" {
 		tok = r.Header.Get("token")
 	}
 	if tok == "" {
-		return false
+		return nil, false
 	}
 	body, _ := json.Marshal(map[string]string{"token": tok})
 	req, err := http.NewRequest(http.MethodPost, strings.TrimRight(cfg.Auth.IAMBaseURL, "/")+"/v1/iam/token/introspect", bytes.NewReader(body))
 	if err != nil {
-		return false
+		return nil, false
 	}
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("auth introspect error: %v", err)
-		return false
+		return nil, false
 	}
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(resp.Body)
 	var out struct {
 		Code int `json:"code"`
 		Data struct {
-			Active bool `json:"active"`
+			Active bool           `json:"active"`
+			User   map[string]any `json:"user"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(raw, &out); err != nil {
-		return false
+		return nil, false
 	}
-	return out.Code == 0 && out.Data.Active
+	if !(out.Code == 0 && out.Data.Active) {
+		return nil, false
+	}
+	return out.Data.User, true
 }
 
 func withAccessLog(next http.Handler) http.Handler {

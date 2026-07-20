@@ -271,6 +271,11 @@
       "path": "/v1/iam/onboarding/status",
       "summary": "开通状态",
       "skillId": "iam.onboarding.status"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/ai/connectors",
+      "summary": "Connector catalog"
     }
   ]
 }

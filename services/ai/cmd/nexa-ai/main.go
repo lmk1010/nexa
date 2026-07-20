@@ -125,6 +125,7 @@ func main() {
 	mux.HandleFunc("/v1/ai/reception/config", s.handleReceptionConfig)
 	mux.HandleFunc("/v1/ai/reception/records", s.handleReceptionRecords)
 	mux.HandleFunc("/v1/ai/assistant/bootstrap", s.handleBootstrap)
+	mux.HandleFunc("/v1/ai/connectors", s.handleConnectors)
 	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, 200, map[string]any{
 			"service": cfg.Name,
@@ -134,6 +135,7 @@ func main() {
 				"/v1/ai/skills", "/v1/ai/intent/route", "/v1/ai/sense", "/v1/ai/sense/recent",
 				"/v1/ai/automation/rules", "/v1/ai/automation/runs", "/v1/ai/automation/tick",
 				"/v1/ai/assistant/bootstrap",
+				"/v1/ai/connectors",
 			},
 		})
 	})
@@ -484,6 +486,19 @@ func (s *server) handleBootstrap(w http.ResponseWriter, r *http.Request) {
 		"docs":        []string{"docs/architecture/ai-native.md", "docs/GOAL.md"},
 	}})
 }
+
+
+func (s *server) handleConnectors(w http.ResponseWriter, r *http.Request) {
+	// Product connector catalog: nexa is the body; these are optional plugs.
+	list := []map[string]any{
+		{"id": "dingtalk-import", "kind": "dingtalk_import", "name": "钉钉通讯录导入", "description": "可选导入已有钉钉组织，非主数据权威", "enabled": true, "status": "ready", "env": []string{"NEXA_DINGTALK_APP_KEY", "NEXA_DINGTALK_APP_SECRET"}},
+		{"id": "cdc-mysql", "kind": "cdc_mysql", "name": "MySQL CDC", "description": "业务库 binlog -> warehouse", "enabled": true, "status": "ready"},
+		{"id": "data-center", "kind": "warehouse_ro", "name": "数据中心导出", "description": "模板导出与经营取数", "enabled": true, "status": "ready", "base": ":48092"},
+		{"id": "business-http", "kind": "business_api", "name": "HTTP 业务连接器", "description": "通用外部业务 API", "enabled": true, "status": "ready"},
+	}
+	writeJSON(w, 200, map[string]any{"code": 0, "data": list, "total": len(list), "note": "connectors plug into nexa; nexa is not an OA-dingtalk adapter"})
+}
+
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")

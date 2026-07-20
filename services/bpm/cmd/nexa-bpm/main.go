@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"flag"
 	"log"
 	"net/http"
@@ -30,6 +31,7 @@ type config struct {
 
 type task struct {
 	ID          string `json:"id"`
+	TenantID    int64  `json:"tenantId,omitempty"`
 	Title       string `json:"title"`
 	ProcessName string `json:"processName"`
 	Starter     string `json:"starter"`
@@ -233,6 +235,7 @@ func (s *server) handleStart(w http.ResponseWriter, r *http.Request) {
 	if t.Assignee == "" {
 		t.Assignee = "boss"
 	}
+	t.TenantID = parseTenantID(r)
 	s.db.Tasks = append(s.db.Tasks, t)
 	_ = s.save()
 	writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": t})
@@ -262,6 +265,18 @@ func emitSense(senseType, source, severity, message string, payload map[string]a
 		resp.Body.Close()
 		return
 	}
+}
+
+
+func parseTenantID(r *http.Request) int64 {
+	for _, k := range []string{"X-Tenant-Id", "tenant-id"} {
+		if v := strings.TrimSpace(r.Header.Get(k)); v != "" {
+			var n int64
+			fmt.Sscan(v, &n)
+			return n
+		}
+	}
+	return 0
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"flag"
 	"log"
 	"net/http"
@@ -32,6 +33,7 @@ type config struct {
 
 type employee struct {
 	ID         int64  `json:"id"`
+	TenantID   int64  `json:"tenantId,omitempty"`
 	Name       string `json:"name"`
 	Mobile     string `json:"mobile"`
 	DeptID     int64  `json:"deptId"`
@@ -148,9 +150,9 @@ func (s *server) loadOrSeed() error {
 			{ID: 30, Name: "HR", ParentID: 1},
 		},
 		Employees: []employee{
-			{ID: 1001, Name: "Zhang San", Mobile: "13800000001", DeptID: 10, DeptName: "R&D", JobNo: "KYX001", Status: "active", UpdatedAt: now},
-			{ID: 1002, Name: "Li Si", Mobile: "13800000002", DeptID: 20, DeptName: "Ops", JobNo: "KYX002", Status: "active", UpdatedAt: now},
-			{ID: 1003, Name: "Wang Wu", Mobile: "13800000003", DeptID: 30, DeptName: "HR", JobNo: "KYX003", Status: "active", UpdatedAt: now},
+			{ID: 1001, TenantID: 1, Name: "Zhang San", Mobile: "13800000001", DeptID: 10, DeptName: "R&D", JobNo: "KYX001", Status: "active", UpdatedAt: now},
+			{ID: 1002, TenantID: 1, Name: "Li Si", Mobile: "13800000002", DeptID: 20, DeptName: "Ops", JobNo: "KYX002", Status: "active", UpdatedAt: now},
+			{ID: 1003, TenantID: 1, Name: "Wang Wu", Mobile: "13800000003", DeptID: 30, DeptName: "HR", JobNo: "KYX003", Status: "active", UpdatedAt: now},
 		},
 		SyncJobs: []syncJob{},
 		SeqEmp:   1003,
@@ -176,7 +178,18 @@ func (s *server) handleEmployees(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": s.db.Employees, "total": len(s.db.Employees)})
+		tid := parseTenantID(r)
+		out := s.db.Employees
+		if tid > 0 {
+			tmp := make([]employee, 0, len(out))
+			for _, e := range out {
+				if e.TenantID == 0 || e.TenantID == tid {
+					tmp = append(tmp, e)
+				}
+			}
+			out = tmp
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"code": 0, "data": out, "total": len(out)})
 	case http.MethodPost:
 		var body employee
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -191,6 +204,9 @@ func (s *server) handleEmployees(w http.ResponseWriter, r *http.Request) {
 			body.Status = "active"
 		}
 		body.UpdatedAt = time.Now().Format(time.RFC3339)
+		if body.TenantID == 0 {
+			body.TenantID = parseTenantID(r)
+		}
 		s.db.Employees = append(s.db.Employees, body)
 		_ = s.save()
 		go emitSense("hr.employee.joined", "hr", "info", "employee created", map[string]any{"id": body.ID, "name": body.Name, "jobNo": body.JobNo})
@@ -310,9 +326,9 @@ func (s *server) handleDingSync(w http.ResponseWriter, r *http.Request) {
 			{ID: 40, Name: "Finance", ParentID: 1},
 		}
 		remoteEmps = []employee{
-			{ID: 1001, Name: "Zhang San", Mobile: "13800000001", DeptID: 10, DeptName: "R&D", JobNo: "KYX001", Status: "active", DingTalkID: "dt_zhangsan"},
-			{ID: 1002, Name: "Li Si", Mobile: "13800000002", DeptID: 20, DeptName: "Ops", JobNo: "KYX002", Status: "active", DingTalkID: "dt_lisi"},
-			{ID: 1003, Name: "Wang Wu", Mobile: "13800000003", DeptID: 30, DeptName: "HR", JobNo: "KYX003", Status: "active", DingTalkID: "dt_wangwu"},
+			{ID: 1001, TenantID: 1, Name: "Zhang San", Mobile: "13800000001", DeptID: 10, DeptName: "R&D", JobNo: "KYX001", Status: "active", DingTalkID: "dt_zhangsan"},
+			{ID: 1002, TenantID: 1, Name: "Li Si", Mobile: "13800000002", DeptID: 20, DeptName: "Ops", JobNo: "KYX002", Status: "active", DingTalkID: "dt_lisi"},
+			{ID: 1003, TenantID: 1, Name: "Wang Wu", Mobile: "13800000003", DeptID: 30, DeptName: "HR", JobNo: "KYX003", Status: "active", DingTalkID: "dt_wangwu"},
 			{ID: 1004, Name: "Zhao Liu", Mobile: "13800000004", DeptID: 40, DeptName: "Finance", JobNo: "KYX004", Status: "active", DingTalkID: "dt_zhaoliu"},
 		}
 	}
@@ -409,6 +425,18 @@ func emitSense(senseType, source, severity, message string, payload map[string]a
 		resp.Body.Close()
 		return
 	}
+}
+
+
+func parseTenantID(r *http.Request) int64 {
+	for _, k := range []string{"X-Tenant-Id", "tenant-id"} {
+		if v := strings.TrimSpace(r.Header.Get(k)); v != "" {
+			var n int64
+			fmt.Sscan(v, &n)
+			return n
+		}
+	}
+	return 0
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
