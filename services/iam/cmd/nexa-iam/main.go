@@ -20,9 +20,11 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+
+	bolt "go.etcd.io/bbolt"
 )
 
-var version = "0.5.0-tenant"
+var version = "0.6.0-bolt"
 
 type config struct {
 	Name string `json:"name"`
@@ -85,10 +87,12 @@ type tokenRecord struct {
 }
 
 type server struct {
-	cfg  config
-	mu   sync.Mutex
-	db   db
-	path string
+	cfg     config
+	mu      sync.Mutex
+	db      db
+	path    string
+	backend string // file | bolt
+	bolt    *bolt.DB
 }
 
 func main() {
@@ -109,14 +113,29 @@ func main() {
 		cfg.DataDir = "./data"
 	}
 
-	s := &server{cfg: cfg, path: filepath.Join(cfg.DataDir, "iam.json")}
+	backend := resolveIAMBackend(&cfg)
+	s := &server{cfg: cfg, path: filepath.Join(cfg.DataDir, "iam.json"), backend: backend}
+	if backend == "bolt" || backend == "bbolt" {
+		s.backend = "bolt"
+		dbPath := resolveIAMBoltPath(cfg)
+		b, err := openBolt(dbPath)
+		if err != nil {
+			log.Fatalf("bolt: %v", err)
+		}
+		s.bolt = b
+		s.path = dbPath
+		log.Printf("[store] backend=bolt path=%s", dbPath)
+	} else {
+		s.backend = "file"
+		log.Printf("[store] backend=file path=%s", s.path)
+	}
 	if err := s.loadOrSeed(); err != nil {
 		log.Fatalf("store: %v", err)
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{"status": "UP", "service": cfg.Name, "version": version})
+		writeJSON(w, http.StatusOK, map[string]any{"status": "UP", "service": cfg.Name, "version": version, "backend": s.backend})
 	})
 	mux.HandleFunc("/v1/iam/login", s.handleLogin)
 	mux.HandleFunc("/v1/iam/logout", s.handleLogout)
@@ -186,6 +205,18 @@ func (s *server) ensureMaps() {
 }
 
 func (s *server) loadOrSeed() error {
+	if s.backend == "bolt" {
+		// if empty DB, seed
+		if err := s.loadFromBolt(); err != nil {
+			return err
+		}
+		if len(s.db.Users) == 0 {
+			s.seedDefaults()
+			return s.save()
+		}
+		s.ensureMaps()
+		return nil
+	}
 	_ = os.MkdirAll(filepath.Dir(s.path), 0o755)
 	raw, err := os.ReadFile(s.path)
 	if err == nil {
@@ -198,6 +229,11 @@ func (s *server) loadOrSeed() error {
 	if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
+	s.seedDefaults()
+	return s.save()
+}
+
+func (s *server) seedDefaults() {
 	s.db = db{
 		Users: map[string]user{
 			"admin": {ID: 1, Username: "admin", Nickname: "管理员", Password: hashPassword("admin123"), TenantID: 1, Roles: []string{"super_admin"}, Permissions: defaultPerms("super_admin")},
@@ -210,7 +246,6 @@ func (s *server) loadOrSeed() error {
 		Seq:       2,
 		TenantSeq: 1,
 	}
-	return s.save()
 }
 
 func defaultPerms(role string) []string {
@@ -242,6 +277,9 @@ func (s *server) appendAudit(actor, action, detail string, tenantID int64) {
 }
 
 func (s *server) save() error {
+	if s.backend == "bolt" {
+		return s.saveToBolt()
+	}
 	raw, err := json.MarshalIndent(s.db, "", "  ")
 	if err != nil {
 		return err

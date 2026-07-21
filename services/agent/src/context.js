@@ -57,13 +57,29 @@ export function getRequestContext(req) {
   const tenantIgnore = firstHeader(req.headers['tenant-ignore'] || req.headers['tenant_ignore']);
   const authorization = firstHeader(req.headers.authorization);
 
+  let loginUser = parseLoginUserHeader(loginUserHeader);
+  // nexa-core injects X-User-Id / X-Username / X-Tenant-Id when gateway login-user is absent
+  if (!loginUser) {
+    const uid = firstHeader(req.headers['x-user-id']);
+    const un = firstHeader(req.headers['x-username']);
+    const xtid = firstHeader(req.headers['x-tenant-id']) || tenantId;
+    if (uid || un) {
+      loginUser = {
+        id: uid ? Number(uid) : un,
+        userId: uid ? Number(uid) : un,
+        username: un || String(uid || ''),
+        nickname: un || '',
+        tenantId: xtid ? Number(xtid) : null,
+      };
+    }
+  }
   return {
     requestId: firstHeader(req.headers['x-request-id']) || randomUUID(),
-    tenantId,
+    tenantId: tenantId || firstHeader(req.headers['x-tenant-id']),
     visitTenantId,
     tenantIgnore,
     authorization,
-    loginUser: parseLoginUserHeader(loginUserHeader),
+    loginUser,
     rawLoginUserHeader: loginUserHeader,
     userAgent: firstHeader(req.headers['user-agent']),
     remoteAddress: req.socket.remoteAddress || '',

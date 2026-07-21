@@ -43,7 +43,8 @@ class HttpError extends Error {
 // rewritten in a way that doesn't strip it, this check MUST be upgraded to
 // verify the JWT directly (agent would need the signing key).
 function requireLogin(context) {
-  if (!context?.loginUser?.id) {
+  const id = context?.loginUser?.id ?? context?.loginUser?.userId;
+  if (id === undefined || id === null || id === '') {
     throw new HttpError(401, '账号未登录');
   }
 }
@@ -84,7 +85,7 @@ function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', config.service.corsAllowOrigin);
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'Authorization, Content-Type, tenant-id, visit-tenant-id, tenant-ignore, x-request-id',
+    'Authorization, Content-Type, tenant-id, visit-tenant-id, tenant-ignore, x-request-id, login-user, X-User-Id, X-Username, X-Tenant-Id',
   );
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
 }

@@ -97,7 +97,16 @@ curl -s -X POST http://127.0.0.1:48080/v1/iam/login \
 
 ```bash
 cd services/agent && cp .env.example .env
-npm install && AGENT_USE_MOCK=true npm run dev
+npm install && AGENT_USE_MOCK=true npm start
+# via core proxy:
+# POST http://127.0.0.1:48080/agent/run  Authorization: Bearer <token>
+```
+
+### Durable store (bolt)
+
+```bash
+export NEXA_DB_BACKEND=bolt
+./scripts/start-dev.sh
 ```
 
 ### Mobile
@@ -150,6 +159,8 @@ nexa/
 | `NEXA_DATA_DIR` | JSON data |
 | `NEXA_DINGTALK_APP_KEY` | optional import |
 | `GOTOOLCHAIN=local` | local Go |
+| `NEXA_DB_BACKEND` | `file` (default) or `bolt` durable |
+| `AGENT_USE_MOCK` | agent mock LLM |
 
 ## Status
 

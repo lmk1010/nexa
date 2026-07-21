@@ -9,6 +9,11 @@ LOGDIR="${NEXA_LOG_DIR:-$ROOT/.run/logs}"
 PIDDIR="${NEXA_PID_DIR:-$ROOT/.run/pids}"
 mkdir -p "$LOGDIR" "$PIDDIR" "$ROOT/.run/data/core" "$ROOT/.run/data/iam" "$ROOT/.run/configs"
 
+# Storage backend: file (default) | bolt (embedded durable)
+export NEXA_DB_BACKEND="${NEXA_DB_BACKEND:-file}"
+export NEXA_IAM_BACKEND="${NEXA_IAM_BACKEND:-$NEXA_DB_BACKEND}"
+export NEXA_CORE_BACKEND="${NEXA_CORE_BACKEND:-$NEXA_DB_BACKEND}"
+
 echo "[build] iam"
 (cd "$ROOT/services/iam" && go build -o "$BIN/nexa-iam.exe" ./cmd/nexa-iam)
 echo "[build] core"
@@ -28,8 +33,8 @@ start_one() {
     echo "[skip] $name running"
     return
   fi
-  echo "[start] $name"
-  nohup "$bin" -config "$conf" >"$LOGDIR/$name.log" 2>&1 &
+  echo "[start] $name (backend=${NEXA_DB_BACKEND:-file})"
+  nohup env NEXA_IAM_BACKEND="$NEXA_IAM_BACKEND" NEXA_CORE_BACKEND="$NEXA_CORE_BACKEND" NEXA_DB_BACKEND="$NEXA_DB_BACKEND" "$bin" -config "$conf" >"$LOGDIR/$name.log" 2>&1 &
   echo $! >"$pidfile"
 }
 

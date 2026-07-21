@@ -21,12 +21,14 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	bolt "go.etcd.io/bbolt"
 )
 
 //go:embed all:web
 var adminFS embed.FS
 
-var version = "1.0.0-core"
+var version = "1.1.0-core"
 
 type config struct {
 	Name string `json:"name"`
@@ -66,12 +68,26 @@ func main() {
 	_ = os.MkdirAll(cfg.DataDir, 0o755)
 
 	store := newStore(cfg.DataDir)
+	backend := resolveCoreBackend()
+	if backend == "bolt" || backend == "bbolt" {
+		store.backend = "bolt"
+		bpath := resolveCoreBoltPath(cfg.DataDir)
+		b, err := openCoreBolt(bpath)
+		if err != nil {
+			log.Fatalf("bolt: %v", err)
+		}
+		store.bolt = b
+		log.Printf("[store] backend=bolt path=%s", bpath)
+	} else {
+		store.backend = "file"
+		log.Printf("[store] backend=file path=%s", store.path())
+	}
 	store.loadOrSeed()
 	store.backfillTenant()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, 200, map[string]any{"status": "UP", "service": "nexa-core", "version": version, "mode": "monolith-business"})
+		writeJSON(w, 200, map[string]any{"status": "UP", "service": "nexa-core", "version": version, "mode": "monolith-business", "backend": store.backend})
 	})
 	mux.HandleFunc("/v1/platform/services", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, 200, map[string]any{
@@ -206,15 +222,43 @@ func authMiddleware(iamURL string, next http.Handler) http.Handler {
 	publicPrefix := []string{"/admin", "/agent", "/app-api/agent", "/admin-api/agent", "/v1/iam/login", "/v1/iam/tenants/register", "/v1/iam/invites/accept"}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		if publicExact[path] {
+		public := publicExact[path]
+		if !public {
+			for _, p := range publicPrefix {
+				if path == p || strings.HasPrefix(path, p+"/") {
+					public = true
+					break
+				}
+			}
+		}
+		// Optional auth enrich: public routes still inject user headers when Bearer present (agent needs login-user)
+		if public {
+			tok := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer"))
+			tok = strings.TrimSpace(tok)
+			if tok == "" {
+				tok = r.Header.Get("token")
+			}
+			if tok != "" {
+				if user, ok := introspect(iamURL, tok); ok {
+					if tid, ok := user["tenantId"].(float64); ok {
+						r.Header.Set("X-Tenant-Id", fmt.Sprintf("%d", int64(tid)))
+						r.Header.Set("tenant-id", fmt.Sprintf("%d", int64(tid)))
+					}
+					if uid, ok := user["id"].(float64); ok {
+						r.Header.Set("X-User-Id", fmt.Sprintf("%d", int64(uid)))
+					}
+					if un, ok := user["username"].(string); ok {
+						r.Header.Set("X-Username", un)
+					}
+					if r.Header.Get("login-user") == "" {
+						if raw, err := json.Marshal(user); err == nil {
+							r.Header.Set("login-user", string(raw))
+						}
+					}
+				}
+			}
 			next.ServeHTTP(w, r)
 			return
-		}
-		for _, p := range publicPrefix {
-			if path == p || strings.HasPrefix(path, p+"/") {
-				next.ServeHTTP(w, r)
-				return
-			}
 		}
 		// IAM proxied paths that need auth still go through - login/register already public
 		if strings.HasPrefix(path, "/v1/iam/") && (path == "/v1/iam/login" || path == "/v1/iam/tenants/register" || path == "/v1/iam/invites/accept") {
@@ -237,12 +281,19 @@ func authMiddleware(iamURL string, next http.Handler) http.Handler {
 		}
 		if tid, ok := user["tenantId"].(float64); ok {
 			r.Header.Set("X-Tenant-Id", fmt.Sprintf("%d", int64(tid)))
+			r.Header.Set("tenant-id", fmt.Sprintf("%d", int64(tid)))
 		}
 		if uid, ok := user["id"].(float64); ok {
 			r.Header.Set("X-User-Id", fmt.Sprintf("%d", int64(uid)))
 		}
 		if un, ok := user["username"].(string); ok {
 			r.Header.Set("X-Username", un)
+		}
+		// Agent (NeoX) expects gateway-style login-user JSON header
+		if r.Header.Get("login-user") == "" {
+			if raw, err := json.Marshal(user); err == nil {
+				r.Header.Set("login-user", string(raw))
+			}
 		}
 		next.ServeHTTP(w, r)
 	})
@@ -302,9 +353,11 @@ func tenantID(r *http.Request) int64 {
 // ---------- store ----------
 
 type store struct {
-	dir string
-	mu  sync.Mutex
-	db  coreDB
+	dir     string
+	mu      sync.Mutex
+	db      coreDB
+	backend string
+	bolt    *bolt.DB
 }
 
 type coreDB struct {
@@ -326,13 +379,23 @@ type coreDB struct {
 	Seq           int64                   `json:"seq"`
 }
 
-func newStore(dir string) *store { return &store{dir: dir} }
+func newStore(dir string) *store { return &store{dir: dir, backend: "file"} }
 
 func (s *store) path() string { return filepath.Join(s.dir, "core.json") }
 
 func (s *store) loadOrSeed() {
 	_ = os.MkdirAll(s.dir, 0o755)
-	if raw, err := os.ReadFile(s.path()); err == nil {
+	if s.backend == "bolt" {
+		s.migrateJSONToBolt(filepath.Join(s.dir, "core.json"))
+		_ = s.loadFromBolt()
+		if s.db.Connectors == nil {
+			s.db.Connectors = map[string]connectorCfg{}
+		}
+		if len(s.db.Employees) > 0 || len(s.db.Departments) > 0 || s.db.Seq > 0 {
+			return
+		}
+		// fall through to seed if empty
+	} else if raw, err := os.ReadFile(s.path()); err == nil {
 		_ = json.Unmarshal(raw, &s.db)
 		if s.db.Connectors == nil {
 			s.db.Connectors = map[string]connectorCfg{}
@@ -367,6 +430,9 @@ func (s *store) loadOrSeed() {
 }
 
 func (s *store) save() error {
+	if s.backend == "bolt" {
+		return s.saveToBolt()
+	}
 	raw, err := json.MarshalIndent(s.db, "", "  ")
 	if err != nil {
 		return err

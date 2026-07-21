@@ -42,6 +42,7 @@
 
 ### 还差（优先级）
 
+0. ~~MySQL 替换 JSON store~~ → **bolt 嵌入式持久化已可用**（`NEXA_DB_BACKEND=bolt`）；MySQL schema 保留
 ~~1. core 内全域 `X-Tenant-Id` 过滤写实~~ ✅
 2. ~~审批状态机 + IM 会话/消息~~ ✅
 ~~3. 连接器按租户配置（不仅目录）~~ ✅
@@ -73,3 +74,7 @@ cd deploy && docker compose up -d --build
 - Core: workbench summary, BPM process catalog, calendar CRUD, department create, tenant isolation fix
 - Admin: `/admin` static console with workbench + audit
 - Verified multi-tenant isolation (tenant 2 only sees own org after bootstrap)
+
+### 2026-07-21
+- IAM/core bbolt durable store + migrate from JSON
+- Agent mock run via core `/agent/run` with auth enrich

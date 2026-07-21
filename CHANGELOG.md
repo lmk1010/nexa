@@ -9,9 +9,22 @@ This project is pre-1.0; entries are grouped by date on `main`.
 
 ### Planned
 
-- MySQL-backed stores
-- Agent real LLM end-to-end
+- Optional MySQL driver (schema already present); bolt is default durable path
+- Agent real LLM keys (mock path works via /agent/run)
 - Full data-center engine + CDC prod profile
+
+## [0.3.0] - 2026-07-21
+
+### Added
+
+- Durable store backend: `NEXA_DB_BACKEND=bolt` (bbolt) for IAM + core, with JSON migrate
+- Agent auth bridge: core injects `login-user` / X-User-* on /agent/* when Bearer present
+- Agent context accepts X-User-Id headers for nexa-core gateway path
+- start-dev.sh honors NEXA_DB_BACKEND
+
+### Fixed
+
+- Agent /agent/run 401 when proxied without gateway login-user header
 
 ## [0.2.0] - 2026-07-20
 
